@@ -1,6 +1,6 @@
 package com.familyspencesapi.domain.users;
 
-public class loginuser {
+public class LoginUser {
     private String email;
     private String password;
 
@@ -20,7 +20,7 @@ public class loginuser {
         this.password = password;
     }
 
-    public loginuser(String email, String password) {
+    public LoginUser(String email, String password) {
         this.email = email;
         this.password = password;
     }
