@@ -4,46 +4,62 @@ import java.time.LocalDate;
 
 public class FamilyUser {
 
-    private String name;
-    private LocalDate birthDate;
-    private String dniType;
-    private String dni;
+    private String full_name;
+    private LocalDate birth_date;
+    private String document_type;
+    private String document;
     private String email;
-    private String relationShip;
-    private String creditCard;
-    private String cellphone;
+    private String relationship;
+    private String credit_card;
+    private String phone;
     private String address;
 
-    public String getName() {
-        return name;
+    public FamilyUser() {
+
     }
 
-    public void setName(final String name) {
-        this.name = name;
+    public FamilyUser(String full_name, LocalDate birth_date, String document_type, String document, String email, String relationship, String credit_card, String phone, String address) {
+        this.full_name = full_name;
+        this.birth_date = birth_date;
+        this.document_type = document_type;
+        this.document = document;
+        this.email = email;
+        this.relationship = relationship;
+        this.credit_card = credit_card;
+        this.phone = phone;
+        this.address = address;
     }
 
-    public LocalDate getBirthDate() {
-        return birthDate;
+    public String getfull_name() {
+        return full_name;
     }
 
-    public void setBirthDate(final LocalDate birthDate) {
-        this.birthDate = birthDate;
+    public void setfull_name(final String full_name) {
+        this.full_name = full_name;
     }
 
-    public String getDniType() {
-        return dniType;
+    public LocalDate getbirth_date() {
+        return birth_date;
     }
 
-    public void setDniType(final String dniType) {
-        this.dniType = dniType;
+    public void setbirth_date(final LocalDate birth_date) {
+        this.birth_date = birth_date;
+    }
+
+    public String getdocument_type() {
+        return document_type;
+    }
+
+    public void setdocument_type(final String document_type) {
+        this.document_type = document_type;
     }
 
     public String getSni() {
-        return dni;
+        return document;
     }
 
-    public void setSni(final String dni) {
-        this.dni = dni;
+    public void setSni(final String document) {
+        this.document = document;
     }
 
     public String getEmail() {
@@ -55,27 +71,27 @@ public class FamilyUser {
     }
 
     public String getRelationShip() {
-        return relationShip;
+        return relationship;
     }
 
-    public void setRelationShip(final String relationShip) {
-        this.relationShip = relationShip;
+    public void setRelationShip(final String relationship) {
+        this.relationship = relationship;
     }
 
     public String getCreditCard() {
-        return creditCard;
+        return credit_card;
     }
 
-    public void setCreditCard(final String creditCard) {
-        this.creditCard = creditCard;
+    public void setCreditCard(final String credit_card) {
+        this.credit_card = credit_card;
     }
 
     public String getCellphone() {
-        return cellphone;
+        return phone;
     }
 
-    public void setCellphone(final String cellphone) {
-        this.cellphone = cellphone;
+    public void setCellphone(final String phone) {
+        this.phone = phone;
     }
 
     public String getAddress() {
