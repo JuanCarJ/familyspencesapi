@@ -46,19 +46,19 @@ public class FamilyUser {
         this.birth_date = birth_date;
     }
 
-    public String getdocument_type() {
+    public String getDocument_type() {
         return document_type;
     }
 
-    public void setdocument_type(final String document_type) {
+    public void setDocument_type(final String document_type) {
         this.document_type = document_type;
     }
 
-    public String getSni() {
+    public String getDocument() {
         return document;
     }
 
-    public void setSni(final String document) {
+    public void setDocument(final String document) {
         this.document = document;
     }
 
@@ -70,11 +70,11 @@ public class FamilyUser {
         this.email = email;
     }
 
-    public String getRelationShip() {
+    public String getRelationship() {
         return relationship;
     }
 
-    public void setRelationShip(final String relationship) {
+    public void setRelationship(final String relationship) {
         this.relationship = relationship;
     }
 
@@ -86,11 +86,11 @@ public class FamilyUser {
         this.credit_card = credit_card;
     }
 
-    public String getCellphone() {
+    public String getPhone() {
         return phone;
     }
 
-    public void setCellphone(final String phone) {
+    public void setPhone(final String phone) {
         this.phone = phone;
     }
 
