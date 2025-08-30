@@ -1,4 +1,4 @@
-package com.familyspencesapi.controller.category;
+package com.familyspencesapi.controllers.category;
 
 import com.familyspencesapi.domain.category.Category;
 import com.familyspencesapi.domain.category.CategoryType;
