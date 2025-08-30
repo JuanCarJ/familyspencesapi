@@ -1,4 +1,4 @@
-package com.familyspencesapi.controller;
+package com.familyspencesapi.controllers.goal;
 
 import com.familyspencesapi.domain.goals.Goal;
 import org.springframework.http.ResponseEntity;

@@ -19,7 +19,7 @@ public class LoginUser {
     public void setPassword(String password) {
         this.password = password;
     }
-
+    public LoginUser() { }
     public LoginUser(String email, String password) {
         this.email = email;
         this.password = password;
