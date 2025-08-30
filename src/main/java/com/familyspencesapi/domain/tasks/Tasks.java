@@ -7,6 +7,7 @@ import java.util.UUID;
 public class Tasks {
 
     private UUID id;
+    private UUID familiId;
     private String name;
     private String description;
     private boolean status;
@@ -80,6 +81,14 @@ public class Tasks {
 
     public void setIdExpenseve(final UUID idExpenseve) {
         this.idExpenseve = idExpenseve;
+    }
+
+    public UUID getFamiliId() {
+        return familiId;
+    }
+
+    public void setFamiliId(UUID familiId) {
+        this.familiId = familiId;
     }
 }
 
