@@ -1,4 +1,4 @@
-package com.familyspencesapi.domain;
+package com.familyspencesapi.domain.producto;
 
 import java.util.UUID;
 
@@ -51,51 +51,4 @@ public class comparadorDomain {
         this.negocio = negocio;
     }
 }
-
-class BusquedaRequest {
-    private String nombre;
-
-    public BusquedaRequest() {}
-
-    public BusquedaRequest(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-}
-
-class RespuestaProducto {
-    private String mensaje;
-    private UUID id;
-
-    public RespuestaProducto() {}
-
-    public RespuestaProducto(String mensaje, UUID id) {
-        this.mensaje = mensaje;
-        this.id = id;
-    }
-
-    public String getMensaje() {
-        return mensaje;
-    }
-
-    public void setMensaje(String mensaje) {
-        this.mensaje = mensaje;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-}
-
 

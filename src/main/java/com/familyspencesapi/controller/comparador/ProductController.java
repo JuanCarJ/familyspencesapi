@@ -1,19 +1,18 @@
-package com.familyspencesapi.controller;
+package com.familyspencesapi.controller.comparador;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/comparador")
+@RequestMapping("/api/product")
 public class comparadorController {
 
-    @PostMapping("/buscar")
-    public List<Map<String, Object>> buscarProductos(@RequestBody Map<String, String> request) {
-        String nombre = request.get("nombre");
-
+    @GetMapping()//
+    public List<Map<String, Object>> searchProducts(@RequestBody Map<String, String> request) {
+        String name = request.get("nombre");
         List<Map<String, Object>> resultados = new ArrayList<>();
 
-        if ("leche".equalsIgnoreCase(nombre)) {
+        if ("leche".equalsIgnoreCase(name)) {
             Map<String, Object> producto1 = new HashMap<>();
             producto1.put("producto", "Leche Entera 1L");
             producto1.put("precio", 3500);
@@ -26,13 +25,19 @@ public class comparadorController {
 
             resultados.add(producto1);
             resultados.add(producto2);
-        }
+        } else if ("pan".equalsIgnoreCase(name)) {
+            Map<String, Object> producto1 = new HashMap<>();
+            producto1.put("producto", "Pan Integral 500g");
+            producto1.put("precio", 4200);
+            producto1.put("negocio", "Panadería 123");
 
+            resultados.add(producto1);
+        }
         return resultados;
     }
 
-    @PostMapping("/producto")
-    public Map<String, Object> agregarProducto(@RequestBody Map<String, Object> producto) {
+    @PostMapping("/product")
+    public Map<String, Object> addProduct(@RequestBody Map<String, Object> producto) {
         Map<String, Object> respuesta = new HashMap<>();
         respuesta.put("mensaje", "Producto agregado exitosamente");
         respuesta.put("id", UUID.randomUUID().toString()); // ID como UUID
