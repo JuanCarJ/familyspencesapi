@@ -1,4 +1,4 @@
-package com.familyspencesapi.domain;
+package com.familyspencesapi.domain.pet;
 
 import java.time.LocalDate;
 import java.util.UUID;

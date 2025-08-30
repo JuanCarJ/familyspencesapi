@@ -1,4 +1,4 @@
-package com.familyspencesapi.controller;
+package com.familyspencesapi.controllers.budget;
 
 import org.springframework.web.bind.annotation.*;
 

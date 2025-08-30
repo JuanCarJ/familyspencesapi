@@ -1,6 +1,5 @@
-package com.familyspencesapi.controller;
+package com.familyspencesapi.controllers.ranking;
 
-import com.familyspencesapi.domain.ranking.Ranking;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;

@@ -1,4 +1,4 @@
-package com.familyspencesapi.controller.task;
+package com.familyspencesapi.controllers.task;
 
 import com.familyspencesapi.domain.tasks.Tasks;
 import com.familyspencesapi.mock.tasks.TaskMockData;

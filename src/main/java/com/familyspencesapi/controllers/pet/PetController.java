@@ -1,6 +1,6 @@
-package com.familyspencesapi.controller;
+package com.familyspencesapi.controllers.pet;
 
-import com.familyspencesapi.domain.Pet;
+import com.familyspencesapi.domain.pet.Pet;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
