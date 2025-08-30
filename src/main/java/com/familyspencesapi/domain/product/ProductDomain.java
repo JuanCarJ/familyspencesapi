@@ -1,22 +1,22 @@
-package com.familyspencesapi.domain.producto;
+package com.familyspencesapi.domain.product;
 
 import java.util.UUID;
 
-public class comparadorDomain {
+public class ProductDomain {
     private UUID id;
-    private String producto;
-    private int precio;
-    private String negocio;
+    private String product;
+    private int price;
+    private String store;
 
-    public comparadorDomain() {
+    public ProductDomain() {
         this.id = UUID.randomUUID();
     }
 
-    public comparadorDomain(String producto, int precio, String negocio) {
+    public ProductDomain(String product, int price, String store) {
         this.id = UUID.randomUUID();
-        this.producto = producto;
-        this.precio = precio;
-        this.negocio = negocio;
+        this.product = product;
+        this.price = price;
+        this.store = store;
     }
 
     public UUID getId() {
@@ -27,28 +27,28 @@ public class comparadorDomain {
         this.id = id;
     }
 
-    public String getProducto() {
-        return producto;
+    public String getProduct() {
+        return product;
     }
 
-    public void setProducto(String producto) {
-        this.producto = producto;
+    public void setProduct(String product) {
+        this.product = product;
     }
 
-    public int getPrecio() {
-        return precio;
+    public int getPrice() {
+        return price;
     }
 
-    public void setPrecio(int precio) {
-        this.precio = precio;
+    public void setPrice(int price) {
+        this.price = price;
     }
 
-    public String getNegocio() {
-        return negocio;
+    public String getStore() {
+        return store;
     }
 
-    public void setNegocio(String negocio) {
-        this.negocio = negocio;
+    public void setStore(String store) {
+        this.store = store;
     }
 }
 

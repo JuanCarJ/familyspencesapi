@@ -1,11 +1,11 @@
-package com.familyspencesapi.controller.comparador;
+package com.familyspencesapi.controllers.product;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/product")
-public class comparadorController {
+public class ProductController {
 
     @GetMapping()//
     public List<Map<String, Object>> searchProducts(@RequestBody Map<String, String> request) {
