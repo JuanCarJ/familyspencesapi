@@ -1,4 +1,4 @@
-package com.familyspencesapi.controllers;
+package com.familyspencesapi.controllers.expenseControl;
 
 import com.familyspencesapi.domain.expenseControl.Expense;
 import com.familyspencesapi.domain.family.FamilyMember;
