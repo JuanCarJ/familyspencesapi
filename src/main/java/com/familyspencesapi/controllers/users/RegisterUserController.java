@@ -12,46 +12,15 @@ public class RegisterUserController {
 
     private final List<RegisterUser> users = new ArrayList<>();
 
-    public RegisterUserController() {
-        users.add(new RegisterUser(
-                UUID.randomUUID(),
-                "Brahian R",
-                LocalDate.of(2004, 1, 20),
-                "Cedula",
-                "12345678",
-                "brahianr@email.com",
-                "Padre",
-                "123456789",
-                "1234567890",
-                "Rionegro",
-                "password123",
-                UUID.randomUUID().toString()
-        ));
-        users.add(new RegisterUser(
-                UUID.randomUUID(),
-                "Ana ",
-                LocalDate.of(1985, 8, 15),
-                "Cedula",
-                "87654321",
-                "ana@email.com",
-                "Madre",
-                "4222222222222222",
-                "5557654321",
-                "Rionegro",
-                "password456",
-                UUID.randomUUID().toString()
-        ));
-    }
-
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody RegisterUser user) {
         if (user == null ||
-                user.getfull_name() == null || user.getfull_name().isEmpty() ||
-                user.getbirth_date() == null ||
-                user.getdocument_type() == null || user.getdocument_type().isEmpty() ||
+                user.getfullName() == null || user.getfullName().isEmpty() ||
+                user.getbirthDate() == null ||
+                user.getdocumentType() == null ||
                 user.getdocument() == null || user.getdocument().isEmpty() ||
                 user.getEmail() == null || user.getEmail().isEmpty() ||
-                user.getRelationship() == null || user.getRelationship().isEmpty() ||
+                user.getRelationship() == null ||
                 user.getcredit_card() == null || user.getcredit_card().isEmpty() ||
                 user.getphone() == null || user.getphone().isEmpty() ||
                 user.getAddress() == null || user.getAddress().isEmpty() ||
@@ -59,7 +28,7 @@ public class RegisterUserController {
             return ResponseEntity.badRequest().body("Todos los campos son obligatorios.");
         }
         user.setId(UUID.randomUUID());
-        user.setid_family(UUID.randomUUID().toString());
+        user.setfamilyId(UUID.randomUUID());
         users.add(user);
         return ResponseEntity.ok(user);
     }
