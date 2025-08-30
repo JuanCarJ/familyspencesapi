@@ -1,6 +1,6 @@
-package com.familyspencesapi.controllers;
+package com.familyspencesapi.controllers.vacation;
 
-import com.familyspencesapi.domain.Vacation;
+import com.familyspencesapi.domain.vacation.Vacation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

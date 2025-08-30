@@ -1,4 +1,4 @@
-package com.familyspencesapi.domain;
+package com.familyspencesapi.domain.vacation;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
