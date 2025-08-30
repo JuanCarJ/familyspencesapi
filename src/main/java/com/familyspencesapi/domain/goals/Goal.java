@@ -1,5 +1,8 @@
 package com.familyspencesapi.domain.goals;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 public class Goal {
 
     private UUID id;
