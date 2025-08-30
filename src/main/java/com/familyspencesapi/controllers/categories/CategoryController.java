@@ -1,7 +1,7 @@
-package com.familyspencesapi.controllers.category;
+package com.familyspencesapi.controllers.categories;
 
-import com.familyspencesapi.domain.category.Category;
-import com.familyspencesapi.domain.category.CategoryType;
+import com.familyspencesapi.domain.categories.Category;
+import com.familyspencesapi.domain.categories.CategoryType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/categorias")
+@RequestMapping("/api/categories")
 public class CategoryController {
 
     // Datos quemados simulando una base de datos
