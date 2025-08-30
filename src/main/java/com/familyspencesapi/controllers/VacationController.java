@@ -1,4 +1,4 @@
-package com.familyspencesapi.controller;
+package com.familyspencesapi.controllers;
 
 import com.familyspencesapi.domain.Vacation;
 import org.springframework.http.HttpStatus;
