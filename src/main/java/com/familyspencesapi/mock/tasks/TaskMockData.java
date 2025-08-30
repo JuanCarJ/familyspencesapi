@@ -12,7 +12,8 @@ public class TaskMockData {
         List<Tasks> tasks = new ArrayList<>();
 
         Tasks t1 = new Tasks();
-        t1.setId(UUID.fromString("11111111-2222-3333-4444-555555555555"));
+        t1.setId(UUID.fromString("11111111-2222-3333-4444-555555555553"));
+        t1.setFamiliId(UUID.fromString("11111111-2222-3333-4444-55555555555"));
         t1.setName("Comprar alimentos");
         t1.setDescription("Ir al supermercado y comprar frutas y verduras");
         t1.setStatus(false);
@@ -23,6 +24,7 @@ public class TaskMockData {
 
         Tasks t2 = new Tasks();
         t2.setId(UUID.fromString("22222222-3333-4444-5555-666666666666"));
+        t1.setFamiliId(UUID.fromString("11111111-2222-3333-4444-555555555555"));
         t2.setName("Lavar los platos");
         t2.setDescription("Lavar los platos después de la cena");
         t2.setStatus(true);

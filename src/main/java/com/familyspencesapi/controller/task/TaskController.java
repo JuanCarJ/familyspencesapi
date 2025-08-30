@@ -31,12 +31,12 @@ public class TaskController {
     }
 
     @PutMapping
-    public ResponseEntity<String> putTask(@RequestParam(required = true) UUID familyId ,@RequestParam(required = true) UUID taskID,@RequestBody Tasks task){
+    public ResponseEntity<String> putTask(@RequestParam(required = true) UUID familyId ,@RequestParam(required = true) UUID taskId,@RequestBody Tasks task){
         return ResponseEntity.ok("Task updated successfully");
     }
 
     @DeleteMapping
-    public ResponseEntity<String> deleteTask(@RequestParam(required = true) UUID familyId ,@RequestParam(required = true) UUID taskID){
+    public ResponseEntity<String> deleteTask(@RequestParam(required = true) UUID familyId ,@RequestParam(required = true) UUID taskId){
         return ResponseEntity.ok("Task deleted successfully");
     }
 
