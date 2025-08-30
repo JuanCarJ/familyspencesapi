@@ -5,7 +5,6 @@ import java.time.LocalDate;
 
 public class Vacation {
 
-    // Atributos privados
     private Long id;
     private String titulo;
     private String descripcion;
@@ -14,11 +13,9 @@ public class Vacation {
     private String lugar;
     private BigDecimal presupuesto;
 
-    // Constructor por defecto
     public Vacation() {
     }
 
-    // Constructor con parámetros básicos
     public Vacation(String titulo, LocalDate fechaInicio, LocalDate fechaFin, String lugar) {
         this.titulo = titulo;
         this.fechaInicio = fechaInicio;
@@ -26,7 +23,6 @@ public class Vacation {
         this.lugar = lugar;
     }
 
-    // Constructor completo
     public Vacation(Long id, String titulo, String descripcion, LocalDate fechaInicio,
                     LocalDate fechaFin, String lugar, BigDecimal presupuesto) {
         this.id = id;
@@ -38,7 +34,6 @@ public class Vacation {
         this.presupuesto = presupuesto;
     }
 
-    // Constructor completo sin ID (para nuevas vacaciones)
     public Vacation(String titulo, String descripcion, LocalDate fechaInicio,
                     LocalDate fechaFin, String lugar, BigDecimal presupuesto) {
         this.titulo = titulo;
@@ -49,7 +44,6 @@ public class Vacation {
         this.presupuesto = presupuesto;
     }
 
-    // Getters
     public Long getId() {
         return id;
     }
@@ -78,7 +72,6 @@ public class Vacation {
         return presupuesto;
     }
 
-    // Setters
     public void setId(Long id) {
         this.id = id;
     }
