@@ -1,4 +1,4 @@
-package com.example.domain;
+package com.familyspencesapi.domain;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
