@@ -1,4 +1,4 @@
-package com.familyspencesapi.controllers;
+package com.familyspencesapi.controller;
 
 import com.familyspencesapi.domain.category.Category;
 import com.familyspencesapi.domain.category.CategoryType;
@@ -19,8 +19,6 @@ public class CategoryController {
         categories.add(new Category(UUID.randomUUID(), "Mercado", CategoryType.ALIMENTACION, "Gastos mensuales en compra de alimentos y productos del hogar"));
         categories.add(new Category(UUID.randomUUID(), "Pasajes", CategoryType.TRANSPORTE, "Pago de transporte público para el trabajo y los niños"));
         categories.add(new Category(UUID.randomUUID(), "Colegio de los niños", CategoryType.EDUCACION, "Pago anual de matrícula y mensualidades escolares"));
-        categories.add(new Category(UUID.randomUUID(), "Arriendo mensual", CategoryType.VIVIENDA, "Pago mensual del alquiler de la casa"));
-        categories.add(new Category(UUID.randomUUID(), "Consulta médica", CategoryType.SALUD, "Pago por citas médicas y medicamentos"));
     }
 
     // GET ALL
@@ -41,7 +39,7 @@ public class CategoryController {
 
     // POST
     @PostMapping
-    public ResponseEntity<Map<String, Object>> createCategory(@RequestBody Category category) {
+    public ResponseEntity<Map<String, Object>> createCategory(@PathVariable Category category) {
         category.setId(UUID.randomUUID()); // asigna un id simulado
         categories.add(category);
 
