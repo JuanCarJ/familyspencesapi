@@ -1,4 +1,4 @@
-package com.familyspencesapi.controllers;
+package com.familyspencesapi.utils;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
