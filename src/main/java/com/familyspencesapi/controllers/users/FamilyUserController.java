@@ -54,7 +54,7 @@ public class FamilyUserController {
         return ResponseEntity.ok(existingUser);
     }
 
-
+    //Put agragdo para actualizar todo el perfil
     @PutMapping(value = "/users/{email}", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> updateAllUser(
             @PathVariable String email,
