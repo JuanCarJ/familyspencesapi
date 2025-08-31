@@ -1,8 +1,12 @@
 package com.familyspencesapi.controllers.users;
 
 import com.familyspencesapi.domain.users.FamilyUser;
+import com.familyspencesapi.domain.users.RegisterUser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
@@ -13,20 +17,42 @@ public class FamilyUserController {
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
-        FamilyUser myUser = new FamilyUser();
-        myUser.setEmail(email);
-        myUser.setfull_name("Usuario de prueba");
+        RegisterUser myUser = new RegisterUser(
+                UUID.randomUUID(),
+                "Carlos Pérez",
+                LocalDate.of(1995, 5, 12),
+                "CC",
+                "1234567890",
+                email,
+                "Hijo",
+                "4111111111111111",
+                "3001234567",
+                "Calle 123 #45-67, Bogotá",
+                "segura123",
+                "FAM-001"
+        );
         return ResponseEntity.ok(myUser);
     }
 
     @PatchMapping(value = "/users/{email}", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> updateUser(
             @PathVariable String email,
-            @RequestBody FamilyUser updatedData) {
+            @RequestBody RegisterUser updatedData) {
 
-        FamilyUser existingUser = new FamilyUser();
-        existingUser.setEmail(email);
-        existingUser.setfull_name("Old Name");
+        RegisterUser existingUser = new RegisterUser(
+                UUID.randomUUID(),
+                "Carlos Pérez",
+                LocalDate.of(1995, 5, 12),
+                "CC",
+                "1234567890",
+                email,
+                "Hijo",
+                "4111111111111111",
+                "3001234567",
+                "Calle 123 #45-67, Bogotá",
+                "segura123",
+                "FAM-001"
+        );
 
         if (existingUser == null) {
             return ResponseEntity.notFound().build();
@@ -35,17 +61,17 @@ public class FamilyUserController {
         if (updatedData.getfull_name() != null && !updatedData.getfull_name().isBlank()) {
             existingUser.setfull_name(updatedData.getfull_name());
         }
-        if (updatedData.getDocument_type() != null && !updatedData.getDocument_type().isBlank()) {
-            existingUser.setDocument_type(updatedData.getDocument_type());
+        if (updatedData.getdocument_type() != null && !updatedData.getdocument_type().isBlank()) {
+            existingUser.setdocument_type(updatedData.getdocument_type());
         }
-        if (updatedData.getDocument() != null && !updatedData.getDocument().isBlank()) {
-            existingUser.setDocument(updatedData.getDocument());
+        if (updatedData.getdocument() != null && !updatedData.getdocument().isBlank()) {
+            existingUser.setdocument(updatedData.getdocument());
         }
-        if (updatedData.getCreditCard() != null && !updatedData.getCreditCard().isBlank()) {
-            existingUser.setCreditCard(updatedData.getCreditCard());
+        if (updatedData.getcredit_card() != null && !updatedData.getcredit_card().isBlank()) {
+            existingUser.setcredit_card(updatedData.getcredit_card());
         }
-        if (updatedData.getPhone() != null && !updatedData.getPhone().isBlank()) {
-            existingUser.setPhone(updatedData.getPhone());
+        if (updatedData.getphone() != null && !updatedData.getphone().isBlank()) {
+            existingUser.setphone(updatedData.getphone());
         }
         if (updatedData.getAddress() != null && !updatedData.getAddress().isBlank()) {
             existingUser.setAddress(updatedData.getAddress());
@@ -58,20 +84,31 @@ public class FamilyUserController {
     @PutMapping(value = "/users/{email}", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> updateAllUser(
             @PathVariable String email,
-            @RequestBody FamilyUser updatedUser) {
+            @RequestBody RegisterUser updatedUser) {
 
-        FamilyUser existingUser = new FamilyUser();
-        existingUser.setEmail(email);
-        existingUser.setfull_name("Old Name");
+        RegisterUser existingUser = new RegisterUser(
+                UUID.randomUUID(),
+                "Carlos Pérez",
+                LocalDate.of(1995, 5, 12),
+                "CC",
+                "1234567890",
+                email,
+                "Hijo",
+                "4111111111111111",
+                "3001234567",
+                "Calle 123 #45-67, Bogotá",
+                "segura123",
+                "FAM-001"
+        );
 
         if (existingUser == null) {
             return ResponseEntity.notFound().build();
         }
 
         existingUser.setfull_name(updatedUser.getfull_name());
-        existingUser.setDocument_type(updatedUser.getDocument_type());
-        existingUser.setCreditCard(updatedUser.getCreditCard());
-        existingUser.setPhone(updatedUser.getPhone());
+        existingUser.setdocument_type(updatedUser.getdocument_type());
+        existingUser.setcredit_card(updatedUser.getcredit_card());
+        existingUser.setphone(updatedUser.getphone());
         existingUser.setAddress(updatedUser.getAddress());
 
         return ResponseEntity.ok(existingUser);
