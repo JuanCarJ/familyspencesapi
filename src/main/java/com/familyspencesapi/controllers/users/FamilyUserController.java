@@ -1,7 +1,9 @@
 package com.familyspencesapi.controllers.users;
 
+import com.familyspencesapi.domain.users.DocumentType;
 import com.familyspencesapi.domain.users.FamilyUser;
 import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.domain.users.Relationship;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,15 +23,15 @@ public class FamilyUserController {
                 UUID.randomUUID(),
                 "Carlos Pérez",
                 LocalDate.of(1995, 5, 12),
-                "CC",
+                new DocumentType(UUID.randomUUID(), "CC"),
                 "1234567890",
-                email,
-                "Hijo",
+                "carlos.perez@example.com",
+                new Relationship(UUID.randomUUID(), "Hijo"),
                 "4111111111111111",
                 "3001234567",
                 "Calle 123 #45-67, Bogotá",
                 "segura123",
-                "FAM-001"
+                UUID.fromString("11111111-1111-1111-1111-111111111111")
         );
         return ResponseEntity.ok(myUser);
     }
@@ -43,26 +45,26 @@ public class FamilyUserController {
                 UUID.randomUUID(),
                 "Carlos Pérez",
                 LocalDate.of(1995, 5, 12),
-                "CC",
+                new DocumentType(UUID.randomUUID(), "CC"),
                 "1234567890",
-                email,
-                "Hijo",
+                "carlos.perez@example.com",
+                new Relationship(UUID.randomUUID(), "Hijo"),
                 "4111111111111111",
                 "3001234567",
                 "Calle 123 #45-67, Bogotá",
                 "segura123",
-                "FAM-001"
+                UUID.fromString("11111111-1111-1111-1111-111111111111")
         );
 
         if (existingUser == null) {
             return ResponseEntity.notFound().build();
         }
 
-        if (updatedData.getfull_name() != null && !updatedData.getfull_name().isBlank()) {
-            existingUser.setfull_name(updatedData.getfull_name());
+        if (updatedData.getfullName() != null && !updatedData.getfullName().isBlank()) {
+            existingUser.setfullName(updatedData.getfullName());
         }
-        if (updatedData.getdocument_type() != null && !updatedData.getdocument_type().isBlank()) {
-            existingUser.setdocument_type(updatedData.getdocument_type());
+        if (updatedData.getdocumentType() != null && !updatedData.getdocumentType().equals(null)) {
+            existingUser.setdocumentType(updatedData.getdocumentType());
         }
         if (updatedData.getdocument() != null && !updatedData.getdocument().isBlank()) {
             existingUser.setdocument(updatedData.getdocument());
@@ -90,23 +92,23 @@ public class FamilyUserController {
                 UUID.randomUUID(),
                 "Carlos Pérez",
                 LocalDate.of(1995, 5, 12),
-                "CC",
+                new DocumentType(UUID.randomUUID(), "CC"),
                 "1234567890",
-                email,
-                "Hijo",
+                "carlos.perez@example.com",
+                new Relationship(UUID.randomUUID(), "Hijo"),
                 "4111111111111111",
                 "3001234567",
                 "Calle 123 #45-67, Bogotá",
                 "segura123",
-                "FAM-001"
+                UUID.fromString("11111111-1111-1111-1111-111111111111")
         );
 
         if (existingUser == null) {
             return ResponseEntity.notFound().build();
         }
 
-        existingUser.setfull_name(updatedUser.getfull_name());
-        existingUser.setdocument_type(updatedUser.getdocument_type());
+        existingUser.setfullName(updatedUser.getfullName());
+        existingUser.setdocumentType(updatedUser.getdocumentType());
         existingUser.setcredit_card(updatedUser.getcredit_card());
         existingUser.setphone(updatedUser.getphone());
         existingUser.setAddress(updatedUser.getAddress());
