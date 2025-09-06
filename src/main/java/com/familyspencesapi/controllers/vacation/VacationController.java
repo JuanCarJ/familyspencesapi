@@ -17,7 +17,7 @@ public class VacationController {
     private final AtomicLong idGenerator = new AtomicLong(1);
 
     @PostMapping
-    public ResponseEntity<Vacation> crearVacacion(@RequestBody Vacation vacation) {
+    public ResponseEntity<Vacation> createVacation(@RequestBody Vacation vacation) {
         try {
             Long newId = idGenerator.getAndIncrement();
             vacation.setId(newId);
@@ -31,7 +31,7 @@ public class VacationController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Vacation> actualizarVacacion(
+    public ResponseEntity<Vacation> updateVacation(
             @PathVariable Long id,
             @RequestBody Vacation vacacionActualizada) {
         try {
@@ -50,7 +50,7 @@ public class VacationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarVacacion(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteVacation(@PathVariable Long id) {
         try {
             Vacation removedVacation = vacations.remove(id);
 
@@ -65,7 +65,7 @@ public class VacationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Vacation> obtenerVacacion(@PathVariable Long id) {
+    public ResponseEntity<Vacation> obtainVacation(@PathVariable Long id) {
         try {
             Vacation vacation = vacations.get(id);
             if (vacation != null) {
@@ -79,7 +79,7 @@ public class VacationController {
     }
 
     @GetMapping
-    public ResponseEntity<Map<Long, Vacation>> obtenerTodasLasVacaciones() {
+    public ResponseEntity<Map<Long, Vacation>> getAllVacations() {
         try {
             return ResponseEntity.ok(vacations);
         } catch (Exception e) {
