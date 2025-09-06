@@ -5,27 +5,27 @@ import java.util.UUID;
 
 public class RegisterUser {
     private UUID id;
-    private  String full_name;
-    private LocalDate birth_date;
-    private String document_type;
+    private  String fullName;
+    private LocalDate birthDate;
+    private DocumentType documentType;
     private String document;
     private String email;
-    private String relationship;
+    private Relationship relationship;
     private String credit_card;
     private String phone;
     private String address;
     private String password;
-    private String id_family;
+    private UUID familyId;
 
 
-    public RegisterUser(UUID id, String full_name, LocalDate birth_date,
-                        String document_type, String document,
-                        String email, String relationship, String credit_card,
-                        String phone, String address, String password, String id_family) {
+    public RegisterUser(UUID id, String fullName, LocalDate birthDate,
+                        DocumentType documentType, String document,
+                        String email, Relationship relationship, String credit_card,
+                        String phone, String address, String password, UUID familyId) {
         this.id = id;
-        this.full_name = full_name;
-        this.birth_date = birth_date;
-        this.document_type = document_type;
+        this.fullName = fullName;
+        this.birthDate = birthDate;
+        this.documentType = documentType;
         this.document = document;
         this.email = email;
         this.relationship = relationship;
@@ -33,7 +33,7 @@ public class RegisterUser {
         this.phone = phone;
         this.address = address;
         this.password = password;
-        this.id_family = id_family;
+        this.familyId = familyId;
     }
 
     public UUID getId() {
@@ -44,28 +44,28 @@ public class RegisterUser {
         this.id = id;
     }
 
-    public String getfull_name() {
-        return full_name;
+    public String getfullName() {
+        return fullName;
     }
 
-    public void setfull_name(String full_name) {
-        this.full_name = full_name;
+    public void setfullName(String fullName) {
+        this.fullName = fullName;
     }
 
-    public LocalDate getbirth_date() {
-        return birth_date;
+    public LocalDate getbirthDate() {
+        return birthDate;
     }
 
-    public void setbirth_date(LocalDate birth_date) {
-        this.birth_date = birth_date;
+    public void setbirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
     }
 
-    public String getdocument_type() {
-        return document_type;
+    public DocumentType getdocumentType() {
+        return documentType;
     }
 
-    public void setdocument_type(String document_type) {
-        this.document_type = document_type;
+    public void setdocumentType(DocumentType documentType) {
+        this.documentType = documentType;
     }
 
     public String getdocument() {
@@ -100,11 +100,11 @@ public class RegisterUser {
         this.phone = phone;
     }
 
-    public String getRelationship() {
+    public Relationship getRelationship() {
         return relationship;
     }
 
-    public void setRelationship(String relationship) {
+    public void setRelationship(Relationship relationship) {
         this.relationship = relationship;
     }
 
@@ -124,11 +124,11 @@ public class RegisterUser {
         this.password = password;
     }
 
-    public String getid_family() {
-        return id_family;
+    public UUID getfamilyId() {
+        return familyId;
     }
 
-    public void setid_family(String id_family) {
-        this.id_family = id_family;
+    public void setfamilyId(UUID familyId) {
+        this.familyId = familyId;
     }
 }
