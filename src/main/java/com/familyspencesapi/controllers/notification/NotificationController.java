@@ -5,10 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
 
 /**
  * Controller temporal con datos quemados para desarrollo colaborativo
@@ -25,33 +22,52 @@ public class NotificationController {
 
     // Simulación de base de datos en memoria para colaboración
     private static final List<Notification> NOTIFICATIONS = new ArrayList<>();
-    private static final AtomicLong ID_GENERATOR = new AtomicLong(1);
 
-    // Datos quemados para demostración - adaptados al constructor específico
+    // UUIDs predefinidos para los usuarios de prueba
+    private static final UUID USER_1 = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
+    private static final UUID USER_2 = UUID.fromString("550e8400-e29b-41d4-a716-446655440002");
+    private static final UUID USER_3 = UUID.fromString("550e8400-e29b-41d4-a716-446655440003");
+
+    // Datos quemados para demostración - adaptados al constructor con UUID y Date
     static {
+        Date now = new Date();
+
         NOTIFICATIONS.add(new Notification(
-                1L, 1001L, "Bienvenido al sistema de gastos familiares", false,
-                LocalDateTime.now().minusHours(2), null
+                UUID.randomUUID(), USER_1, "Bienvenido al sistema de gastos familiares",
+                Notification.NotificationType.INFO, Notification.NotificationPriority.NORMAL, false,
+                new Date(now.getTime() - 2 * 60 * 60 * 1000), null // 2 horas atrás
         ));
+
         NOTIFICATIONS.add(new Notification(
-                2L, 1001L, "Tu presupuesto mensual está al 80%", true,
-                LocalDateTime.now().minusHours(5), LocalDateTime.now().minusHours(4)
+                UUID.randomUUID(), USER_1, "Tu presupuesto mensual está al 80%",
+                Notification.NotificationType.WARNING, Notification.NotificationPriority.HIGH, true,
+                new Date(now.getTime() - 5 * 60 * 60 * 1000), // 5 horas atrás
+                new Date(now.getTime() - 4 * 60 * 60 * 1000)  // leída hace 4 horas
         ));
+
         NOTIFICATIONS.add(new Notification(
-                3L, 1002L, "Nuevo gasto registrado: $45.000 en Supermercado", false,
-                LocalDateTime.now().minusHours(1), null
+                UUID.randomUUID(), USER_2, "Nuevo gasto registrado: $45.000 en Supermercado",
+                Notification.NotificationType.EXPENSE_ADDED, Notification.NotificationPriority.NORMAL, false,
+                new Date(now.getTime() - 60 * 60 * 1000), null // 1 hora atrás
         ));
+
         NOTIFICATIONS.add(new Notification(
-                4L, 1001L, "Recordatorio: Pagar servicios públicos", false,
-                LocalDateTime.now().minusMinutes(30), null
+                UUID.randomUUID(), USER_1, "Recordatorio: Pagar servicios públicos",
+                Notification.NotificationType.PAYMENT_DUE, Notification.NotificationPriority.URGENT, false,
+                new Date(now.getTime() - 30 * 60 * 1000), null // 30 minutos atrás
         ));
+
         NOTIFICATIONS.add(new Notification(
-                5L, 1003L, "Reporte mensual de gastos disponible", true,
-                LocalDateTime.now().minusHours(8), LocalDateTime.now().minusHours(7)
+                UUID.randomUUID(), USER_3, "Reporte mensual de gastos disponible",
+                Notification.NotificationType.INFO, Notification.NotificationPriority.NORMAL, true,
+                new Date(now.getTime() - 8 * 60 * 60 * 1000), // 8 horas atrás
+                new Date(now.getTime() - 7 * 60 * 60 * 1000)  // leída hace 7 horas
         ));
+
         NOTIFICATIONS.add(new Notification(
-                6L, 1002L, "Meta de ahorro alcanzada: ¡Felicidades!", false,
-                LocalDateTime.now().minusMinutes(15), null
+                UUID.randomUUID(), USER_2, "Meta de ahorro alcanzada: ¡Felicidades!",
+                Notification.NotificationType.SUCCESS, Notification.NotificationPriority.NORMAL, false,
+                new Date(now.getTime() - 15 * 60 * 1000), null // 15 minutos atrás
         ));
     }
 
@@ -70,7 +86,7 @@ public class NotificationController {
      * @return Lista de notificaciones del usuario
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Notification>> getByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<Notification>> getByUserId(@PathVariable UUID userId) {
         List<Notification> userNotifications = NOTIFICATIONS.stream()
                 .filter(n -> n.getUserId().equals(userId))
                 .toList();
@@ -83,7 +99,7 @@ public class NotificationController {
      * @return Lista de notificaciones no leídas
      */
     @GetMapping("/user/{userId}/unread")
-    public ResponseEntity<List<Notification>> getUnreadByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<Notification>> getUnreadByUserId(@PathVariable UUID userId) {
         List<Notification> unreadNotifications = NOTIFICATIONS.stream()
                 .filter(n -> n.getUserId().equals(userId) && !n.isRead())
                 .toList();
@@ -96,7 +112,7 @@ public class NotificationController {
      * @return Cantidad de notificaciones no leídas
      */
     @GetMapping("/user/{userId}/unread/count")
-    public ResponseEntity<Long> getUnreadCount(@PathVariable Long userId) {
+    public ResponseEntity<Long> getUnreadCount(@PathVariable UUID userId) {
         long count = NOTIFICATIONS.stream()
                 .filter(n -> n.getUserId().equals(userId) && !n.isRead())
                 .count();
@@ -119,13 +135,14 @@ public class NotificationController {
         }
 
         // Crear nueva notificación usando el constructor específico del domain
-        Long newId = ID_GENERATOR.getAndIncrement();
         Notification notification = new Notification(
-                newId,
+                UUID.randomUUID(),
                 notificationRequest.getUserId(),
                 notificationRequest.getMessage(),
+                notificationRequest.getType() != null ? notificationRequest.getType() : Notification.NotificationType.INFO,
+                notificationRequest.getPriority() != null ? notificationRequest.getPriority() : Notification.NotificationPriority.NORMAL,
                 false, // Nueva notificación siempre no leída
-                LocalDateTime.now(), // Fecha de creación actual
+                new Date(), // Fecha de creación actual
                 null // readAt es null hasta que se marque como leída
         );
 
@@ -141,7 +158,7 @@ public class NotificationController {
      * @return Notificación encontrada
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Notification> getById(@PathVariable Long id) {
+    public ResponseEntity<Notification> getById(@PathVariable UUID id) {
         return NOTIFICATIONS.stream()
                 .filter(n -> n.getId().equals(id))
                 .findFirst()
@@ -155,26 +172,14 @@ public class NotificationController {
      * @return Notificación actualizada
      */
     @PutMapping("/{id}/read")
-    public ResponseEntity<Notification> markAsRead(@PathVariable Long id) {
+    public ResponseEntity<Notification> markAsRead(@PathVariable UUID id) {
         return NOTIFICATIONS.stream()
                 .filter(n -> n.getId().equals(id))
                 .findFirst()
                 .map(notification -> {
-                    // Crear nueva instancia con estado actualizado (inmutable approach)
-                    Notification updatedNotification = new Notification(
-                            notification.getId(),
-                            notification.getUserId(),
-                            notification.getMessage(),
-                            true, // Marcada como leída
-                            notification.getCreatedAt(),
-                            LocalDateTime.now() // Fecha de lectura actual
-                    );
-
-                    // Reemplazar en la lista
-                    int index = NOTIFICATIONS.indexOf(notification);
-                    NOTIFICATIONS.set(index, updatedNotification);
-
-                    return ResponseEntity.ok(updatedNotification);
+                    // Usar el método markAsRead() del domain
+                    notification.markAsRead();
+                    return ResponseEntity.ok(notification);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -185,23 +190,12 @@ public class NotificationController {
      * @return Cantidad de notificaciones marcadas como leídas
      */
     @PutMapping("/user/{userId}/read-all")
-    public ResponseEntity<NotificationBulkUpdateResponse> markAllAsReadByUser(@PathVariable Long userId) {
-        LocalDateTime now = LocalDateTime.now();
+    public ResponseEntity<NotificationBulkUpdateResponse> markAllAsReadByUser(@PathVariable UUID userId) {
         int updatedCount = 0;
 
-        for (int i = 0; i < NOTIFICATIONS.size(); i++) {
-            Notification notification = NOTIFICATIONS.get(i);
+        for (Notification notification : NOTIFICATIONS) {
             if (notification.getUserId().equals(userId) && !notification.isRead()) {
-                // Crear versión actualizada
-                Notification updatedNotification = new Notification(
-                        notification.getId(),
-                        notification.getUserId(),
-                        notification.getMessage(),
-                        true,
-                        notification.getCreatedAt(),
-                        now
-                );
-                NOTIFICATIONS.set(i, updatedNotification);
+                notification.markAsRead();
                 updatedCount++;
             }
         }
@@ -215,7 +209,7 @@ public class NotificationController {
      * @return Respuesta sin contenido
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
         boolean removed = NOTIFICATIONS.removeIf(n -> n.getId().equals(id));
         return removed ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
@@ -226,7 +220,7 @@ public class NotificationController {
      * @return Cantidad de notificaciones eliminadas
      */
     @DeleteMapping("/user/{userId}/read")
-    public ResponseEntity<NotificationBulkUpdateResponse> deleteReadByUser(@PathVariable Long userId) {
+    public ResponseEntity<NotificationBulkUpdateResponse> deleteReadByUser(@PathVariable UUID userId) {
         int initialSize = NOTIFICATIONS.size();
         NOTIFICATIONS.removeIf(n -> n.getUserId().equals(userId) && n.isRead());
         int deletedCount = initialSize - NOTIFICATIONS.size();
@@ -240,23 +234,33 @@ public class NotificationController {
      * DTO para crear notificaciones (evita exponer el constructor completo)
      */
     public static class NotificationCreateRequest {
-        private Long userId;
+        private UUID userId;
         private String message;
+        private Notification.NotificationType type;
+        private Notification.NotificationPriority priority;
 
         // Constructores
         public NotificationCreateRequest() {}
 
-        public NotificationCreateRequest(Long userId, String message) {
+        public NotificationCreateRequest(UUID userId, String message) {
             this.userId = userId;
             this.message = message;
+            this.type = Notification.NotificationType.INFO;
+            this.priority = Notification.NotificationPriority.NORMAL;
         }
 
         // Getters y Setters
-        public Long getUserId() { return userId; }
-        public void setUserId(Long userId) { this.userId = userId; }
+        public UUID getUserId() { return userId; }
+        public void setUserId(UUID userId) { this.userId = userId; }
 
         public String getMessage() { return message; }
         public void setMessage(String message) { this.message = message; }
+
+        public Notification.NotificationType getType() { return type; }
+        public void setType(Notification.NotificationType type) { this.type = type; }
+
+        public Notification.NotificationPriority getPriority() { return priority; }
+        public void setPriority(Notification.NotificationPriority priority) { this.priority = priority; }
     }
 
     /**

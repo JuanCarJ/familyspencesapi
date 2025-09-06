@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class FamilyUserController {
 
-    @GetMapping(value = "/users/myuser", produces = "application/json")
+    @GetMapping(value = "/users/profile", produces = "application/json")
     public ResponseEntity<?> getUser(@RequestParam String email) {
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().build();
@@ -16,7 +16,7 @@ public class FamilyUserController {
         FamilyUser myUser = new FamilyUser();
         myUser.setEmail(email);
         myUser.setfull_name("Usuario de prueba");
-        return ResponseEntity.ok(new FamilyUser());
+        return ResponseEntity.ok(myUser);
     }
 
     @PatchMapping(value = "/users/{email}", consumes = "application/json", produces = "application/json")
@@ -50,6 +50,29 @@ public class FamilyUserController {
         if (updatedData.getAddress() != null && !updatedData.getAddress().isBlank()) {
             existingUser.setAddress(updatedData.getAddress());
         }
+
+        return ResponseEntity.ok(existingUser);
+    }
+
+    //Put agragdo para actualizar todo el perfil
+    @PutMapping(value = "/users/{email}", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<?> updateAllUser(
+            @PathVariable String email,
+            @RequestBody FamilyUser updatedUser) {
+
+        FamilyUser existingUser = new FamilyUser();
+        existingUser.setEmail(email);
+        existingUser.setfull_name("Old Name");
+
+        if (existingUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        existingUser.setfull_name(updatedUser.getfull_name());
+        existingUser.setDocument_type(updatedUser.getDocument_type());
+        existingUser.setCreditCard(updatedUser.getCreditCard());
+        existingUser.setPhone(updatedUser.getPhone());
+        existingUser.setAddress(updatedUser.getAddress());
 
         return ResponseEntity.ok(existingUser);
     }
