@@ -1,49 +1,51 @@
 package com.familyspencesapi.controllers.pet;
 
 import com.familyspencesapi.domain.pet.Pet;
+import com.familyspencesapi.service.pet.PetService;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/rest")
 public class PetController {
 
-    private List<Pet> pets = new ArrayList<>();
+    private final PetService petService;
 
-    public PetController() {
-        // Datos quemados
-        pets.add(new Pet(UUID.randomUUID(), "Firulais Restrepo", "Dog", "Labrador", LocalDate.parse("2020-05-10"), UUID.randomUUID()));
-        pets.add(new Pet(UUID.randomUUID(), "Misu López", "Cat", "Siamese", LocalDate.parse("2022-03-14"), UUID.randomUUID()));
+    public PetController(PetService petService) {
+        this.petService = petService;
     }
 
     // Obtener todas las mascotas
     @GetMapping("/pets")
     public List<Pet> getAllPets() {
-        return pets;
+        return petService.getAllPets();
     }
 
     // Obtener mascota por id
     @GetMapping("/pets/{id}")
-    public Pet getPetById(@PathVariable UUID id) {
-        return pets.stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+    public Optional<Pet> getPetById(@PathVariable UUID id) {
+        return petService.getPetById(id);
     }
 
     // Crear mascota
     @PostMapping("/pets")
     public Pet createPet(@RequestBody Pet pet) {
-        pet.setId(UUID.randomUUID());
-        pets.add(pet);
-        return pet;
+        return petService.createPet(pet);
     }
 
     // Eliminar mascota
     @DeleteMapping("/pets/{id}")
-    public void deletePet(@PathVariable UUID id) {
-        pets.removeIf(p -> p.getId().equals(id));
+    public boolean deletePet(@PathVariable UUID id) {
+        return petService.deletePet(id);
     }
+
+    // Actualizar mascota
+    @PutMapping("/{id}")
+    public Pet updatePet(@PathVariable UUID id, @RequestBody Pet pet) {
+        return petService.updatePet(id, pet);
+    }
+
 }
