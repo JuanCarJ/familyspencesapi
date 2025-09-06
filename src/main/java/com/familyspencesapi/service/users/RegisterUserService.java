@@ -1,4 +1,4 @@
-package com.familyspencesapi.services.users;
+package com.familyspencesapi.service.users;
 
 import com.familyspencesapi.domain.users.DocumentType;
 import com.familyspencesapi.domain.users.Relationship;

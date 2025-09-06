@@ -1,4 +1,4 @@
-package com.familyspencesapi.domain.category;
+package com.familyspencesapi.domain.categories;
 
 public enum CategoryType {
 
