@@ -24,7 +24,7 @@ public class TaskMockData {
 
         Tasks t2 = new Tasks();
         t2.setId(UUID.fromString("22222222-3333-4444-5555-666666666666"));
-        t1.setFamiliId(UUID.fromString("11111111-2222-3333-4444-555555555555"));
+        t2.setFamiliId(UUID.fromString("11111111-2222-3333-4444-555555555553"));
         t2.setName("Lavar los platos");
         t2.setDescription("Lavar los platos después de la cena");
         t2.setStatus(true);

@@ -1,25 +1,22 @@
-package com.familyspencesapi.controllers.users;
+package com.familyspencesapi.service.users;
 
 import com.familyspencesapi.domain.users.DocumentType;
 import com.familyspencesapi.domain.users.FamilyUser;
 import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.domain.users.Relationship;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
-@RestController
-@RequestMapping("/api")
-public class FamilyUserController {
+@Service
+public class FamilyUserService {
 
-    @GetMapping(value = "/users/profile", produces = "application/json")
-    public ResponseEntity<?> getUser(@RequestParam String email) {
-        if (email == null || email.isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
-        RegisterUser myUser = new RegisterUser(
+    // GET user by email
+    public RegisterUser getUserByEmail(String email) {
+
+        return new RegisterUser(
                 UUID.randomUUID(),
                 "Carlos Pérez",
                 LocalDate.of(1995, 5, 12),
@@ -33,15 +30,11 @@ public class FamilyUserController {
                 "segura123",
                 UUID.fromString("11111111-1111-1111-1111-111111111111")
         );
-        return ResponseEntity.ok(myUser);
     }
 
-    @PatchMapping(value = "/users/{email}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> updateUser(
-            @PathVariable String email,
-            @RequestBody RegisterUser updatedData) {
-
-        RegisterUser existingUser = new RegisterUser(
+    // PATCH
+    public RegisterUser updateUser(String email, RegisterUser updatedData) {
+        RegisterUser optionalUser = new RegisterUser(
                 UUID.randomUUID(),
                 "Carlos Pérez",
                 LocalDate.of(1995, 5, 12),
@@ -55,10 +48,11 @@ public class FamilyUserController {
                 "segura123",
                 UUID.fromString("11111111-1111-1111-1111-111111111111")
         );
-
-        if (existingUser == null) {
-            return ResponseEntity.notFound().build();
+        if (optionalUser.equals(null)) {
+            return null;
         }
+
+        RegisterUser existingUser = optionalUser;
 
         if (updatedData.getfullName() != null && !updatedData.getfullName().isBlank()) {
             existingUser.setfullName(updatedData.getfullName());
@@ -79,16 +73,12 @@ public class FamilyUserController {
             existingUser.setAddress(updatedData.getAddress());
         }
 
-        return ResponseEntity.ok(existingUser);
+        return existingUser;
     }
 
-    //Put agragdo para actualizar todo el perfil
-    @PutMapping(value = "/users/{email}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> updateAllUser(
-            @PathVariable String email,
-            @RequestBody RegisterUser updatedUser) {
-
-        RegisterUser existingUser = new RegisterUser(
+    // PUT (actualización completa)
+    public RegisterUser updateAllUser(String email, RegisterUser updatedUser) {
+        RegisterUser optionalUser = new RegisterUser(
                 UUID.randomUUID(),
                 "Carlos Pérez",
                 LocalDate.of(1995, 5, 12),
@@ -102,17 +92,19 @@ public class FamilyUserController {
                 "segura123",
                 UUID.fromString("11111111-1111-1111-1111-111111111111")
         );
-
-        if (existingUser == null) {
-            return ResponseEntity.notFound().build();
+        if (optionalUser.equals(null)) {
+            return null;
         }
 
+        RegisterUser existingUser = optionalUser;
         existingUser.setfullName(updatedUser.getfullName());
         existingUser.setdocumentType(updatedUser.getdocumentType());
+        existingUser.setdocument(updatedUser.getdocument());
         existingUser.setcredit_card(updatedUser.getcredit_card());
         existingUser.setphone(updatedUser.getphone());
         existingUser.setAddress(updatedUser.getAddress());
 
-        return ResponseEntity.ok(existingUser);
+        return existingUser;
     }
 }
+
