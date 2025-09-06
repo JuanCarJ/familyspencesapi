@@ -2,12 +2,8 @@ package com.familyspencesapi.controllers.users;
 
 import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.services.users.RegisterUserService;
-import com.familyspencesapi.services.users.RegisterUserService2;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users/register")

@@ -5,22 +5,13 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Entity
-@Table(name = "user")
 public class RegisterUser {
-    @Id
-    @GeneratedValue
     private UUID id;
-    @Column(nullable = false, unique = true)
     private  String fullName;
     private LocalDate birthDate;
-    @ManyToOne
-    @JoinColumn(name = "document_type_id", nullable = false)
     private DocumentType documentType;
     private String document;
     private String email;
-    @ManyToOne
-    @JoinColumn(name = "relationship_id", nullable = false)
     private Relationship relationship;
     private String credit_card;
     private String phone;
@@ -28,6 +19,20 @@ public class RegisterUser {
     private String password;
     private UUID familyId;
 
+    public RegisterUser( UUID id, String fullName, LocalDate birthDate, DocumentType documentType, String document, String email, Relationship relationship, String credit_card, String phone, String address, String password, UUID familyId) {
+        this.id = id;
+        this.fullName = fullName;
+        this.birthDate = birthDate;
+        this.documentType = documentType;
+        this.document = document;
+        this.email = email;
+        this.relationship = relationship;
+        this.credit_card = credit_card;
+        this.phone = phone;
+        this.address = address;
+        this.password = password;
+        this.familyId = familyId;
+    }
 
     public UUID getId() {
         return id;
