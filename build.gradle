@@ -27,6 +27,8 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'org.apache.poi:poi:5.2.3'
 	implementation 'org.apache.poi:poi-ooxml:5.2.3'
+	runtimeOnly 'org.postgresql:postgresql'
+
 }
 
 tasks.named('test') {
