@@ -1,29 +1,26 @@
-package com.familyspencesapi.controllers.users;
+package com.familyspencesapi.service.users;
 
 import com.familyspencesapi.domain.users.FamilyUser;
 import com.familyspencesapi.domain.users.RegisterUser;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
-@RestController
-@RequestMapping("/api")
-public class FamilyUserController {
+@Service
+public class FamilyUserService {
 
-    @GetMapping(value = "/users/profile", produces = "application/json")
-    public ResponseEntity<?> getUser(@RequestParam String email) {
-        if (email == null || email.isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
-        RegisterUser myUser = new RegisterUser(
+    // GET user by email
+    public RegisterUser getUserByEmail(String email) {
+
+        return new RegisterUser(
                 UUID.randomUUID(),
                 "Carlos Pérez",
                 LocalDate.of(1995, 5, 12),
                 "CC",
                 "1234567890",
-                email,
+                "carlos.perez@example.com",
                 "Hijo",
                 "4111111111111111",
                 "3001234567",
@@ -31,21 +28,17 @@ public class FamilyUserController {
                 "segura123",
                 "FAM-001"
         );
-        return ResponseEntity.ok(myUser);
     }
 
-    @PatchMapping(value = "/users/{email}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> updateUser(
-            @PathVariable String email,
-            @RequestBody RegisterUser updatedData) {
-
-        RegisterUser existingUser = new RegisterUser(
+    // PATCH
+    public RegisterUser updateUser(String email, RegisterUser updatedData) {
+        RegisterUser optionalUser = new RegisterUser(
                 UUID.randomUUID(),
                 "Carlos Pérez",
                 LocalDate.of(1995, 5, 12),
                 "CC",
                 "1234567890",
-                email,
+                "carlos.perez@example.com",
                 "Hijo",
                 "4111111111111111",
                 "3001234567",
@@ -53,10 +46,11 @@ public class FamilyUserController {
                 "segura123",
                 "FAM-001"
         );
-
-        if (existingUser == null) {
-            return ResponseEntity.notFound().build();
+        if (optionalUser.equals(null)) {
+            return null;
         }
+
+        RegisterUser existingUser = optionalUser;
 
         if (updatedData.getfull_name() != null && !updatedData.getfull_name().isBlank()) {
             existingUser.setfull_name(updatedData.getfull_name());
@@ -77,40 +71,38 @@ public class FamilyUserController {
             existingUser.setAddress(updatedData.getAddress());
         }
 
-        return ResponseEntity.ok(existingUser);
+        return existingUser;
     }
 
-    //Put agragdo para actualizar todo el perfil
-    @PutMapping(value = "/users/{email}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> updateAllUser(
-            @PathVariable String email,
-            @RequestBody RegisterUser updatedUser) {
-
-        RegisterUser existingUser = new RegisterUser(
+    // PUT (actualización completa)
+    public RegisterUser updateAllUser(String email, FamilyUser updatedUser) {
+        RegisterUser optionalUser = new RegisterUser(
                 UUID.randomUUID(),
                 "Carlos Pérez",
                 LocalDate.of(1995, 5, 12),
                 "CC",
                 "1234567890",
-                email,
+                "carlos.perez@example.com",
                 "Hijo",
                 "4111111111111111",
                 "3001234567",
                 "Calle 123 #45-67, Bogotá",
                 "segura123",
                 "FAM-001"
-        );
-
-        if (existingUser == null) {
-            return ResponseEntity.notFound().build();
+        );;
+        if (optionalUser.equals(null)) {
+            return null;
         }
 
+        RegisterUser existingUser = optionalUser;
         existingUser.setfull_name(updatedUser.getfull_name());
-        existingUser.setdocument_type(updatedUser.getdocument_type());
-        existingUser.setcredit_card(updatedUser.getcredit_card());
-        existingUser.setphone(updatedUser.getphone());
+        existingUser.setdocument_type(updatedUser.getDocument_type());
+        existingUser.setdocument(updatedUser.getDocument());
+        existingUser.setcredit_card(updatedUser.getCreditCard());
+        existingUser.setphone(updatedUser.getPhone());
         existingUser.setAddress(updatedUser.getAddress());
 
-        return ResponseEntity.ok(existingUser);
+        return existingUser;
     }
 }
+
