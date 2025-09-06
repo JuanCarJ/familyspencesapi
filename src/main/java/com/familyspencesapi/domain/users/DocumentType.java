@@ -1,15 +1,18 @@
 package com.familyspencesapi.domain.users;
 
+import jakarta.persistence.*;
+
 import java.util.UUID;
 
+@Entity
+@Table(name ="document_types")
 public class DocumentType {
+    @Id
+    @GeneratedValue
     private UUID id;
+    @Column(nullable = false, unique = true)
     private String type;
 
-    public DocumentType(UUID id, String type) {
-        this.id = id;
-        this.type = type;
-    }
     public UUID getId() {
         return id;
     }
