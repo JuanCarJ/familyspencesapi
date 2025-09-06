@@ -2,37 +2,50 @@ package com.familyspencesapi.service.family;
 
 import com.familyspencesapi.domain.family.FamilyMemberDomain;
 import org.springframework.stereotype.Service;
+import com.familyspencesapi.repositories.family.FamilyMemberRepository;
+
 
 import java.util.*;
 
 @Service
 public class FamilyMemberService {
 
-    private final Map<UUID, FamilyMemberDomain> familyMembers = new HashMap<>();
+    private final FamilyMemberRepository repository;
 
-    public List<FamilyMemberDomain> getAllFamilyMembers() {
-        return new ArrayList<>(familyMembers.values());
+    public FamilyMemberService(FamilyMemberRepository repository) {
+        this.repository = repository;
     }
 
-    public Optional<FamilyMemberDomain> getFamilyMemberById(UUID id) {
-        return Optional.ofNullable(familyMembers.get(id));
+    // Get all family members
+    public List<FamilyMemberDomain> getAll() {
+        return repository.findAll();
     }
 
-    public FamilyMemberDomain createFamilyMember(FamilyMemberDomain member) {
-        familyMembers.put(member.getId(), member);
-        return member;
+    // Get one by ID
+    public Optional<FamilyMemberDomain> getById(UUID id) {
+        return repository.findById(id);
     }
 
-    public boolean deleteFamilyMember(UUID id) {
-        return familyMembers.remove(id) != null;
+    // Create
+    public FamilyMemberDomain create(FamilyMemberDomain member) {
+        return repository.save(member);
     }
 
-    public FamilyMemberDomain updateFamilyMember(UUID id, FamilyMemberDomain member) {
-        if (familyMembers.containsKey(id)) {
+    // Update
+    public FamilyMemberDomain update(UUID id, FamilyMemberDomain member) {
+        if (repository.existsById(id)) {
             member.setId(id);
-            familyMembers.put(id, member);
-            return member;
+            return repository.save(member);
         }
         return null;
+    }
+
+    // Delete
+    public boolean delete(UUID id) {
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }

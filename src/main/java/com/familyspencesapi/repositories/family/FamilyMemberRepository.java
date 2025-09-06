@@ -1,4 +1,9 @@
-package com.familyspencesapi.repositories.FamilyMemberRepository;
+package com.familyspencesapi.repositories.family;
 
-public class FamilyMemberRepository {
+import com.familyspencesapi.domain.family.FamilyMemberDomain;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
+public interface FamilyMemberRepository extends JpaRepository<FamilyMemberDomain, UUID> {
 }

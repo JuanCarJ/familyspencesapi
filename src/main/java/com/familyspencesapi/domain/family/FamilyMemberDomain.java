@@ -10,29 +10,34 @@ import java.util.UUID;
 @Table(name = "family_members")
 public class FamilyMemberDomain {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(nullable = false)
+    @Column(name = "full_name", nullable = false)
     private String fullName;
-
+    @Column(name = "birth_date", nullable = false)
     private String birthDate;
-
+    @Column(name = "family_id", nullable = false)
     private String familyId;
 
     @ManyToOne
     @JoinColumn(name = "document_type_id", nullable = false)
     private DocumentType documentType;
+    @Column(name = "document_number", nullable = false, unique = true)
     private String documentNumber;
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
+    @ManyToOne
+    @JoinColumn(name = "relationship_id", nullable = false)
     private Relationship relationship;
+    @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
+    @Column(name = "address", nullable = false)
     private String address;
+    @Column(name = "password", nullable = false)
     private String password;
+    @Column(name= "confirm_password", nullable = false)
     private String confirmPassword;
 
-    public FamilyMemberDomain() {
-        this.id = UUID.randomUUID();
-    }
 
     public UUID getId() {
         return id;
