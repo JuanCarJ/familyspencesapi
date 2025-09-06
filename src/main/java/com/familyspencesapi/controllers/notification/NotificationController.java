@@ -7,15 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-/**
- * Controller temporal con datos quemados para desarrollo colaborativo
- * Adaptado al domain Notification específico del proyecto
- * TODO: Integrar con NotificationService cuando esté disponible
- *
- * @author Tu Nombre
- * @version 1.0
- * @since 2025-08-30
- */
 @RestController
 @RequestMapping("/api/v1/notifications")
 public class NotificationController {
