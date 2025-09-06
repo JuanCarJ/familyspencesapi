@@ -26,17 +26,6 @@ public class RegisterUserService {
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-]).{8,}$");
 
-    private static final List<DocumentType> DOCUMENT_TYPES = List.of(
-            new DocumentType(UUID.fromString("11111111-1111-1111-1111-111111111111"), "CC"),
-            new DocumentType(UUID.fromString("22222222-2222-2222-2222-222222222222"), "TI"),
-            new DocumentType(UUID.fromString("33333333-3333-3333-3333-333333333333"), "CE")
-    );
-
-    private static final List<Relationship> RELATIONSHIPS = List.of(
-            new Relationship(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), "PADRE"),
-            new Relationship(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), "HIJO"),
-            new Relationship(UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc"), "TUTOR")
-    );
 
     public RegisterUser createUser(RegisterUser user) {
         validate(user);
