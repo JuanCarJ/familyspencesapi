@@ -1,4 +1,4 @@
-package com.familyspencesapi.service.Notification;
+package com.familyspencesapi.service.notification;
 
 import com.familyspencesapi.domain.notification.Notification;
 import org.springframework.stereotype.Service;
@@ -6,15 +6,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service para la gestión de notificaciones
- * Contiene la lógica de negocio para las operaciones con notificaciones
- * TODO: Integrar con NotificationRepository cuando esté disponible
- *
- * @author Jorge C
- * @version 1.0
- * @since 2025-09-05
- */
+
 @Service
 public class NotificationService {
 
