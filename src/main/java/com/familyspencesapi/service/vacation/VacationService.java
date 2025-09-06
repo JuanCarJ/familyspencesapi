@@ -1,4 +1,4 @@
-package com.familyspencesapi.services.vacation;
+package com.familyspencesapi.service.vacation;
 
 import com.familyspencesapi.domain.vacation.Vacation;
 import org.springframework.stereotype.Service;
