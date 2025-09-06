@@ -1,10 +1,12 @@
 package com.familyspencesapi.controllers.income;
 
+
 import com.familyspencesapi.domain.income.Income;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/api/incomes")
@@ -34,7 +36,7 @@ public class IncomeController {
                 income.setDescription(updatedIncome.getDescription());
                 income.setPeriod(updatedIncome.getPeriod());
                 income.setTotal(updatedIncome.getTotal());
-                income.setFamilyId(updatedIncome.getFamilyId());
+                income.setFamilyId(updatedIncome.getFamilyId()); // ahora UUID
                 return "Income updated successfully";
             }
         }
