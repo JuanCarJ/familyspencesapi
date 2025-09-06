@@ -1,7 +1,7 @@
 package com.familyspencesapi.controllers.users;
 
 import com.familyspencesapi.domain.users.RegisterUser;
-import com.familyspencesapi.services.users.RegisterUserService;
+import com.familyspencesapi.service.users.RegisterUserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
