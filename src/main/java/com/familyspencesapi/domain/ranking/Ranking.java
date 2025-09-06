@@ -1,18 +1,22 @@
 package com.familyspencesapi.domain.ranking;
 
+import com.familyspencesapi.domain.expenseControl.Expense;
+
 import java.util.List;
 import java.util.UUID;
 
 public class Ranking {
-    //TODO Agregar Objeto de gasto(Jose) e ingreso(Simon)
+
     private UUID idFamily;
     private List<String> nameFamilyMembers;
-    //private Expencess expencess
-    //private Earning earning
+    private Expense expense;
+    //private Income income;
 
-    public Ranking(UUID idFamily, List<String> nameFamilyMembers) {
+
+    public Ranking(UUID idFamily, List<String> nameFamilyMembers, Expense expense) {
         this.idFamily = idFamily;
         this.nameFamilyMembers = nameFamilyMembers;
+        this.expense = expense;
     }
 
     public UUID getIdFamily() {
@@ -29,5 +33,13 @@ public class Ranking {
 
     public void setNameFamilyMembers(List<String> nameFamilyMembers) {
         this.nameFamilyMembers = nameFamilyMembers;
+    }
+
+    public Expense getExpense() {
+        return expense;
+    }
+
+    public void setExpense(Expense expense) {
+        this.expense = expense;
     }
 }
