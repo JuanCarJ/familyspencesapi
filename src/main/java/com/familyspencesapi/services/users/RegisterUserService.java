@@ -1,0 +1,142 @@
+package com.familyspencesapi.services.users;
+
+import com.familyspencesapi.domain.users.DocumentType;
+import com.familyspencesapi.domain.users.Relationship;
+import org.springframework.stereotype.Service;
+import com.familyspencesapi.domain.users.RegisterUser;
+import org.springframework.util.StringUtils;
+
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.*;
+import java.util.regex.Pattern;
+
+@Service
+public class RegisterUserService {
+
+    private final List<RegisterUser> users = new ArrayList<>();
+    private static final Pattern NAME_PATTERN =
+            Pattern.compile("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{3,100}$");
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern PHONE_PATTERN =
+            Pattern.compile("^3\\d{9}$");
+    private static final Pattern CREDIT_CARD_PATTERN =
+            Pattern.compile("^\\d{13,19}$");
+    private static final Pattern PASSWORD_PATTERN =
+            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-]).{8,}$");
+
+    private static final List<DocumentType> DOCUMENT_TYPES = List.of(
+            new DocumentType(UUID.fromString("11111111-1111-1111-1111-111111111111"), "CC"),
+            new DocumentType(UUID.fromString("22222222-2222-2222-2222-222222222222"), "TI"),
+            new DocumentType(UUID.fromString("33333333-3333-3333-3333-333333333333"), "CE")
+    );
+
+    private static final List<Relationship> RELATIONSHIPS = List.of(
+            new Relationship(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), "PADRE"),
+            new Relationship(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), "HIJO"),
+            new Relationship(UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc"), "TUTOR")
+    );
+
+    public RegisterUser createUser(RegisterUser user) {
+        validate(user);
+        user.setId(UUID.randomUUID());
+        user.setfamilyId(UUID.randomUUID());
+        users.add(user);
+        return user;
+    }
+
+
+
+    public void validate(RegisterUser user) {
+        if (user == null) {
+            throw new IllegalArgumentException("El usuario no puede ser nulo");
+        }
+
+        validateFullName(user.getfullName());
+        validateBirthDate(user.getbirthDate());
+        validateDocumentType(user.getdocumentType());
+        validateDocument(user.getdocument());
+        validateEmail(user.getEmail());
+        validateRelationship(user.getRelationship());
+        validateCreditCard(user.getcredit_card());
+        validatePhone(user.getphone());
+        validateAddress(user.getAddress());
+        validatePassword(user.getPassword(), user.getPassword());
+    }
+
+    private void validateFullName(String fullName) {
+        if (!StringUtils.hasText(fullName) || !NAME_PATTERN.matcher(fullName).matches()) {
+            throw new IllegalArgumentException(
+                    "El nombre debe tener entre 3 y 100 letras y espacios, sin números ni símbolos"
+            );
+        }
+    }
+
+    private void validateBirthDate(LocalDate birthDate) {
+        if (birthDate == null) {
+            throw new IllegalArgumentException("La fecha de nacimiento no puede ser nula");
+        }
+        LocalDate today = LocalDate.now();
+        if (birthDate.isAfter(today) ||
+                Period.between(birthDate, today).getYears() > 150) {
+            throw new IllegalArgumentException("Fecha de nacimiento invalida o edad mayor a 150 años");
+        }
+    }
+
+    private void validateDocumentType(DocumentType type) {
+        if (type == null || type.getId() == null) {
+            throw new IllegalArgumentException("Tipo de documento invalido");
+        }
+    }
+    private void validateDocument(String document) {
+        if (!StringUtils.hasText(document)) {
+            throw new IllegalArgumentException("El documento no puede estar vacio");
+        }
+        if (!document.matches("\\d{6,15}")) {
+            throw new IllegalArgumentException("El documento debe tener entre 6 y 15 digitos");
+        }
+    }
+
+    private void validateEmail(String email) {
+        if (!StringUtils.hasText(email) || !EMAIL_PATTERN.matcher(email).matches()) {
+            throw new IllegalArgumentException("Formato de correo electronico invalido");
+        }
+    }
+
+    private void validateRelationship(Relationship relationship) {
+        if (relationship == null || relationship.getId() == null) {
+            throw new IllegalArgumentException("Parentesco invalido");
+        }
+    }
+
+    private void validateCreditCard(String creditCard) {
+        if (!StringUtils.hasText(creditCard) || !CREDIT_CARD_PATTERN.matcher(creditCard).matches()) {
+            throw new IllegalArgumentException("Numero de tarjeta de credito invalido (13-19 digitos)");
+        }
+    }
+
+    private void validatePhone(String phone) {
+        if (!StringUtils.hasText(phone) || !PHONE_PATTERN.matcher(phone).matches()) {
+            throw new IllegalArgumentException("Formato de telefono invalido");
+        }
+    }
+
+    private void validateAddress(String address) {
+        if (!StringUtils.hasText(address) || address.length() < 5) {
+            throw new IllegalArgumentException("La direccion no puede estar vacia y debe tener minimo 5 caracteres");
+        }
+    }
+
+    private void validatePassword(String password, String repeatPassword) {
+        if (!StringUtils.hasText(password) ||
+                !PASSWORD_PATTERN.matcher(password).matches()) {
+            throw new IllegalArgumentException(
+                    "La contraseña debe tener minimo 8 caracteres, con minuscula, mayuscula, numero y simbolo"
+            );
+        }
+        if (!password.equals(repeatPassword)) {
+            throw new IllegalArgumentException("Las contraseñas no coinciden");
+        }
+    }
+}

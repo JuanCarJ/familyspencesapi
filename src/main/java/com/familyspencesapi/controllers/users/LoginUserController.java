@@ -1,6 +1,8 @@
 package com.familyspencesapi.controllers.users;
 
 import com.familyspencesapi.domain.users.LoginUser;
+import com.familyspencesapi.service.users.LoginUserService;
+import com.familyspencesapi.utils.LoginUserException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,15 +13,23 @@ import java.util.Map;
 @RequestMapping("/api")
 public class LoginUserController {
 
-    @PostMapping(value = "/users/login", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> login(@RequestBody LoginUser body) {
-        if (body == null || isBlank(body.getEmail()) || isBlank(body.getPassword())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        return ResponseEntity.ok(Map.of("idfamily", "123456"));
+    private final LoginUserService loginService;
+
+    public LoginUserController(LoginUserService loginService) {
+        this.loginService = loginService;
     }
 
-    private boolean isBlank(String s) {
-        return s == null || s.trim().isEmpty();
+    @PostMapping(value = "/users/login", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<?> login(@RequestBody LoginUser loginRequest) {
+        try {
+            String familyId = loginService.authenticate(loginRequest);
+            return ResponseEntity.ok(Map.of("idFamily", familyId));
+
+        } catch (LoginUserException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 }
+
