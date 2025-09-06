@@ -2,14 +2,25 @@ package com.familyspencesapi.domain.family;
 
 import com.familyspencesapi.domain.users.DocumentType;
 import com.familyspencesapi.domain.users.Relationship;
+import jakarta.persistence.*;
 
 import java.util.UUID;
 
+@Entity
+@Table(name = "family_members")
 public class FamilyMemberDomain {
+    @Id
+    @GeneratedValue
     private UUID id;
+    @Column(nullable = false)
     private String fullName;
+
     private String birthDate;
+
     private String familyId;
+
+    @ManyToOne
+    @JoinColumn(name = "document_type_id", nullable = false)
     private DocumentType documentType;
     private String documentNumber;
     private String email;
