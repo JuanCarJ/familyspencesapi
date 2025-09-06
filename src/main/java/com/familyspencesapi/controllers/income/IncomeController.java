@@ -36,7 +36,7 @@ public class IncomeController {
                 income.setDescription(updatedIncome.getDescription());
                 income.setPeriod(updatedIncome.getPeriod());
                 income.setTotal(updatedIncome.getTotal());
-                income.setFamilyId(updatedIncome.getFamilyId()); // ahora UUID
+                income.setFamilyId(updatedIncome.getFamilyId());
                 return "Income updated successfully";
             }
         }
