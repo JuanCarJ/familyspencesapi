@@ -1,6 +1,5 @@
 package com.familyspencesapi.domain.users;
 
-import jakarta.persistence.*;
 
 import java.util.UUID;
 
