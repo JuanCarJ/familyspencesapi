@@ -1,8 +1,11 @@
 package com.familyspencesapi.service.category;
 
+import com.familyspencesapi.domain.categories.BudgetPeriod;
 import com.familyspencesapi.domain.categories.Category;
+import com.familyspencesapi.domain.categories.CategoryType;
 import com.familyspencesapi.utils.CategoryException;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
@@ -18,9 +21,10 @@ public class CategoryService {
     private final List<Category> categories = new ArrayList<>();
 
     public CategoryService() {
-        categories.add(new Category(UUID.randomUUID(), "Mercado", com.familyspencesapi.domain.categories.CategoryType.ALIMENTACION, "Gastos mensuales en compra de alimentos y productos del hogar"));
-        categories.add(new Category(UUID.randomUUID(), "Pasajes", com.familyspencesapi.domain.categories.CategoryType.TRANSPORTE, "Pago de transporte público para el trabajo y los niños"));
-        categories.add(new Category(UUID.randomUUID(), "Colegio de los niños", com.familyspencesapi.domain.categories.CategoryType.EDUCACION, "Pago anual de matrícula y mensualidades escolares"));
+        categories.add(new Category(UUID.randomUUID(), "Mercado", CategoryType.ALIMENTACION, "Gastos mensuales en compra de alimentos y productos del hogar", BigDecimal.valueOf(700000), BudgetPeriod.MENSUAL));
+        categories.add(new Category(UUID.randomUUID(), "Pasajes", CategoryType.TRANSPORTE, "Pago de transporte público para el trabajo y los niños", BigDecimal.valueOf(20000), BudgetPeriod.DIARIO));
+        categories.add(new Category(UUID.randomUUID(), "Matricula Colegio", CategoryType.EDUCACION, "Pago anual de matrícula escolar para los niños", BigDecimal.valueOf(550000), BudgetPeriod.ANUAL));
+        categories.add(new Category(UUID.randomUUID(), "Mensualidad Colegio", CategoryType.EDUCACION, "Pago mensual de el colegio", BigDecimal.valueOf(120000), BudgetPeriod.MENSUAL));
     }
 
     // POST - Crear Categoria
@@ -48,6 +52,7 @@ public class CategoryService {
 
     // PUT - Actualiza una categoria existente
     public Category updateCategory(UUID id, Category updates) {
+
         Category existing = getCategoryById(id); // lanza excepción si no existe
         validateCategoryUpdate(updates, existing);
 
@@ -60,6 +65,12 @@ public class CategoryService {
         if (updates.getDescription() != null) {
             existing.setDescription(updates.getDescription());
         }
+        if (updates.getAllocatedBudget() != null) {
+            existing.setAllocatedBudget(updates.getAllocatedBudget());
+        }
+        if (updates.getBudgetPeriod() != null) {
+            existing.setBudgetPeriod(updates.getBudgetPeriod());
+        }
 
         return existing;
     }
@@ -69,9 +80,50 @@ public class CategoryService {
         categories.remove(existing);
     }
 
+    private void validateCategory(Category category) {
+
+        if (category.getName() == null || category.getName().trim().isEmpty()) {
+            throw new CategoryException("El nombre de la categoria es obligatorio y no puede estar vacío");
+        }
+        if (!NAME_PATTERN.matcher(category.getName()).matches()) {
+            throw new CategoryException("El nombre de la categoría es inválido");
+        }
+        if (category.getName().length() < 3 || category.getName().length() > 50) {
+            throw new CategoryException("El nombre de la categoría debe tener entre 3 y 50 caracteres");
+        }
 
 
-    private void validateCategoryUpdate(Category updates, Category existing) {
+        if (category.getCategoryType() == null || category.getCategoryType().toString().trim().isEmpty()) {
+            throw new CategoryException("El tipo de la categoría es obligatorio y no puede estar vacío");
+        }
+        if (category.getCategoryType() == null) {
+            throw new CategoryException("El tipo de la categoría es inválido");
+        }
+
+
+        if (category.getDescription() != null && category.getDescription().length() > 255) {
+            throw new CategoryException("La descripción de la categoría no puede exceder los 255 caracteres");
+        }
+
+
+        if (category.getAllocatedBudget() == null) {
+            throw new CategoryException("El presupuesto destinado es obligatorio y no puede estar vacío");
+        }
+        if (category.getAllocatedBudget() != null && category.getAllocatedBudget().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new CategoryException("El presupuesto destinado no puede ser negativo o cero");
+        }
+        if (category.getAllocatedBudget() != null && category.getAllocatedBudget().compareTo(BigDecimal.valueOf(100000000)) > 0) {
+            throw new CategoryException("El presupuesto destinado no puede exceder los 100.000.000 de pesos");
+        }
+
+
+        if (category.getBudgetPeriod() == null || category.getBudgetPeriod().toString().trim().isEmpty()) {
+            throw new CategoryException("El periodo del presupuesto es obligatorio y no puede estar vacío");
+        }
+    }
+
+    private void validateCategoryUpdate (Category updates, Category existing){
+
         if (updates.getName() != null) {
             if (updates.getName().trim().isEmpty()) {
                 throw new CategoryException("El nombre de la categoría es obligatorio y no puede estar vacío");
@@ -93,35 +145,32 @@ public class CategoryService {
             throw new CategoryException("El tipo de la categoría es obligatorio");
         }
 
+
         if (updates.getDescription() != null && updates.getDescription().length() > 255) {
             throw new CategoryException("La descripción de la categoría no puede exceder los 255 caracteres");
         }
-    }
-
-    private void validateCategory(Category category) {
-        if (category.getName() == null || category.getName().trim().isEmpty()){
-            throw new CategoryException("El nombre de la categoria es obligatorio y no puede estar vacío");
-        }
-        if (!NAME_PATTERN.matcher(category.getName()).matches()) {
-            throw new CategoryException("El nombre de la categoría es inválido");
-        }
-        if (category.getName().length() < 3 || category.getName().length() > 50) {
-            throw new CategoryException("El nombre de la categoría debe tener entre 3 y 50 caracteres");
-        }
 
 
-        if (category.getCategoryType() == null || category.getCategoryType().toString().trim().isEmpty()) {
-            throw new CategoryException("El tipo de la categoría es obligatorio y no puede estar vacío");
-        }
-        if (category.getCategoryType() == null){
-            throw new CategoryException("El tipo de la categoría es inválido");
+        if (updates.getAllocatedBudget() != null) {
+            if (updates.getAllocatedBudget().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new CategoryException("El presupuesto destinado no puede ser negativo o cero");
+            }
+            if (updates.getAllocatedBudget().compareTo(BigDecimal.valueOf(100000000)) > 0) {
+                throw new CategoryException("El presupuesto destinado no puede superar los 100,000,000 de pesos");
+            }
+        } else if (existing.getAllocatedBudget() == null) {
+            throw new CategoryException("El presupuesto destinado es obligatorio");
         }
 
 
-        if (category.getDescription() != null && category.getDescription().length() > 255) {
-            throw new CategoryException("La descripción de la categoría no puede exceder los 255 caracteres");
+        if (updates.getBudgetPeriod() != null) {
+            // válido porque es un enum
+        } else if (existing.getBudgetPeriod() == null) {
+            throw new CategoryException("El período del presupuesto es obligatorio");
         }
     }
 
 }
+
+
 

@@ -31,7 +31,7 @@ public class CategoryController {
     }
 
     // GET ALL
-   @GetMapping("/all")
+   @GetMapping
     public ResponseEntity<List<Category>> getAllCategories() {
         return ResponseEntity.ok(categoryService.getAllCategories());
    }
@@ -51,7 +51,7 @@ public class CategoryController {
     public ResponseEntity<?> updateCategory(@PathVariable UUID id, @RequestBody Category category) {
         try {
             Category updated = categoryService.updateCategory(id, category);
-            return ResponseEntity.ok(Map.of("mensaje", "La categoría " + updated.getName() + " ha sido actualizada exitosamente"));
+            return ResponseEntity.ok(Map.of("mensaje", "La categoría ha sido actualizada exitosamente"));
         } catch (CategoryException ex) {
             return ResponseEntity.badRequest().body(Map.of("mensaje", ex.getMessage()));
         }

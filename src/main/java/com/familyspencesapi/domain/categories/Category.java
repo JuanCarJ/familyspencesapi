@@ -1,5 +1,6 @@
 package com.familyspencesapi.domain.categories;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class Category {
@@ -8,6 +9,8 @@ public class Category {
     private String name;
     private CategoryType categoryType;
     private String description;
+    private BigDecimal allocatedBudget;
+    private BudgetPeriod budgetPeriod;
 
     public Category() {
     }
@@ -16,11 +19,13 @@ public class Category {
         this.id = id;
     }
 
-    public Category(UUID id, String name, CategoryType categoryType, String description) {
+    public Category(UUID id, String name, CategoryType categoryType, String description, BigDecimal allocatedBudget, BudgetPeriod budgetPeriod) {
         this.id = id;
         this.name = name;
         this.categoryType = categoryType;
         this.description = description;
+        this.allocatedBudget = allocatedBudget;
+        this.budgetPeriod = budgetPeriod;
     }
 
     public UUID getId() {
@@ -55,6 +60,22 @@ public class Category {
         this.description = description;
     }
 
+    public BigDecimal getAllocatedBudget() {
+        return allocatedBudget;
+    }
+
+    public void setAllocatedBudget(BigDecimal allocatedBudget) {
+        this.allocatedBudget = allocatedBudget;
+    }
+
+    public BudgetPeriod getBudgetPeriod() {
+        return budgetPeriod;
+    }
+
+    public void setBudgetPeriod(BudgetPeriod budgetPeriod) {
+        this.budgetPeriod = budgetPeriod;
+    }
+
     @Override
     public String toString() {
         return "Category{" +
@@ -62,6 +83,8 @@ public class Category {
                 ", name='" + name + '\'' +
                 ", categoryType=" + categoryType +
                 ", description='" + description + '\'' +
+                ", allocatedBudget=" + allocatedBudget +
+                ", budgetPeriod=" + budgetPeriod +
                 '}';
     }
 }
