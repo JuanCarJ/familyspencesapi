@@ -1,6 +1,6 @@
 package com.familyspencesapi.domain.ranking;
 
-import com.familyspencesapi.domain.expenseControl.Expense;
+import com.familyspencesapi.domain.expense.Expense;
 
 import java.util.List;
 import java.util.UUID;
