@@ -1,8 +1,7 @@
 package com.familyspencesapi.service.category;
 
-import com.familyspencesapi.domain.categories.BudgetPeriod;
 import com.familyspencesapi.domain.categories.Category;
-import com.familyspencesapi.domain.categories.CategoryType;
+import com.familyspencesapi.repositories.categories.CategoryRepository;
 import com.familyspencesapi.utils.CategoryException;
 
 import java.math.BigDecimal;
@@ -10,7 +9,6 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -18,42 +16,36 @@ public class CategoryService {
 
     private static final Pattern NAME_PATTERN = Pattern.compile("^[\\p{L}0-9 ]+$");
 
-    private final List<Category> categories = new ArrayList<>();
+    private final CategoryRepository categoryRepository;
 
-    public CategoryService() {
-        categories.add(new Category(UUID.randomUUID(), "Mercado", CategoryType.ALIMENTACION, "Gastos mensuales en compra de alimentos y productos del hogar", BigDecimal.valueOf(700000), BudgetPeriod.MENSUAL));
-        categories.add(new Category(UUID.randomUUID(), "Pasajes", CategoryType.TRANSPORTE, "Pago de transporte público para el trabajo y los niños", BigDecimal.valueOf(20000), BudgetPeriod.DIARIO));
-        categories.add(new Category(UUID.randomUUID(), "Matricula Colegio", CategoryType.EDUCACION, "Pago anual de matrícula escolar para los niños", BigDecimal.valueOf(550000), BudgetPeriod.ANUAL));
-        categories.add(new Category(UUID.randomUUID(), "Mensualidad Colegio", CategoryType.EDUCACION, "Pago mensual de el colegio", BigDecimal.valueOf(120000), BudgetPeriod.MENSUAL));
+    public CategoryService(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
     }
 
     // POST - Crear Categoria
     public Category createCategory(Category category) {
         validateCategory(category);
-
         category.setId(UUID.randomUUID());
-        categories.add(category);
 
-        return category;
+        return categoryRepository.save(category);
     }
 
     // GET ALL - Consulta todas las categorias
     public List<Category> getAllCategories() {
-        return categories;
+        return categoryRepository.findAll();
     }
 
     // GET BY ID - Retrieve a category by its ID
     public Category getCategoryById(UUID id) {
-        return categories.stream()
-                .filter(c -> c.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new CategoryException("Categoría no encontrada"));
+        return categoryRepository.findById(id).
+                orElseThrow(() -> new CategoryException("Categoría no encontrada"));
     }
 
     // PUT - Actualiza una categoria existente
     public Category updateCategory(UUID id, Category updates) {
+        Category existing = categoryRepository.findById(id).
+                orElseThrow(() -> new CategoryException("Categoría no encontrada"));
 
-        Category existing = getCategoryById(id); // lanza excepción si no existe
         validateCategoryUpdate(updates, existing);
 
         if (updates.getName() != null) {
@@ -72,13 +64,16 @@ public class CategoryService {
             existing.setBudgetPeriod(updates.getBudgetPeriod());
         }
 
-        return existing;
+        return categoryRepository.save(existing);
     }
 
     public void deleteCategory(UUID id) {
-        Category existing = getCategoryById(id); // lanza excepción si no existe
-        categories.remove(existing);
+        Category existing = categoryRepository.findById(id).
+                orElseThrow(() -> new CategoryException("Categoria no encntrada"));// lanza excepción si no existe
+
+        categoryRepository.delete(existing);
     }
+
 
     private void validateCategory(Category category) {
 
@@ -121,6 +116,7 @@ public class CategoryService {
             throw new CategoryException("El periodo del presupuesto es obligatorio y no puede estar vacío");
         }
     }
+
 
     private void validateCategoryUpdate (Category updates, Category existing){
 

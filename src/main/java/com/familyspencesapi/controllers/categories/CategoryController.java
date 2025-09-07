@@ -24,9 +24,13 @@ public class CategoryController {
     public ResponseEntity<?> createCategory(@RequestBody Category category) {
         try {
             Category created = categoryService.createCategory(category);
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("mensaje", "La categoría " + created.getName() + " ha sido creada exitosamente"));
+            return ResponseEntity.
+                    status(HttpStatus.CREATED).
+                    body(Map.of("mensaje", "La categoría " + created.getName() + " ha sido creada exitosamente"));
         } catch (CategoryException ex) {
-            return ResponseEntity.badRequest().body(Map.of("mensaje", ex.getMessage()));
+            return ResponseEntity.
+                    badRequest().
+                    body(Map.of("mensaje", ex.getMessage()));
         }
     }
 
@@ -64,7 +68,9 @@ public class CategoryController {
             categoryService.deleteCategory(id);
             return ResponseEntity.ok(Map.of("mensaje", "La categoría ha sido eliminada exitosamente"));
         } catch (CategoryException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", ex.getMessage()));
+            return ResponseEntity.
+                    status(HttpStatus.NOT_FOUND).
+                    body(Map.of("mensaje", ex.getMessage()));
         }
     }
 }
