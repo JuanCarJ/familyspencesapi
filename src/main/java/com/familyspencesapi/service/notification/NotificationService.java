@@ -1,72 +1,34 @@
 package com.familyspencesapi.service.notification;
 
 import com.familyspencesapi.domain.notification.Notification;
+import com.familyspencesapi.repositories.notification.NotificationRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
+@Transactional
 public class NotificationService {
 
-    // Simulación de base de datos en memoria (temporal para desarrollo)
-    private final List<Notification> notifications = new ArrayList<>();
+    private final NotificationRepository notificationRepository;
 
-    // UUIDs predefinidos para usuarios de prueba
-    private static final UUID USER_1 = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
-    private static final UUID USER_2 = UUID.fromString("550e8400-e29b-41d4-a716-446655440002");
-    private static final UUID USER_3 = UUID.fromString("550e8400-e29b-41d4-a716-446655440003");
-
-    public NotificationService() {
-        initializeMockData();
-    }
-
-    /**
-     * Inicializa datos de prueba
-     */
-    private void initializeMockData() {
-        Date now = new Date();
-
-        notifications.add(new Notification(
-                UUID.randomUUID(), USER_1, "Bienvenido al sistema de gastos familiares",
-                Notification.NotificationType.INFO, Notification.NotificationPriority.NORMAL, false,
-                new Date(now.getTime() - 2 * 60 * 60 * 1000), null
-        ));
-
-        notifications.add(new Notification(
-                UUID.randomUUID(), USER_1, "Tu presupuesto mensual está al 80%",
-                Notification.NotificationType.WARNING, Notification.NotificationPriority.HIGH, true,
-                new Date(now.getTime() - 5 * 60 * 60 * 1000),
-                new Date(now.getTime() - 4 * 60 * 60 * 1000)
-        ));
-
-        notifications.add(new Notification(
-                UUID.randomUUID(), USER_2, "Nuevo gasto registrado: $45.000 en Supermercado",
-                Notification.NotificationType.EXPENSE_ADDED, Notification.NotificationPriority.NORMAL, false,
-                new Date(now.getTime() - 60 * 60 * 1000), null
-        ));
-
-        notifications.add(new Notification(
-                UUID.randomUUID(), USER_1, "Recordatorio: Pagar servicios públicos",
-                Notification.NotificationType.PAYMENT_DUE, Notification.NotificationPriority.URGENT, false,
-                new Date(now.getTime() - 30 * 60 * 1000), null
-        ));
-
-        notifications.add(new Notification(
-                UUID.randomUUID(), USER_3, "Reporte mensual de gastos disponible",
-                Notification.NotificationType.INFO, Notification.NotificationPriority.NORMAL, true,
-                new Date(now.getTime() - 8 * 60 * 60 * 1000),
-                new Date(now.getTime() - 7 * 60 * 60 * 1000)
-        ));
+    @Autowired
+    public NotificationService(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
     }
 
     /**
      * Obtiene todas las notificaciones
      * @return Lista de todas las notificaciones
      */
+    @Transactional(readOnly = true)
     public List<Notification> getAllNotifications() {
-        return new ArrayList<>(notifications);
+        return notificationRepository.findAll();
     }
 
     /**
@@ -74,15 +36,10 @@ public class NotificationService {
      * @param userId ID del usuario
      * @return Lista de notificaciones del usuario ordenadas por fecha de creación (más recientes primero)
      */
+    @Transactional(readOnly = true)
     public List<Notification> getNotificationsByUserId(UUID userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("El ID de usuario no puede ser null");
-        }
-
-        return notifications.stream()
-                .filter(notification -> notification.getUserId().equals(userId))
-                .sorted((n1, n2) -> n2.getCreatedAt().compareTo(n1.getCreatedAt())) // Más recientes primero
-                .collect(Collectors.toList());
+        validateUserId(userId);
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
     /**
@@ -90,15 +47,10 @@ public class NotificationService {
      * @param userId ID del usuario
      * @return Lista de notificaciones no leídas ordenadas por prioridad y fecha
      */
+    @Transactional(readOnly = true)
     public List<Notification> getUnreadNotificationsByUserId(UUID userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("El ID de usuario no puede ser null");
-        }
-
-        return notifications.stream()
-                .filter(notification -> notification.getUserId().equals(userId) && !notification.isRead())
-                .sorted(this::compareByPriorityAndDate)
-                .collect(Collectors.toList());
+        validateUserId(userId);
+        return notificationRepository.findUnreadByUserIdOrderedByPriorityAndDate(userId);
     }
 
     /**
@@ -106,14 +58,10 @@ public class NotificationService {
      * @param userId ID del usuario
      * @return Cantidad de notificaciones no leídas
      */
+    @Transactional(readOnly = true)
     public long getUnreadNotificationCount(UUID userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("El ID de usuario no puede ser null");
-        }
-
-        return notifications.stream()
-                .filter(notification -> notification.getUserId().equals(userId) && !notification.isRead())
-                .count();
+        validateUserId(userId);
+        return notificationRepository.countByUserIdAndReadFalse(userId);
     }
 
     /**
@@ -121,14 +69,12 @@ public class NotificationService {
      * @param notificationId ID de la notificación
      * @return Optional con la notificación si existe
      */
+    @Transactional(readOnly = true)
     public Optional<Notification> getNotificationById(UUID notificationId) {
         if (notificationId == null) {
             return Optional.empty();
         }
-
-        return notifications.stream()
-                .filter(notification -> notification.getId().equals(notificationId))
-                .findFirst();
+        return notificationRepository.findById(notificationId);
     }
 
     /**
@@ -144,19 +90,11 @@ public class NotificationService {
                                            Notification.NotificationPriority priority) {
         validateCreateNotificationParams(userId, message, type, priority);
 
-        Notification notification = new Notification(
-                UUID.randomUUID(),
-                userId,
-                message.trim(),
-                type,
-                priority,
-                false,
-                new Date(),
-                null
-        );
+        // Crear nueva notificación usando el constructor del domain
+        Notification notification = new Notification(userId, message.trim(), type, priority);
 
-        notifications.add(notification);
-        return notification;
+        // Guardar en base de datos
+        return notificationRepository.save(notification);
     }
 
     /**
@@ -177,12 +115,13 @@ public class NotificationService {
      * @return true si se marcó como leída, false si no se encontró
      */
     public boolean markNotificationAsRead(UUID notificationId) {
-        Optional<Notification> notificationOpt = getNotificationById(notificationId);
+        Optional<Notification> notificationOpt = notificationRepository.findById(notificationId);
 
         if (notificationOpt.isPresent()) {
             Notification notification = notificationOpt.get();
             if (!notification.isRead()) {
                 notification.markAsRead();
+                notificationRepository.save(notification);
                 return true;
             }
         }
@@ -196,21 +135,8 @@ public class NotificationService {
      * @return Cantidad de notificaciones marcadas como leídas
      */
     public int markAllNotificationsAsReadByUserId(UUID userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("El ID de usuario no puede ser null");
-        }
-
-        int markedCount = 0;
-        Date now = new Date();
-
-        for (Notification notification : notifications) {
-            if (notification.getUserId().equals(userId) && !notification.isRead()) {
-                notification.markAsRead();
-                markedCount++;
-            }
-        }
-
-        return markedCount;
+        validateUserId(userId);
+        return notificationRepository.markAllAsReadByUserId(userId, LocalDateTime.now());
     }
 
     /**
@@ -219,7 +145,16 @@ public class NotificationService {
      * @return true si se eliminó, false si no se encontró
      */
     public boolean deleteNotification(UUID notificationId) {
-        return notifications.removeIf(notification -> notification.getId().equals(notificationId));
+        if (notificationId == null) {
+            return false;
+        }
+
+        if (notificationRepository.existsById(notificationId)) {
+            notificationRepository.deleteById(notificationId);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -228,15 +163,8 @@ public class NotificationService {
      * @return Cantidad de notificaciones eliminadas
      */
     public int deleteReadNotificationsByUserId(UUID userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("El ID de usuario no puede ser null");
-        }
-
-        int initialSize = notifications.size();
-        notifications.removeIf(notification ->
-                notification.getUserId().equals(userId) && notification.isRead());
-
-        return initialSize - notifications.size();
+        validateUserId(userId);
+        return notificationRepository.deleteByUserIdAndReadTrue(userId);
     }
 
     /**
@@ -244,15 +172,11 @@ public class NotificationService {
      * @param userId ID del usuario
      * @return Lista de notificaciones recientes
      */
+    @Transactional(readOnly = true)
     public List<Notification> getRecentNotificationsByUserId(UUID userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("El ID de usuario no puede ser null");
-        }
-
-        return notifications.stream()
-                .filter(notification -> notification.getUserId().equals(userId) && notification.isRecent())
-                .sorted((n1, n2) -> n2.getCreatedAt().compareTo(n1.getCreatedAt()))
-                .collect(Collectors.toList());
+        validateUserId(userId);
+        LocalDateTime since = LocalDateTime.now().minusHours(24);
+        return notificationRepository.findRecentNotificationsByUserId(userId, since);
     }
 
     /**
@@ -261,15 +185,13 @@ public class NotificationService {
      * @param type Tipo de notificación
      * @return Lista de notificaciones del tipo especificado
      */
+    @Transactional(readOnly = true)
     public List<Notification> getNotificationsByUserIdAndType(UUID userId, Notification.NotificationType type) {
-        if (userId == null || type == null) {
-            throw new IllegalArgumentException("Los parámetros no pueden ser null");
+        validateUserId(userId);
+        if (type == null) {
+            throw new IllegalArgumentException("El tipo no puede ser null");
         }
-
-        return notifications.stream()
-                .filter(notification -> notification.getUserId().equals(userId) && notification.getType() == type)
-                .sorted((n1, n2) -> n2.getCreatedAt().compareTo(n1.getCreatedAt()))
-                .collect(Collectors.toList());
+        return notificationRepository.findByUserIdAndTypeOrderByCreatedAtDesc(userId, type);
     }
 
     /**
@@ -278,18 +200,25 @@ public class NotificationService {
      * @param priority Prioridad de la notificación
      * @return Lista de notificaciones de la prioridad especificada
      */
+    @Transactional(readOnly = true)
     public List<Notification> getNotificationsByUserIdAndPriority(UUID userId, Notification.NotificationPriority priority) {
-        if (userId == null || priority == null) {
-            throw new IllegalArgumentException("Los parámetros no pueden ser null");
+        validateUserId(userId);
+        if (priority == null) {
+            throw new IllegalArgumentException("La prioridad no puede ser null");
         }
-
-        return notifications.stream()
-                .filter(notification -> notification.getUserId().equals(userId) && notification.getPriority() == priority)
-                .sorted((n1, n2) -> n2.getCreatedAt().compareTo(n1.getCreatedAt()))
-                .collect(Collectors.toList());
+        return notificationRepository.findByUserIdAndPriorityOrderByCreatedAtDesc(userId, priority);
     }
 
     // =================== MÉTODOS PRIVADOS ===================
+
+    /**
+     * Valida que el userId no sea null
+     */
+    private void validateUserId(UUID userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("El ID de usuario no puede ser null");
+        }
+    }
 
     /**
      * Valida los parámetros para crear una notificación
@@ -297,9 +226,7 @@ public class NotificationService {
     private void validateCreateNotificationParams(UUID userId, String message,
                                                   Notification.NotificationType type,
                                                   Notification.NotificationPriority priority) {
-        if (userId == null) {
-            throw new IllegalArgumentException("El ID de usuario no puede ser null");
-        }
+        validateUserId(userId);
         if (message == null || message.trim().isEmpty()) {
             throw new IllegalArgumentException("El mensaje no puede ser null o vacío");
         }
@@ -309,34 +236,5 @@ public class NotificationService {
         if (priority == null) {
             throw new IllegalArgumentException("La prioridad no puede ser null");
         }
-    }
-
-    /**
-     * Compara notificaciones por prioridad y fecha
-     * Prioridad: URGENT > HIGH > NORMAL > LOW
-     * En caso de igual prioridad, ordena por fecha (más recientes primero)
-     */
-    private int compareByPriorityAndDate(Notification n1, Notification n2) {
-        // Primero por prioridad (orden descendente)
-        int priorityComparison = getPriorityWeight(n2.getPriority()) - getPriorityWeight(n1.getPriority());
-
-        if (priorityComparison != 0) {
-            return priorityComparison;
-        }
-
-        // Si tienen la misma prioridad, ordenar por fecha (más recientes primero)
-        return n2.getCreatedAt().compareTo(n1.getCreatedAt());
-    }
-
-    /**
-     * Obtiene el peso numérico de una prioridad para comparación
-     */
-    private int getPriorityWeight(Notification.NotificationPriority priority) {
-        return switch (priority) {
-            case URGENT -> 4;
-            case HIGH -> 3;
-            case NORMAL -> 2;
-            case LOW -> 1;
-        };
     }
 }
