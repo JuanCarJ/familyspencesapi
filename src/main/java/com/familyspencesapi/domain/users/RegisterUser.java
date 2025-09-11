@@ -7,14 +7,16 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 public class RegisterUser {
     @Id
     @GeneratedValue(strategy =  GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
-    @Column(name = "full_name", nullable = false)
-    private  String fullName;
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
     @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
     @ManyToOne
@@ -35,10 +37,9 @@ public class RegisterUser {
     private String address;
     @Column(name = "password", nullable = false)
     private String password;
-    @Id
-    @GeneratedValue(strategy =  GenerationType.UUID)
-    @Column(name = "family_id", nullable = false)
-    private UUID familyId;
+    @ManyToOne
+    @JoinColumn(name = "family_id", nullable = false)
+    private Family family;
 
 
 
@@ -50,12 +51,24 @@ public class RegisterUser {
         this.id = id;
     }
 
-    public String getfullName() {
-        return fullName;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setfullName(String fullName) {
-        this.fullName = fullName;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getfullName() {
+        return firstName  + " " + lastName;
     }
 
     public LocalDate getbirthDate() {
@@ -130,11 +143,13 @@ public class RegisterUser {
         this.password = password;
     }
 
-    public UUID getfamilyId() {
-        return familyId;
+    public void setFamily(Family family) {
+        this.family = family;
     }
-
-    public void setfamilyId(UUID familyId) {
-        this.familyId = familyId;
+    public Family getFamily() {
+        return family;
+    }
+    public UUID getFamilyId() {
+        return family != null ? family.getId() : null;
     }
 }

@@ -3,6 +3,7 @@ package com.familyspencesapi.domain.users;
 
 import jakarta.persistence.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -14,6 +15,9 @@ public class DocumentType {
     private UUID id;
     @Column(name = "type", nullable = false)
     private String type;
+    @OneToMany(mappedBy = "documentType")
+    private List<RegisterUser> users;
+
 
 
     public UUID getId() {
