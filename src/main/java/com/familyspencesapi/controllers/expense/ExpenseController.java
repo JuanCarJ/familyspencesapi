@@ -1,10 +1,12 @@
-package com.familyspencesapi.controllers.expenseControl;
+package com.familyspencesapi.controllers.expense;
 
-import com.familyspencesapi.domain.expenseControl.Expense;
+import com.familyspencesapi.domain.expense.Expense;
+import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
 import com.familyspencesapi.domain.family.FamilyMember;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -12,15 +14,21 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Pattern;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/rest/expenses")
 @CrossOrigin(origins = "*")
-public class ExpenseControlController {
+public class ExpenseController {
 
     // Datos quemados - Miembros de familia
     private static final Map<UUID, FamilyMember> FAMILY_MEMBERS = new ConcurrentHashMap<>();
@@ -38,24 +46,24 @@ public class ExpenseControlController {
         FAMILY_MEMBERS.put(familyId2, new FamilyMember(familyId2, "María García", "maria.garcia@email.com", "Madre"));
         FAMILY_MEMBERS.put(familyId3, new FamilyMember(familyId3, "Ana Pérez", "ana.perez@email.com", "Hija"));
 
-        // Inicializar gastos de ejemplo
+        // Inicializar gastos de ejemplo con categorías
         UUID expenseId1 = UUID.fromString("660e8400-e29b-41d4-a716-446655440001");
         UUID expenseId2 = UUID.fromString("660e8400-e29b-41d4-a716-446655440002");
         UUID expenseId3 = UUID.fromString("660e8400-e29b-41d4-a716-446655440003");
 
         EXPENSES.put(expenseId1, new Expense(
-                expenseId1, "Supermercado", "Compras mensuales del hogar", "Mensual",
-                FAMILY_MEMBERS.get(familyId1), new BigDecimal("450.75")
+                expenseId1, "Supermercado", "Compras mensuales del hogar", "enero",
+                FAMILY_MEMBERS.get(familyId1), new BigDecimal("450.75"), ExpenseCategory.ALIMENTACION
         ));
 
         EXPENSES.put(expenseId2, new Expense(
-                expenseId2, "Gasolina", "Combustible para el vehículo", "Semanal",
-                FAMILY_MEMBERS.get(familyId1), new BigDecimal("80.00")
+                expenseId2, "Gasolina", "Combustible para el vehículo", "enero",
+                FAMILY_MEMBERS.get(familyId1), new BigDecimal("80.00"), ExpenseCategory.TRANSPORTE
         ));
 
         EXPENSES.put(expenseId3, new Expense(
-                expenseId3, "Material escolar", "Útiles para el colegio", "Trimestral",
-                FAMILY_MEMBERS.get(familyId2), new BigDecimal("120.50")
+                expenseId3, "Material escolar", "Útiles para el colegio", "enero",
+                FAMILY_MEMBERS.get(familyId2), new BigDecimal("120.50"), ExpenseCategory.EDUCACION
         ));
     }
 
@@ -76,10 +84,57 @@ public class ExpenseControlController {
         return ResponseEntity.notFound().build();
     }
 
+    // GET: api/v1/rest/expenses/by-category/{category}
+    @GetMapping("/by-category/{category}")
+    public ResponseEntity<List<Expense>> getByCategory(@PathVariable ExpenseCategory category) {
+        List<Expense> expensesByCategory = EXPENSES.values().stream()
+                .filter(expense -> expense.getCategory() == category)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(expensesByCategory);
+    }
+
+    // GET: api/v1/rest/expenses/by-period/{period}
+    @GetMapping("/by-period/{period}")
+    public ResponseEntity<List<Expense>> getByPeriod(@PathVariable String period) {
+        List<Expense> expensesByPeriod = EXPENSES.values().stream()
+                .filter(expense -> expense.isSamePeriod(period))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(expensesByPeriod);
+    }
+
+    // GET: api/v1/rest/expenses/expensive
+    @GetMapping("/expensive")
+    public ResponseEntity<List<Expense>> getExpensiveExpenses() {
+        List<Expense> expensiveExpenses = EXPENSES.values().stream()
+                .filter(Expense::isExpensive)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(expensiveExpenses);
+    }
+
+    // GET: api/v1/rest/expenses/total-by-period/{period}
+    @GetMapping("/total-by-period/{period}")
+    public ResponseEntity<TotalResponse> getTotalByPeriod(@PathVariable String period) {
+        BigDecimal total = EXPENSES.values().stream()
+                .filter(expense -> expense.isSamePeriod(period))
+                .map(Expense::getValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return ResponseEntity.ok(new TotalResponse(period, total));
+    }
+
     // POST: api/v1/rest/expenses
     @PostMapping("")
-    public ResponseEntity<?> create(@Valid @RequestBody ExpenseRequest request) {
+    public ResponseEntity<?> create(@Valid @RequestBody ExpenseRequest request, BindingResult result) {
         try {
+            // Validar errores de binding
+            if (result.hasErrors()) {
+                List<String> errors = result.getAllErrors().stream()
+                        .map(error -> error.getDefaultMessage())
+                        .collect(Collectors.toList());
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse("Errores de validación: " + String.join(", ", errors)));
+            }
+
             FamilyMember responsible = FAMILY_MEMBERS.get(request.getIdFamily());
             if (responsible == null) {
                 return ResponseEntity.badRequest()
@@ -93,8 +148,15 @@ public class ExpenseControlController {
                     request.getDescription() != null ? request.getDescription().trim() : "",
                     request.getPeriod().trim(),
                     responsible,
-                    request.getValue()
+                    request.getValue(),
+                    request.getCategory()
             );
+
+            // Validar período personalizado
+            if (!expense.isValidPeriod()) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse("Error: El período '" + request.getPeriod() + "' no es válido"));
+            }
 
             EXPENSES.put(newId, expense);
 
@@ -109,8 +171,17 @@ public class ExpenseControlController {
 
     // PUT: api/v1/rest/expenses/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable UUID id, @Valid @RequestBody ExpenseRequest request) {
+    public ResponseEntity<?> update(@PathVariable UUID id, @Valid @RequestBody ExpenseRequest request, BindingResult result) {
         try {
+            // Validar errores de binding
+            if (result.hasErrors()) {
+                List<String> errors = result.getAllErrors().stream()
+                        .map(error -> error.getDefaultMessage())
+                        .collect(Collectors.toList());
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse("Errores de validación: " + String.join(", ", errors)));
+            }
+
             Expense expense = EXPENSES.get(id);
             if (expense == null) {
                 return ResponseEntity.notFound().build();
@@ -128,7 +199,15 @@ public class ExpenseControlController {
             expense.setPeriod(request.getPeriod().trim());
             expense.setResponsible(responsible);
             expense.setValue(request.getValue());
-            expense.setUpdatedAt(LocalDateTime.now());
+            expense.setCategory(request.getCategory());
+
+            // Validar período personalizado
+            if (!expense.isValidPeriod()) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse("Error: El período '" + request.getPeriod() + "' no es válido"));
+            }
+
+            expense.updateTimestamp(); // Actualizar timestamp manualmente
 
             return ResponseEntity.ok(new ApiResponse("Gasto actualizado correctamente", id.toString()));
 
@@ -154,14 +233,23 @@ public class ExpenseControlController {
         }
     }
 
-    // GET: api/v1/rest/expenses/family-members (endpoint adicional para obtener miembros)
+    // GET: api/v1/rest/expenses/family-members
     @GetMapping("/family-members")
     public ResponseEntity<List<FamilyMember>> getFamilyMembers() {
         List<FamilyMember> members = new ArrayList<>(FAMILY_MEMBERS.values());
         return ResponseEntity.ok(members);
     }
 
-    // DTO para requests con validaciones
+    // GET: api/v1/rest/expenses/categories
+    @GetMapping("/categories")
+    public ResponseEntity<List<CategoryInfo>> getCategories() {
+        List<CategoryInfo> categories = Arrays.stream(ExpenseCategory.values())
+                .map(category -> new CategoryInfo(category.name(), category.getDisplayName()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(categories);
+    }
+
+    // DTO para requests con validaciones mejoradas
     public static class ExpenseRequest {
         @NotBlank(message = "El título es obligatorio")
         @Size(min = 3, max = 100, message = "El título debe tener entre 3 y 100 caracteres")
@@ -171,25 +259,33 @@ public class ExpenseControlController {
         private String description;
 
         @NotBlank(message = "El período es obligatorio")
-        @Size(min = 2, max = 50, message = "El período debe tener entre 2 y 50 caracteres")
+        @Pattern(regexp = "^(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|\\d{4}-\\d{2})$",
+                message = "El período debe ser un mes válido en español o formato YYYY-MM")
         private String period;
 
         @NotNull(message = "El ID del miembro de familia es obligatorio")
         private UUID idFamily;
 
         @NotNull(message = "El valor es obligatorio")
-        @Positive(message = "El valor debe ser mayor que cero")
+        @DecimalMin(value = "0.01", message = "El valor debe ser mayor que 0")
+        @DecimalMax(value = "999999999.99", message = "El valor excede el límite permitido")
+        @Digits(integer = 9, fraction = 2, message = "Formato de valor inválido")
         private BigDecimal value;
+
+        @NotNull(message = "La categoría es obligatoria")
+        private ExpenseCategory category;
 
         // Constructores
         public ExpenseRequest() {}
 
-        public ExpenseRequest(String title, String description, String period, UUID idFamily, BigDecimal value) {
+        public ExpenseRequest(String title, String description, String period,
+                              UUID idFamily, BigDecimal value, ExpenseCategory category) {
             this.title = title;
             this.description = description;
             this.period = period;
             this.idFamily = idFamily;
             this.value = value;
+            this.category = category;
         }
 
         // Getters y Setters
@@ -207,6 +303,9 @@ public class ExpenseControlController {
 
         public BigDecimal getValue() { return value; }
         public void setValue(BigDecimal value) { this.value = value; }
+
+        public ExpenseCategory getCategory() { return category; }
+        public void setCategory(ExpenseCategory category) { this.category = category; }
     }
 
     // DTO para responses
@@ -235,5 +334,46 @@ public class ExpenseControlController {
 
         public long getTimestamp() { return timestamp; }
         public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+    }
+
+    // DTO para información de categorías
+    public static class CategoryInfo {
+        private String code;
+        private String displayName;
+
+        public CategoryInfo(String code, String displayName) {
+            this.code = code;
+            this.displayName = displayName;
+        }
+
+        // Getters y Setters
+        public String getCode() { return code; }
+        public void setCode(String code) { this.code = code; }
+
+        public String getDisplayName() { return displayName; }
+        public void setDisplayName(String displayName) { this.displayName = displayName; }
+    }
+
+    // DTO para totales
+    public static class TotalResponse {
+        private String period;
+        private BigDecimal total;
+        private String formattedTotal;
+
+        public TotalResponse(String period, BigDecimal total) {
+            this.period = period;
+            this.total = total;
+            this.formattedTotal = String.format("$%.2f", total);
+        }
+
+        // Getters y Setters
+        public String getPeriod() { return period; }
+        public void setPeriod(String period) { this.period = period; }
+
+        public BigDecimal getTotal() { return total; }
+        public void setTotal(BigDecimal total) { this.total = total; }
+
+        public String getFormattedTotal() { return formattedTotal; }
+        public void setFormattedTotal(String formattedTotal) { this.formattedTotal = formattedTotal; }
     }
 }
