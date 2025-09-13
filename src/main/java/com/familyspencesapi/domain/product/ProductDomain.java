@@ -1,11 +1,24 @@
 package com.familyspencesapi.domain.product;
 
+import jakarta.persistence.*;
 import java.util.UUID;
 
+@Entity
+@Table(name = "products")
 public class ProductDomain {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
+
+    @Column(name = "product_name")
     private String product;
+
+    @Column(name = "price")
     private int price;
+
+    @Column(name = "store")
     private String store;
 
     public ProductDomain() {
@@ -13,7 +26,7 @@ public class ProductDomain {
     }
 
     public ProductDomain(String product, int price, String store) {
-        this.id = UUID.randomUUID();
+        //this.id = UUID.randomUUID();
         this.product = product;
         this.price = price;
         this.store = store;
@@ -51,4 +64,3 @@ public class ProductDomain {
         this.store = store;
     }
 }
-

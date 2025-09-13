@@ -1,94 +1,56 @@
 package com.familyspencesapi.controllers.vacation;
 
 import com.familyspencesapi.domain.vacation.Vacation;
-import org.springframework.http.HttpStatus;
+import com.familyspencesapi.service.vacation.VacationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/vacations")
-@CrossOrigin(origins = "*")
 public class VacationController {
 
-    private final Map<Long, Vacation> vacations = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(1);
+    private final VacationService vacationService;
 
-    @PostMapping
-    public ResponseEntity<Vacation> createVacation(@RequestBody Vacation vacation) {
-        try {
-            Long newId = idGenerator.getAndIncrement();
-            vacation.setId(newId);
-
-            vacations.put(newId, vacation);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(vacation);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Vacation> updateVacation(
-            @PathVariable Long id,
-            @RequestBody Vacation vacacionActualizada) {
-        try {
-            if (vacations.containsKey(id)) {
-                vacacionActualizada.setId(id);
-
-                vacations.put(id, vacacionActualizada);
-
-                return ResponseEntity.ok(vacacionActualizada);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteVacation(@PathVariable Long id) {
-        try {
-            Vacation removedVacation = vacations.remove(id);
-
-            if (removedVacation != null) {
-                return ResponseEntity.ok().build();
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Vacation> obtainVacation(@PathVariable Long id) {
-        try {
-            Vacation vacation = vacations.get(id);
-            if (vacation != null) {
-                return ResponseEntity.ok(vacation);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public VacationController(VacationService vacationService) {
+        this.vacationService = vacationService;
     }
 
     @GetMapping
-    public ResponseEntity<Map<Long, Vacation>> getAllVacations() {
-        try {
-            return ResponseEntity.ok(vacations);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<List<Vacation>> getAllVacations() {
+        return ResponseEntity.ok(vacationService.getAllVacations());
     }
 
-    @GetMapping("/health")
-    public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("Vacation service is running!");
+    @GetMapping("/{id}")
+    public ResponseEntity<Vacation> getVacationById(@PathVariable UUID id) {
+        Optional<Vacation> vacation = vacationService.getVacationById(id);
+        return vacation.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<Vacation> createVacation(@RequestBody Vacation vacation) {
+        Vacation savedVacation = vacationService.createVacation(vacation);
+        return ResponseEntity
+                .created(URI.create("/api/vacations/" + savedVacation.getId()))
+                .body(savedVacation);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Vacation> updateVacation(@PathVariable UUID id, @RequestBody Vacation vacationDetails) {
+        return vacationService.updateVacation(id, vacationDetails)
+                .map(updated -> ResponseEntity.ok(updated))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteVacation(@PathVariable UUID id) {
+        boolean deleted = vacationService.deleteVacation(id);
+        return deleted ? ResponseEntity.noContent().build()
+                : ResponseEntity.notFound().build();
     }
 }
