@@ -1,60 +1,52 @@
 package com.familyspencesapi.service.pet;
 
 import com.familyspencesapi.domain.pet.Pet;
+import com.familyspencesapi.repository.pet.IRepositoryPet;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PetService {
 
-    private final List<Pet> pets = new ArrayList<>();
+    private final IRepositoryPet petRepository;
 
-    public PetService() {
-        // Datos quemados de prueba
-        pets.add(new Pet(UUID.randomUUID(), "Firulais Restrepo", "Dog", "Labrador", LocalDate.parse("2020-05-10"), UUID.randomUUID()));
-        pets.add(new Pet(UUID.randomUUID(), "Misu López", "Cat", "Siamese", LocalDate.parse("2022-03-14"), UUID.randomUUID()));
+    public PetService(IRepositoryPet petRepository) {
+        this.petRepository = petRepository;
     }
 
     // Obtener todas las mascotas
     public List<Pet> getAllPets() {
-        return pets;
+        return petRepository.findAll();
     }
 
-    // Obtener mascota por ID
+    // Buscar una mascota por su ID
     public Optional<Pet> getPetById(UUID id) {
-        return pets.stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst();
+        return petRepository.findById(id);
     }
 
-    // Crear mascota
+    // Crear nueva mascota
     public Pet createPet(Pet pet) {
-        pet.setId(UUID.randomUUID());
-        pets.add(pet);
-        return pet;
+        pet.setId(UUID.randomUUID()); // Generamos un UUID para el nuevo registro
+        return petRepository.save(pet);
     }
 
     // Eliminar mascota
     public boolean deletePet(UUID id) {
-        return pets.removeIf(p -> p.getId().equals(id));
+        if (petRepository.existsById(id)) {
+            petRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
+    // Actualizar mascota
     public Pet updatePet(UUID id, Pet updatedPet) {
-        return pets.stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst()
-                .map(p -> {
-                    p.setFullName(updatedPet.getFullName());
-                    p.setPetType(updatedPet.getPetType());
-                    p.setBreed(updatedPet.getBreed());
-                    p.setBirthDate(updatedPet.getBirthDate());
-                    p.setFamilyId(updatedPet.getFamilyId());
-                    return p;
-                })
-                .orElse(null);
+        return petRepository.findById(id).map(p -> {
+            updatedPet.setId(id); // mantenemos el mismo ID
+            return petRepository.save(updatedPet);
+        }).orElse(null);
     }
-
-
 }
