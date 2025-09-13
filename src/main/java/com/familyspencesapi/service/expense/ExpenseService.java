@@ -6,7 +6,8 @@ import com.familyspencesapi.domain.family.FamilyMember;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
 import com.familyspencesapi.repositories.family.FamilyMemberRepository;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +23,16 @@ import java.util.UUID;
 @Transactional
 public class ExpenseService {
 
-    @Autowired
-    private ExpenseRepository expenseRepository;
+    private static final Logger logger = LoggerFactory.getLogger(ExpenseService.class);
 
-    @Autowired
-    private FamilyMemberRepository familyMemberRepository;
+    private final ExpenseRepository expenseRepository;
+    private final FamilyMemberRepository familyMemberRepository;
+
+    // Constructor injection instead of field injection
+    public ExpenseService(ExpenseRepository expenseRepository, FamilyMemberRepository familyMemberRepository) {
+        this.expenseRepository = expenseRepository;
+        this.familyMemberRepository = familyMemberRepository;
+    }
 
     /**
      * Calcular total de gastos por período
@@ -56,12 +62,8 @@ public class ExpenseService {
     /**
      * Obtener estadísticas generales de gastos
      */
-    public Object getExpenseStatistics() {
+    public ExpenseStatistics getExpenseStatistics() {
         Object[] basicStats = expenseRepository.getBasicStatistics();
-
-        long totalExpenses = ((Number) basicStats[0]).longValue();
-        BigDecimal totalAmount = (BigDecimal) basicStats[1];
-        BigDecimal averageAmount = (BigDecimal) basicStats[2];
 
         // Encontrar la categoría más cara
         List<Object[]> categoryTotals = expenseRepository.findCategoryTotals();
@@ -72,16 +74,7 @@ public class ExpenseService {
             mostExpensiveCategoryName = topCategory.getDisplayName();
         }
 
-        // Crear una variable final para usar en el objeto anónimo
-        final String finalMostExpensiveCategory = mostExpensiveCategoryName;
-
-        // Crear un objeto simple con estadísticas básicas
-        return new Object() {
-            public final long totalExpenses = ((Number) basicStats[0]).longValue();
-            public final BigDecimal totalAmount = basicStats[1] != null ? (BigDecimal) basicStats[1] : BigDecimal.ZERO;
-            public final BigDecimal averageAmount = basicStats[2] != null ? ((BigDecimal) basicStats[2]).setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
-            public final String mostExpensiveCategory = finalMostExpensiveCategory;
-        };
+        return new ExpenseStatistics(basicStats, mostExpensiveCategoryName);
     }
 
     /**
@@ -125,8 +118,7 @@ public class ExpenseService {
         );
 
         if (exists) {
-            // Solo advertir, no bloquear (puedes cambiar esta lógica según tus necesidades)
-            System.out.println("Advertencia: Ya existe un gasto similar");
+            logger.warn("Ya existe un gasto similar para el título: {}, período: {}", title, period);
         }
 
         return expenseRepository.save(expense);
@@ -274,11 +266,43 @@ public class ExpenseService {
 
         List<Expense> expenses = expenseRepository.findByResponsible(fromMember.get());
 
-        expenses.forEach(expense -> {
-            expense.setResponsible(toMember.get());
-        });
+        expenses.forEach(expense -> expense.setResponsible(toMember.get()));
 
         expenseRepository.saveAll(expenses);
         return expenses.size();
+    }
+
+    /**
+     * Clase interna para estadísticas de gastos
+     */
+    public static class ExpenseStatistics {
+        private final long totalExpenses;
+        private final BigDecimal totalAmount;
+        private final BigDecimal averageAmount;
+        private final String mostExpensiveCategory;
+
+        public ExpenseStatistics(Object[] basicStats, String mostExpensiveCategory) {
+            this.totalExpenses = ((Number) basicStats[0]).longValue();
+            this.totalAmount = basicStats[1] != null ? (BigDecimal) basicStats[1] : BigDecimal.ZERO;
+            this.averageAmount = basicStats[2] != null ?
+                    ((BigDecimal) basicStats[2]).setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            this.mostExpensiveCategory = mostExpensiveCategory;
+        }
+
+        public long getTotalExpenses() {
+            return totalExpenses;
+        }
+
+        public BigDecimal getTotalAmount() {
+            return totalAmount;
+        }
+
+        public BigDecimal getAverageAmount() {
+            return averageAmount;
+        }
+
+        public String getMostExpensiveCategory() {
+            return mostExpensiveCategory;
+        }
     }
 }
