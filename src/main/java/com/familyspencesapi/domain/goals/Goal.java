@@ -28,10 +28,12 @@ public class Goal {
     @Size(max = 500, message = "La descripción no puede superar los 500 caracteres")
     private String description;
 
-    // Relación con Category (comentada por ahora)
-    // @ManyToOne
-    // @JoinColumn(name = "id", nullable = false)
-    // private Category category;
+    /*
+     Relación con Category (comentada por ahora)
+     @ManyToOne
+     @JoinColumn(name = "id", nullable = false)
+     private Category category;
+    */
 
     @Column(name = "topeGoal", nullable = false)
     @Positive(message = "El tope debe ser mayor que 0")
@@ -88,13 +90,13 @@ public class Goal {
     }
 
     /*
-    public Category getCategory() {
-        return category;
-    }
+     public Category getCategory() {
+         return category;
+     }
 
-    public void setCategory(Category category) {
-        this.category = category;
-    }
+     public void setCategory(Category category) {
+         this.category = category;
+     }
     */
 
     public double getSavingsCap() {
