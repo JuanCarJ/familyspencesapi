@@ -1,18 +1,23 @@
 package com.familyspencesapi.service.ranking;
 
-import com.familyspencesapi.domain.expenseControl.Expense;
+import com.familyspencesapi.utils.RankingException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.util.*;
+import java.util.logging.Logger;
+
+
 
 @Service
 public class RankingService {
 
-    public byte[] generateRankingExcel(UUID familyId) throws Exception {
+    private static final Logger logger = Logger.getLogger(RankingService.class.getName());
+
+    public byte[] generateRankingExcel(UUID familyId)  {
 
         try {
             Map<String, Double> expenses = new HashMap<>();
@@ -28,7 +33,6 @@ public class RankingService {
             earnings.put("Juan Pablo Aristizabal", 300000.00);
 
             try (Workbook workbook = new XSSFWorkbook()) {
-                System.out.println("Workbook XSSF creado");
 
                 Sheet sheetExpenses = workbook.createSheet("Ranking Gastos");
                 createRankingSheet(sheetExpenses, expenses, "Total Gastado", workbook);
@@ -43,13 +47,11 @@ public class RankingService {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 workbook.write(outputStream);
 
-                System.out.println("Excel generado exitosamente. Tamaño: " + outputStream.size() + " bytes");
                 return outputStream.toByteArray();
             }
         } catch (Exception e) {
-            System.err.println("Error crítico al generar el Excel: " + e.getMessage());
-            e.printStackTrace();
-            throw new Exception("Error al generar el archivo Excel: " + e.getMessage(), e);
+            logger.warning("Error al generar el archivo Excel");
+            throw new RankingException("Error al generar el archivo Excel: " + e.getMessage(), e);
         }
     }
 
@@ -85,9 +87,8 @@ public class RankingService {
 
 
         } catch (Exception e) {
-            System.err.println("Error al crear hoja '" + sheet.getSheetName() + "': " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Error al crear hoja de ranking: " + e.getMessage(), e);
+            logger.warning("Error al crear hoja de ranking");
+            throw new RankingException("Error al crear hoja de ranking: " + e.getMessage(), e);
         }
     }
 
@@ -97,33 +98,31 @@ public class RankingService {
             double totalEarnings = earnings.values().stream().mapToDouble(Double::doubleValue).sum();
             double balance = totalEarnings - totalExpenses;
 
-            int rowIdx = 0;
 
-            Row row1 = sheet.createRow(rowIdx++);
+            Row row1 = sheet.createRow(0);
             row1.createCell(0).setCellValue("Total Gastos");
             row1.createCell(1).setCellValue(totalExpenses);
             styleSummaryCell(row1, 0, workbook, false);
             styleSummaryCell(row1, 1, workbook, true);
 
-            Row row2 = sheet.createRow(rowIdx++);
+            Row row2 = sheet.createRow(1);
             row2.createCell(0).setCellValue("Total Ingresos");
             row2.createCell(1).setCellValue(totalEarnings);
             styleSummaryCell(row2, 0, workbook, false);
             styleSummaryCell(row2, 1, workbook, true);
 
-            Row row3 = sheet.createRow(rowIdx++);
+            Row row3 = sheet.createRow(2);
             row3.createCell(0).setCellValue("Balance");
             row3.createCell(1).setCellValue(balance);
             styleSummaryCell(row3, 0, workbook, false);
-            styleBalanceCell(row3, 1, workbook, balance);
+            styleBalanceCell(row3, workbook, balance);
 
             sheet.autoSizeColumn(0);
             sheet.autoSizeColumn(1);
 
         } catch (Exception e) {
-            System.err.println("Error al crear hoja de resumen: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Error al crear hoja de resumen: " + e.getMessage(), e);
+            logger.warning("Error al crear hoja de resumen");
+            throw new RankingException("Error al crear hoja de resumen: " + e.getMessage(), e);
         }
     }
 
@@ -153,7 +152,8 @@ public class RankingService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error al aplicar estilo al encabezado: " + e.getMessage());
+            logger.warning("Error al aplicar estilo al encabezado");
+            throw  new RankingException("Error al aplicar estilo al encabezado: " + e.getMessage());
         }
     }
 
@@ -167,7 +167,7 @@ public class RankingService {
             dataStyle.setBorderRight(BorderStyle.THIN);
 
             CreationHelper createHelper = workbook.getCreationHelper();
-            dataStyle.setDataFormat(createHelper.createDataFormat().getFormat("$#,##0.00"));
+            dataStyle.setDataFormat(createHelper.createDataFormat().getFormat(Constant.EXCEL_CURRENCY_FORMAT));
 
             if (position % 2 == 0) {
                 dataStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
@@ -183,7 +183,8 @@ public class RankingService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error al aplicar estilo a fila de datos: " + e.getMessage());
+            logger.warning("Error al aplicar estilo a fila de datos");
+            throw new RankingException("Error al aplicar estilo a fila de datos: " + e.getMessage());
         }
     }
 
@@ -202,7 +203,7 @@ public class RankingService {
 
 
                 CreationHelper createHelper = workbook.getCreationHelper();
-                style.setDataFormat(createHelper.createDataFormat().getFormat("$#,##0.00"));
+                style.setDataFormat(createHelper.createDataFormat().getFormat(Constant.EXCEL_CURRENCY_FORMAT));
 
                 Font font = workbook.createFont();
                 font.setBold(true);
@@ -226,11 +227,14 @@ public class RankingService {
                 cell.setCellStyle(style);
             }
         } catch (Exception e) {
-            System.err.println("Error al aplicar estilo a celda de resumen: " + e.getMessage());
+            logger.warning("Error al aplicar estilo a celda de resumen");
+            throw new RankingException("Error al aplicar estilo a celda de resumen: " + e.getMessage());
+
+
         }
     }
 
-    private void styleBalanceCell(Row row, int cellIndex, Workbook workbook, double balance) {
+    private void styleBalanceCell(Row row, Workbook workbook, double balance) {
         try {
             CellStyle style = workbook.createCellStyle();
 
@@ -240,7 +244,7 @@ public class RankingService {
             style.setBorderRight(BorderStyle.MEDIUM);
 
             CreationHelper createHelper = workbook.getCreationHelper();
-            style.setDataFormat(createHelper.createDataFormat().getFormat("$#,##0.00"));
+            style.setDataFormat(createHelper.createDataFormat().getFormat(Constant.EXCEL_CURRENCY_FORMAT));
 
             if (balance >= 0) {
                 style.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
@@ -257,12 +261,13 @@ public class RankingService {
 
             style.setAlignment(HorizontalAlignment.RIGHT);
 
-            Cell cell = row.getCell(cellIndex);
+            Cell cell = row.getCell(1);
             if (cell != null) {
                 cell.setCellStyle(style);
             }
         } catch (Exception e) {
-            System.err.println("Error al aplicar estilo a celda de balance: " + e.getMessage());
+            logger.warning("Error al aplicar estilo a celda de balance");
+            throw new RankingException("Error al aplicar estilo a celda de balance: " + e.getMessage());
         }
     }
 

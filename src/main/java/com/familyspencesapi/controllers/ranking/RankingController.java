@@ -1,7 +1,10 @@
 package com.familyspencesapi.controllers.ranking;
 
+import com.familyspencesapi.controllers.ranking.response.FailedResponse;
+import com.familyspencesapi.controllers.ranking.response.Response;
+import com.familyspencesapi.controllers.ranking.response.SuccessfulResponse;
 import com.familyspencesapi.service.ranking.RankingService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.familyspencesapi.utils.RankingException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -14,28 +17,32 @@ import java.util.*;
 @RequestMapping("/api/family")
 public class RankingController {
 
-    @Autowired
-    private RankingService rankingService;
+
+    private final RankingService rankingService;
+
+    public RankingController(final RankingService rankingService) {
+        this.rankingService = rankingService;
+    }
 
     @PostMapping(value="/ranking/{idFamily}")
-    public ResponseEntity<?> Ranking(@PathVariable UUID idFamily){
-        if (idFamily == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("success", false, "message", "El idFamily no puede ser nulo"));
+    public ResponseEntity<Response> rankingReport(@PathVariable UUID idFamily){
+        if(idFamily==null){
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new FailedResponse("El id de laa familia no puede ser nulo "));
         }
 
         try {
-            byte[] excelFile=rankingService.generateRankingExcel(idFamily);
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"ranking_familia_.xlsx\"")
-                    .header("X-Message", "Archivo generado exitosamente")
+            byte[] excel = rankingService.generateRankingExcel(idFamily);
+            return ResponseEntity
+                    .ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=ranking.xlsx")
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(excelFile);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al generar Excel: " + e.getMessage());
+                    .body(new SuccessfulResponse(excel));
+        } catch (RankingException e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new FailedResponse("Error generando el ranking: " + e.getMessage()));
         }
     }
 
