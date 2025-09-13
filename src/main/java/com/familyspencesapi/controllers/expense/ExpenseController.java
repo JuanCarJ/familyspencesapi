@@ -210,16 +210,17 @@ public class ExpenseController {
         try {
             Expense expense = EXPENSES.remove(id);
             if (expense != null) {
-                return ResponseEntity.ok(new ApiResponse("Gasto eliminado correctamente", id.toString()));
+                // 204 No Content, sin body
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
             }
-            return ResponseEntity.notFound().build();
-
+            // 404 con body explicativo
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse("Gasto no encontrado con ID: " + id));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(ERROR_INTERNO_SERVIDOR + e.getMessage()));
         }
     }
-
     @GetMapping("/family-members")
     public ResponseEntity<List<FamilyMember>> getFamilyMembers() {
         List<FamilyMember> members = new ArrayList<>(FAMILY_MEMBERS.values());
