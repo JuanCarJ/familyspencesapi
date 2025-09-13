@@ -1,22 +1,43 @@
 package com.familyspencesapi.service.users;
 
 import com.familyspencesapi.domain.users.DocumentType;
-import com.familyspencesapi.domain.users.Relationship;
-import org.springframework.stereotype.Service;
+import com.familyspencesapi.domain.users.Family;
 import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.domain.users.Relationship;
+import com.familyspencesapi.repositories.users.DocumentTypeRepository;
+import com.familyspencesapi.repositories.users.FamilyRepository;
+import com.familyspencesapi.repositories.users.RegisterUserRepository;
+import com.familyspencesapi.repositories.users.RelationshipRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.*;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
 public class RegisterUserService {
 
-    private final List<RegisterUser> users = new ArrayList<>();
+
+    private RegisterUserRepository userRepository;
+    private FamilyRepository familyRepository;
+    private DocumentTypeRepository documentTypeRepository;
+    private RelationshipRepository relationshipRepository;
+
+    public RegisterUserService(RelationshipRepository relationshipRepository, RegisterUserRepository userRepository,
+                               FamilyRepository familyRepository,
+                               DocumentTypeRepository documentTypeRepository) {
+        this.relationshipRepository = relationshipRepository;
+        this.userRepository = userRepository;
+        this.familyRepository = familyRepository;
+        this.documentTypeRepository = documentTypeRepository;
+    }
+
+
     private static final Pattern NAME_PATTERN =
-            Pattern.compile("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{3,100}$");
+            Pattern.compile("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{2,50}$");
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final Pattern PHONE_PATTERN =
@@ -26,49 +47,65 @@ public class RegisterUserService {
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-]).{8,}$");
 
-    private static final List<DocumentType> DOCUMENT_TYPES = List.of(
-            new DocumentType(UUID.fromString("11111111-1111-1111-1111-111111111111"), "CC"),
-            new DocumentType(UUID.fromString("22222222-2222-2222-2222-222222222222"), "TI"),
-            new DocumentType(UUID.fromString("33333333-3333-3333-3333-333333333333"), "CE")
-    );
-
-    private static final List<Relationship> RELATIONSHIPS = List.of(
-            new Relationship(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), "PADRE"),
-            new Relationship(UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), "HIJO"),
-            new Relationship(UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc"), "TUTOR")
-    );
-
+    @Transactional
     public RegisterUser createUser(RegisterUser user) {
         validate(user);
-        user.setId(UUID.randomUUID());
-        user.setfamilyId(UUID.randomUUID());
-        users.add(user);
-        return user;
+
+        validateUniqueFields(user);
+
+        Family family = createOrFindFamily(user);
+        user.setFamily(family);
+
+        return userRepository.save(user);
+    }
+
+    private Family createOrFindFamily(RegisterUser user) {
+        String familyName = "Familia " + user.getLastName();
+        Family newFamily = new Family(familyName);
+        return familyRepository.save(newFamily);
     }
 
 
+    private void validateUniqueFields(RegisterUser user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new IllegalArgumentException("Ya existe un usuario con este email");
+        }
+
+        if (userRepository.existsByDocument(user.getdocument())) {
+            throw new IllegalArgumentException("Ya existe un usuario con este documento");
+        }
+    }
 
     public void validate(RegisterUser user) {
         if (user == null) {
             throw new IllegalArgumentException("El usuario no puede ser nulo");
         }
 
-        validateFullName(user.getfullName());
+        validateFirstName(user.getFirstName());
+        validateLastName(user.getLastName());
         validateBirthDate(user.getbirthDate());
         validateDocumentType(user.getdocumentType());
         validateDocument(user.getdocument());
         validateEmail(user.getEmail());
         validateRelationship(user.getRelationship());
-        validateCreditCard(user.getcredit_card());
+        validateCreditCard(user.getcreditCard());
         validatePhone(user.getphone());
         validateAddress(user.getAddress());
-        validatePassword(user.getPassword(), user.getPassword());
+        validatePassword(user.getPassword());
     }
 
-    private void validateFullName(String fullName) {
-        if (!StringUtils.hasText(fullName) || !NAME_PATTERN.matcher(fullName).matches()) {
+    private void validateFirstName(String firstName) {
+        if (!StringUtils.hasText(firstName) || !NAME_PATTERN.matcher(firstName).matches()) {
             throw new IllegalArgumentException(
-                    "El nombre debe tener entre 3 y 100 letras y espacios, sin números ni símbolos"
+                    "El nombre debe tener entre 2 y 50 letras y espacios, sin números ni símbolos"
+            );
+        }
+    }
+
+    private void validateLastName(String lastName) {
+        if (!StringUtils.hasText(lastName) || !NAME_PATTERN.matcher(lastName).matches()) {
+            throw new IllegalArgumentException(
+                    "El apellido debe tener entre 2 y 50 letras y espacios, sin números ni símbolos"
             );
         }
     }
@@ -80,63 +117,78 @@ public class RegisterUserService {
         LocalDate today = LocalDate.now();
         if (birthDate.isAfter(today) ||
                 Period.between(birthDate, today).getYears() > 150) {
-            throw new IllegalArgumentException("Fecha de nacimiento invalida o edad mayor a 150 años");
+            throw new IllegalArgumentException("Fecha de nacimiento inválida o edad mayor a 150 años");
         }
     }
 
     private void validateDocumentType(DocumentType type) {
         if (type == null || type.getId() == null) {
-            throw new IllegalArgumentException("Tipo de documento invalido");
+            throw new IllegalArgumentException("Tipo de documento inválido");
         }
+        documentTypeRepository.findById(type.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Tipo de documento no encontrado"));
     }
+
+
     private void validateDocument(String document) {
         if (!StringUtils.hasText(document)) {
-            throw new IllegalArgumentException("El documento no puede estar vacio");
+            throw new IllegalArgumentException("El documento no puede estar vacío");
         }
         if (!document.matches("\\d{6,15}")) {
-            throw new IllegalArgumentException("El documento debe tener entre 6 y 15 digitos");
+            throw new IllegalArgumentException("El documento debe tener entre 6 y 15 dígitos");
         }
     }
 
     private void validateEmail(String email) {
         if (!StringUtils.hasText(email) || !EMAIL_PATTERN.matcher(email).matches()) {
-            throw new IllegalArgumentException("Formato de correo electronico invalido");
+            throw new IllegalArgumentException("Formato de correo electrónico inválido");
         }
     }
 
     private void validateRelationship(Relationship relationship) {
         if (relationship == null || relationship.getId() == null) {
-            throw new IllegalArgumentException("Parentesco invalido");
+            throw new IllegalArgumentException("Parentesco inválido");
         }
+        relationshipRepository.findById(relationship.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Parentesco no encontrado"));
     }
 
     private void validateCreditCard(String creditCard) {
         if (!StringUtils.hasText(creditCard) || !CREDIT_CARD_PATTERN.matcher(creditCard).matches()) {
-            throw new IllegalArgumentException("Numero de tarjeta de credito invalido (13-19 digitos)");
+            throw new IllegalArgumentException("Número de tarjeta de crédito inválido (13-19 dígitos)");
         }
     }
 
     private void validatePhone(String phone) {
         if (!StringUtils.hasText(phone) || !PHONE_PATTERN.matcher(phone).matches()) {
-            throw new IllegalArgumentException("Formato de telefono invalido");
+            throw new IllegalArgumentException("Formato de teléfono inválido");
         }
     }
 
     private void validateAddress(String address) {
         if (!StringUtils.hasText(address) || address.length() < 5) {
-            throw new IllegalArgumentException("La direccion no puede estar vacia y debe tener minimo 5 caracteres");
+            throw new IllegalArgumentException("La dirección no puede estar vacía y debe tener mínimo 5 caracteres");
         }
     }
 
-    private void validatePassword(String password, String repeatPassword) {
+    private void validatePassword(String password) {
         if (!StringUtils.hasText(password) ||
                 !PASSWORD_PATTERN.matcher(password).matches()) {
             throw new IllegalArgumentException(
-                    "La contraseña debe tener minimo 8 caracteres, con minuscula, mayuscula, numero y simbolo"
+                    "La contraseña debe tener mínimo 8 caracteres, con minúscula, mayúscula, número y símbolo"
             );
         }
-        if (!password.equals(repeatPassword)) {
-            throw new IllegalArgumentException("Las contraseñas no coinciden");
-        }
+    }
+    public RegisterUser findById(UUID id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+    }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    public boolean existsByDocument(String document) {
+        return userRepository.existsByDocument(document);
     }
 }
