@@ -8,31 +8,33 @@ import com.familyspencesapi.repositories.users.DocumentTypeRepository;
 import com.familyspencesapi.repositories.users.FamilyRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
 import com.familyspencesapi.repositories.users.RelationshipRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
 public class RegisterUserService {
 
-    @Autowired
+
     private RegisterUserRepository userRepository;
-
-    @Autowired
     private FamilyRepository familyRepository;
-
-    @Autowired
     private DocumentTypeRepository documentTypeRepository;
-
-    @Autowired
     private RelationshipRepository relationshipRepository;
+
+    public RegisterUserService(RelationshipRepository relationshipRepository, RegisterUserRepository userRepository,
+                               FamilyRepository familyRepository,
+                               DocumentTypeRepository documentTypeRepository) {
+        this.relationshipRepository = relationshipRepository;
+        this.userRepository = userRepository;
+        this.familyRepository = familyRepository;
+        this.documentTypeRepository = documentTypeRepository;
+    }
+
 
     private static final Pattern NAME_PATTERN =
             Pattern.compile("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{2,50}$");
@@ -54,16 +56,6 @@ public class RegisterUserService {
         Family family = createOrFindFamily(user);
         user.setFamily(family);
 
-        return userRepository.save(user);
-    }
-
-    @Transactional
-    public RegisterUser createUserWithExistingFamily(RegisterUser user, UUID familyId) {
-        validate(user);
-        validateUniqueFields(user);
-        Family family = familyRepository.findById(familyId)
-                .orElseThrow(() -> new IllegalArgumentException("Familia no encontrada"));
-        user.setFamily(family);
         return userRepository.save(user);
     }
 
@@ -96,7 +88,7 @@ public class RegisterUserService {
         validateDocument(user.getdocument());
         validateEmail(user.getEmail());
         validateRelationship(user.getRelationship());
-        validateCreditCard(user.getcredit_card());
+        validateCreditCard(user.getcreditCard());
         validatePhone(user.getphone());
         validateAddress(user.getAddress());
         validatePassword(user.getPassword());

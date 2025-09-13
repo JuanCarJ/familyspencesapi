@@ -30,7 +30,7 @@ public class RegisterUser {
     @JoinColumn(name = "relationship_id", nullable = false)
     private Relationship relationship;
     @Column(name = "credit_card", nullable = false)
-    private String credit_card;
+    private String creditCard;
     @Column(name = "phone", nullable = false)
     private String phone;
     @Column(name = "address", nullable = false)
@@ -103,12 +103,12 @@ public class RegisterUser {
         this.email = email;
     }
 
-    public String getcredit_card() {
-        return credit_card;
+    public String getcreditCard() {
+        return creditCard;
     }
 
-    public void setcredit_card(String credit_card) {
-        this.credit_card = credit_card;
+    public void setcreditCard(String creditCard) {
+        this.creditCard = creditCard;
     }
 
     public String getphone() {
