@@ -2,6 +2,7 @@ package com.familyspencesapi.utils;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -83,6 +84,22 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // Manejo de errores de deserialización (JSON inválido o mal formateado)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleJsonParseError(
+            HttpMessageNotReadableException ex, WebRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Error en el formato JSON de la petición",
+                "El cuerpo de la petición contiene un JSON inválido o valores no reconocidos. " +
+                        "El Tipo de categoria y Periodo de presupuesto son obligatorios y no pueden estar vacíos",
+                HttpStatus.BAD_REQUEST.value(),
+                request.getDescription(false)
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     // Clase para la respuesta de error
