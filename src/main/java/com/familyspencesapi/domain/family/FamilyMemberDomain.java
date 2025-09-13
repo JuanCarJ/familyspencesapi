@@ -4,38 +4,52 @@ import com.familyspencesapi.domain.users.DocumentType;
 import com.familyspencesapi.domain.users.Relationship;
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
 @Table(name = "family_members")
 public class FamilyMemberDomain {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
+
     @Column(name = "full_name", nullable = false)
     private String fullName;
+
     @Column(name = "birth_date", nullable = false)
-    private String birthDate;
-    @Column(name = "family_id", nullable = false)
-    private String familyId;
+    private LocalDate birthDate;
+
+    @ManyToOne
+    @JoinColumn(name = "family_id", nullable = false)
+    private Family family; // Relación a la entidad Family
 
     @ManyToOne
     @JoinColumn(name = "document_type_id", nullable = false)
     private DocumentType documentType;
+
     @Column(name = "document_number", nullable = false, unique = true)
     private String documentNumber;
+
     @Column(name = "email", nullable = false, unique = true)
     private String email;
+
     @ManyToOne
     @JoinColumn(name = "relationship_id", nullable = false)
     private Relationship relationship;
+
     @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
+
     @Column(name = "address", nullable = false)
     private String address;
+
     @Column(name = "password", nullable = false)
     private String password;
-    @Column(name= "confirm_password", nullable = false)
+
+    @Transient
     private String confirmPassword;
 
 
@@ -55,20 +69,20 @@ public class FamilyMemberDomain {
         this.fullName = fullName;
     }
 
-    public String getBirthDate() {
+    public LocalDate getBirthDate() {
         return birthDate;
     }
 
-    public void setBirthDate(String birthDate) {
+    public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
 
-    public String getFamilyId() {
-        return familyId;
+    public Family getFamily() {
+        return family;
     }
 
-    public void setFamilyId(String familyId) {
-        this.familyId = familyId;
+    public void setFamily(Family family) {
+        this.family = family;
     }
 
     public DocumentType getDocumentType() {
