@@ -1,4 +1,3 @@
-// Archivo: BudgetController.java
 
 package com.familyspencesapi.controllers.budget;
 
