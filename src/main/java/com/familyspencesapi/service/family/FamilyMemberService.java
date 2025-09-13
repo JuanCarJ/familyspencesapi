@@ -44,13 +44,11 @@ public class FamilyMemberService {
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-]).{8,}$");
 
-    // === Crear un familiar ===
     @Transactional
     public FamilyMemberDomain create(FamilyMemberDomain member) {
         validate(member);
         validateUniqueFields(member);
 
-        // Verificar familia existente
         Family family = familyRepository.findById(member.getFamily().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Familia no encontrada"));
         member.setFamily(family);
