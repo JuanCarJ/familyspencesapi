@@ -25,7 +25,6 @@ public class CategoryService {
     // POST - Crear Categoria
     public Category createCategory(Category category) {
         validateCategory(category);
-        category.setId(UUID.randomUUID());
 
         return categoryRepository.save(category);
     }
