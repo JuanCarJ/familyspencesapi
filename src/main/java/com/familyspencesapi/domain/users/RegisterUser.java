@@ -1,40 +1,47 @@
 package com.familyspencesapi.domain.users;
 
+
+import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
+@Entity
+@Table(name = "users")
 public class RegisterUser {
+    @Id
+    @GeneratedValue(strategy =  GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
-    private  String fullName;
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+    @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
+    @ManyToOne
+    @JoinColumn(name = "document_type_id", nullable = false)
     private DocumentType documentType;
+    @Column(name = "document", nullable = false, unique = true)
     private String document;
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
+    @ManyToOne
+    @JoinColumn(name = "relationship_id", nullable = false)
     private Relationship relationship;
+    @Column(name = "credit_card", nullable = false)
     private String credit_card;
+    @Column(name = "phone", nullable = false)
     private String phone;
+    @Column(name = "address", nullable = false)
     private String address;
+    @Column(name = "password", nullable = false)
     private String password;
-    private UUID familyId;
+    @ManyToOne
+    @JoinColumn(name = "family_id", nullable = false)
+    private Family family;
 
 
-    public RegisterUser(UUID id, String fullName, LocalDate birthDate,
-                        DocumentType documentType, String document,
-                        String email, Relationship relationship, String credit_card,
-                        String phone, String address, String password, UUID familyId) {
-        this.id = id;
-        this.fullName = fullName;
-        this.birthDate = birthDate;
-        this.documentType = documentType;
-        this.document = document;
-        this.email = email;
-        this.relationship = relationship;
-        this.credit_card = credit_card;
-        this.phone = phone;
-        this.address = address;
-        this.password = password;
-        this.familyId = familyId;
-    }
 
     public UUID getId() {
         return id;
@@ -44,12 +51,24 @@ public class RegisterUser {
         this.id = id;
     }
 
-    public String getfullName() {
-        return fullName;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setfullName(String fullName) {
-        this.fullName = fullName;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getfullName() {
+        return firstName  + " " + lastName;
     }
 
     public LocalDate getbirthDate() {
@@ -124,11 +143,13 @@ public class RegisterUser {
         this.password = password;
     }
 
-    public UUID getfamilyId() {
-        return familyId;
+    public void setFamily(Family family) {
+        this.family = family;
     }
-
-    public void setfamilyId(UUID familyId) {
-        this.familyId = familyId;
+    public Family getFamily() {
+        return family;
+    }
+    public UUID getFamilyId() {
+        return family != null ? family.getId() : null;
     }
 }
