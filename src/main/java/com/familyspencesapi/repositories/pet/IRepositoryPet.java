@@ -1,4 +1,4 @@
-package com.familyspencesapi.repository.pet;
+package com.familyspencesapi.repositories.pet;
 
 import com.familyspencesapi.domain.pet.Pet;
 import org.springframework.data.jpa.repository.JpaRepository;
