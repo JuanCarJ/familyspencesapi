@@ -2,7 +2,6 @@ package com.familyspencesapi.repositories.expense;
 
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
-import com.familyspencesapi.domain.family.FamilyMember;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

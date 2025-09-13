@@ -1,9 +1,8 @@
 package com.familyspencesapi.service.family;
 
-import com.familyspencesapi.domain.family.Family;
 import com.familyspencesapi.domain.family.FamilyMemberDomain;
 import com.familyspencesapi.domain.users.DocumentType;
-import com.familyspencesapi.domain.family.Family;
+import com.familyspencesapi.domain.users.Family;
 import com.familyspencesapi.domain.users.Relationship;
 import com.familyspencesapi.repositories.family.FamilyMemberRepository;
 import com.familyspencesapi.repositories.users.DocumentTypeRepository;

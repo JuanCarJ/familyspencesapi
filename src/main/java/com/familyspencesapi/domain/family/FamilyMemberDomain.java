@@ -1,6 +1,7 @@
 package com.familyspencesapi.domain.family;
 
 import com.familyspencesapi.domain.users.DocumentType;
+import com.familyspencesapi.domain.users.Family;
 import com.familyspencesapi.domain.users.Relationship;
 import jakarta.persistence.*;
 

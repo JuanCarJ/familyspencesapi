@@ -2,7 +2,6 @@ package com.familyspencesapi.service.expense;
 
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
-import com.familyspencesapi.domain.family.FamilyMember;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
 import com.familyspencesapi.repositories.family.FamilyMemberRepository;
 

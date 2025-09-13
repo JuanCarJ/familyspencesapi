@@ -28,4 +28,6 @@ public interface FamilyMemberRepository extends JpaRepository<FamilyMemberDomain
 
     // Buscar por nombre exacto
     Optional<FamilyMemberDomain> findByNameIgnoreCase(String name);
+
+    boolean existsByDocumentNumber(String documentNumber);
 }

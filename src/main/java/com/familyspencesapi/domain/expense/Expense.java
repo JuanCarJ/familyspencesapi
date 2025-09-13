@@ -1,6 +1,6 @@
 package com.familyspencesapi.domain.expense;
 
-import com.familyspencesapi.domain.family.FamilyMember;
+import com.familyspencesapi.domain.family.FamilyMemberDomainDomain;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -38,7 +38,7 @@ public class Expense {
     @NotNull(message = "El responsable es obligatorio")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsible_id", nullable = false)
-    private FamilyMember responsible;
+    private FamilyMemberDomainDomain responsible;
 
     @NotNull(message = "El valor es obligatorio")
     @DecimalMin(value = "0.01", message = "El valor debe ser mayor que 0")
@@ -91,7 +91,7 @@ public class Expense {
 
     // Constructor completo para datos existentes
     public Expense(UUID id, String title, String description, String period,
-                   FamilyMember responsible, BigDecimal value, ExpenseCategory category) {
+                   FamilyMemberDomainDomain responsible, BigDecimal value, ExpenseCategory category) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -103,7 +103,7 @@ public class Expense {
 
     // Constructor para nuevos gastos (sin ID)
     public Expense(String title, String description, String period,
-                   FamilyMember responsible, BigDecimal value, ExpenseCategory category) {
+                   FamilyMemberDomain responsible, BigDecimal value, ExpenseCategory category) {
         this.title = title;
         this.description = description;
         this.period = period;
@@ -113,7 +113,7 @@ public class Expense {
     }
 
     // Constructor mínimo para gastos básicos
-    public Expense(String title, String period, FamilyMember responsible,
+    public Expense(String title, String period, FamilyMemberDomain responsible,
                    BigDecimal value, ExpenseCategory category) {
         this.title = title;
         this.period = period;
@@ -155,11 +155,11 @@ public class Expense {
         this.period = period;
     }
 
-    public FamilyMember getResponsible() {
+    public FamilyMemberDomain getResponsible() {
         return responsible;
     }
 
-    public void setResponsible(FamilyMember responsible) {
+    public void setResponsible(FamilyMemberDomain responsible) {
         this.responsible = responsible;
     }
 
