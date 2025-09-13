@@ -2,6 +2,7 @@ package com.familyspencesapi.domain.categories;
 
 import java.util.UUID;
 
+
 public class Category {
 
     private UUID id;

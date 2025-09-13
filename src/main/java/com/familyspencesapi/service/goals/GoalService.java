@@ -1,0 +1,52 @@
+package com.familyspencesapi.service.goals;
+
+
+
+import com.familyspencesapi.domain.goals.Goal;
+import com.familyspencesapi.repositories.goal.IRepositoryGoal;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class GoalService {
+
+    private final IRepositoryGoal repository;
+
+    public GoalService(IRepositoryGoal repository) {
+        this.repository = repository;
+    }
+
+    public List<Goal> getAllGoals() {
+        return repository.findAll();
+    }
+
+    public Optional<Goal> getGoalById(UUID id) {
+        return repository.findById(id);
+    }
+
+    public Goal createGoal(Goal goal) {
+        return repository.save(goal);
+    }
+
+    public Optional<Goal> updateGoal(UUID id, Goal goalDetails) {
+        return repository.findById(id).map(goal -> {
+            goal.setNombre(goalDetails.getNombre());
+            goal.setDescripcion(goalDetails.getDescripcion());
+            goal.setTope(goalDetails.getTope());
+            goal.setFechaLimite(goalDetails.getFechaLimite());
+            goal.setMetaDiaria(goalDetails.getMetaDiaria());
+            //goal.setCategoria(goalDetails.getCategoria());
+            return repository.save(goal);
+        });
+    }
+
+    public boolean deleteGoal(UUID id) {
+        return repository.findById(id).map(goal -> {
+            repository.delete(goal);
+            return true;
+        }).orElse(false);
+    }
+}
