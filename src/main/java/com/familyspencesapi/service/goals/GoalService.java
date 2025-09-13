@@ -1,7 +1,5 @@
 package com.familyspencesapi.service.goals;
 
-
-
 import com.familyspencesapi.domain.goals.Goal;
 import com.familyspencesapi.repositories.goal.IRepositoryGoal;
 import org.springframework.stereotype.Service;
@@ -33,12 +31,12 @@ public class GoalService {
 
     public Optional<Goal> updateGoal(UUID id, Goal goalDetails) {
         return repository.findById(id).map(goal -> {
-            goal.setNombre(goalDetails.getNombre());
-            goal.setDescripcion(goalDetails.getDescripcion());
-            goal.setTope(goalDetails.getTope());
-            goal.setFechaLimite(goalDetails.getFechaLimite());
-            goal.setMetaDiaria(goalDetails.getMetaDiaria());
-            //goal.setCategoria(goalDetails.getCategoria());
+            goal.setName(goalDetails.getName());
+            goal.setDescription(goalDetails.getDescription());
+            goal.setSavingsCap(goalDetails.getSavingsCap());
+            goal.setDeadline(goalDetails.getDeadline());
+            goal.setDailyGoal(goalDetails.getDailyGoal());
+            // goal.setCategory(goalDetails.getCategory());  // Si activas la relación
             return repository.save(goal);
         });
     }

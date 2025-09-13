@@ -1,62 +1,59 @@
 package com.familyspencesapi.controllers.goal;
 
 import com.familyspencesapi.domain.goals.Goal;
+import com.familyspencesapi.service.goals.GoalService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/goals")
 public class GoalController {
 
+    private final GoalService goalService;
 
-    private final Map<UUID, Goal> goals = new HashMap<>();
+    // Constructor con inyección de dependencias
+    public GoalController(GoalService goalService) {
+        this.goalService = goalService;
+    }
 
-
+    // GET: traer todas las metas
     @GetMapping
     public ResponseEntity<List<Goal>> getAllGoals() {
-        return ResponseEntity.ok(new ArrayList<>(goals.values()));
+        List<Goal> goals = goalService.getAllGoals();
+        return ResponseEntity.ok(goals);
     }
 
-
+    // GET: traer meta por id
     @GetMapping("/{id}")
     public ResponseEntity<Goal> getGoalById(@PathVariable UUID id) {
-        Goal goal = goals.get(id);
-        return goal != null ? ResponseEntity.ok(goal) : ResponseEntity.notFound().build();
+        return goalService.getGoalById(id)
+                .map(ResponseEntity::ok) // si existe la meta
+                .orElse(ResponseEntity.notFound().build()); // si no existe
     }
 
-
+    // POST: crear una nueva meta
     @PostMapping
-    public ResponseEntity<Goal> createGoal(@RequestBody Goal goal) {
-        UUID id = UUID.randomUUID();
-        goal.setId(id);
-        goals.put(id, goal);
-        return ResponseEntity.ok(goal);
+    public ResponseEntity<Goal> createGoal(@Valid @RequestBody Goal goal) {
+        Goal savedGoal = goalService.createGoal(goal);
+        return ResponseEntity.ok(savedGoal);
     }
 
-
+    // PUT: actualizar una meta existente
     @PutMapping("/{id}")
-    public ResponseEntity<Goal> updateGoal(@PathVariable UUID id, @RequestBody Goal goal) {
-        if (!goals.containsKey(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        goal.setId(id);
-        goals.put(id, goal);
-        return ResponseEntity.ok(goal);
+    public ResponseEntity<Goal> updateGoal(@PathVariable UUID id, @Valid @RequestBody Goal goalDetails) {
+        return goalService.updateGoal(id, goalDetails)
+                .map(ResponseEntity::ok) // devuelve la meta actualizada
+                .orElse(ResponseEntity.notFound().build()); // si no existe
     }
 
-
+    // DELETE: eliminar meta
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteGoal(@PathVariable UUID id) {
-        if (!goals.containsKey(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        goals.remove(id);
-        return ResponseEntity.noContent().build();
+        boolean deleted = goalService.deleteGoal(id);
+        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }
