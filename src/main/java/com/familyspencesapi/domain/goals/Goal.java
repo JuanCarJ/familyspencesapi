@@ -1,5 +1,6 @@
 package com.familyspencesapi.domain.goals;
 
+import com.familyspencesapi.domain.categories.Category;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -28,12 +29,10 @@ public class Goal {
     @Size(max = 500, message = "La descripción no puede superar los 500 caracteres")
     private String description;
 
-    /*
-     Relación con Category (comentada por ahora)
+
      @ManyToOne
      @JoinColumn(name = "id", nullable = false)
      private Category category;
-    */
 
     @Column(name = "tope_goal", nullable = false)
     @Positive(message = "El tope debe ser mayor que 0")
@@ -51,10 +50,11 @@ public class Goal {
     public Goal() {}
 
 
-    // Constructor con parámetros (sin ID, porque se genera automáticamente)
-    public Goal(String name, String description, double savingsCap, LocalDateTime deadline, double dailyGoal) {
+    public Goal(UUID id, String name, String description, Category category, double savingsCap, LocalDateTime deadline, double dailyGoal) {
+        this.id = id;
         this.name = name;
         this.description = description;
+        this.category = category;
         this.savingsCap = savingsCap;
         this.deadline = deadline;
         this.dailyGoal = dailyGoal;
@@ -85,7 +85,6 @@ public class Goal {
         this.description = description;
     }
 
-    /*
      public Category getCategory() {
          return category;
      }
@@ -93,7 +92,7 @@ public class Goal {
      public void setCategory(Category category) {
          this.category = category;
      }
-    */
+
 
     public double getSavingsCap() {
         return savingsCap;
