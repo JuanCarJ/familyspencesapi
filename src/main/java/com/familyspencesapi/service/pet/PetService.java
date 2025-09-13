@@ -1,7 +1,7 @@
 package com.familyspencesapi.service.pet;
 
 import com.familyspencesapi.domain.pet.Pet;
-import com.familyspencesapi.repository.pet.IRepositoryPet;
+import com.familyspencesapi.repositories.pet.IRepositoryPet;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
