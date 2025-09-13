@@ -8,31 +8,31 @@ import java.util.UUID;
 
 public class Ranking {
 
-    private UUID familyId;
+    private UUID idFamily;
     private List<String> nameFamilyMembers;
     private Expense expense;
-    private Income income;
+    //private Income income;
 
-    public Ranking(final UUID familyId,final List<String> nameFamilyMembers,final Expense expense,final Income income) {
-        this.familyId = familyId;
+
+    public Ranking(UUID idFamily, List<String> nameFamilyMembers, Expense expense) {
+        this.idFamily = idFamily;
         this.nameFamilyMembers = nameFamilyMembers;
         this.expense = expense;
-        this.income = income;
     }
 
-    public UUID getFamilyId() {
-        return familyId;
+    public UUID getIdFamily() {
+        return idFamily;
     }
 
-    public void setFamilyId(final UUID familyId) {
-        this.familyId = familyId;
+    public void setIdFamily(final UUID idFamily) {
+        this.idFamily = idFamily;
     }
 
     public List<String> getNameFamilyMembers() {
         return nameFamilyMembers;
     }
 
-    public void setNameFamilyMembers(final List<String> nameFamilyMembers) {
+    public void setNameFamilyMembers(List<String> nameFamilyMembers) {
         this.nameFamilyMembers = nameFamilyMembers;
     }
 
@@ -40,15 +40,7 @@ public class Ranking {
         return expense;
     }
 
-    public void setExpense(final Expense expense) {
+    public void setExpense(Expense expense) {
         this.expense = expense;
-    }
-
-    public Income getIncome() {
-        return income;
-    }
-
-    public void setIncome(final Income income) {
-        this.income = income;
     }
 }

@@ -1,65 +1,25 @@
 package com.familyspencesapi.controllers.notification;
 
 import com.familyspencesapi.domain.notification.Notification;
+import com.familyspencesapi.service.notification.NotificationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
 public class NotificationController {
 
-    // Simulación de base de datos en memoria para colaboración
-    private static final List<Notification> NOTIFICATIONS = new ArrayList<>();
+    private final NotificationService notificationService;
 
-    // UUIDs predefinidos para los usuarios de prueba
-    private static final UUID USER_1 = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
-    private static final UUID USER_2 = UUID.fromString("550e8400-e29b-41d4-a716-446655440002");
-    private static final UUID USER_3 = UUID.fromString("550e8400-e29b-41d4-a716-446655440003");
-
-    // Datos quemados para demostración - adaptados al constructor con UUID y Date
-    static {
-        Date now = new Date();
-
-        NOTIFICATIONS.add(new Notification(
-                UUID.randomUUID(), USER_1, "Bienvenido al sistema de gastos familiares",
-                Notification.NotificationType.INFO, Notification.NotificationPriority.NORMAL, false,
-                new Date(now.getTime() - 2 * 60 * 60 * 1000), null // 2 horas atrás
-        ));
-
-        NOTIFICATIONS.add(new Notification(
-                UUID.randomUUID(), USER_1, "Tu presupuesto mensual está al 80%",
-                Notification.NotificationType.WARNING, Notification.NotificationPriority.HIGH, true,
-                new Date(now.getTime() - 5 * 60 * 60 * 1000), // 5 horas atrás
-                new Date(now.getTime() - 4 * 60 * 60 * 1000)  // leída hace 4 horas
-        ));
-
-        NOTIFICATIONS.add(new Notification(
-                UUID.randomUUID(), USER_2, "Nuevo gasto registrado: $45.000 en Supermercado",
-                Notification.NotificationType.EXPENSE_ADDED, Notification.NotificationPriority.NORMAL, false,
-                new Date(now.getTime() - 60 * 60 * 1000), null // 1 hora atrás
-        ));
-
-        NOTIFICATIONS.add(new Notification(
-                UUID.randomUUID(), USER_1, "Recordatorio: Pagar servicios públicos",
-                Notification.NotificationType.PAYMENT_DUE, Notification.NotificationPriority.URGENT, false,
-                new Date(now.getTime() - 30 * 60 * 1000), null // 30 minutos atrás
-        ));
-
-        NOTIFICATIONS.add(new Notification(
-                UUID.randomUUID(), USER_3, "Reporte mensual de gastos disponible",
-                Notification.NotificationType.INFO, Notification.NotificationPriority.NORMAL, true,
-                new Date(now.getTime() - 8 * 60 * 60 * 1000), // 8 horas atrás
-                new Date(now.getTime() - 7 * 60 * 60 * 1000)  // leída hace 7 horas
-        ));
-
-        NOTIFICATIONS.add(new Notification(
-                UUID.randomUUID(), USER_2, "Meta de ahorro alcanzada: ¡Felicidades!",
-                Notification.NotificationType.SUCCESS, Notification.NotificationPriority.NORMAL, false,
-                new Date(now.getTime() - 15 * 60 * 1000), null // 15 minutos atrás
-        ));
+    @Autowired
+    public NotificationController(NotificationService notificationService) {
+        this.notificationService = notificationService;
     }
 
     /**
@@ -68,7 +28,12 @@ public class NotificationController {
      */
     @GetMapping
     public ResponseEntity<List<Notification>> getAll() {
-        return ResponseEntity.ok(new ArrayList<>(NOTIFICATIONS));
+        try {
+            List<Notification> notifications = notificationService.getAllNotifications();
+            return ResponseEntity.ok(notifications);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
@@ -78,10 +43,14 @@ public class NotificationController {
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Notification>> getByUserId(@PathVariable UUID userId) {
-        List<Notification> userNotifications = NOTIFICATIONS.stream()
-                .filter(n -> n.getUserId().equals(userId))
-                .toList();
-        return ResponseEntity.ok(userNotifications);
+        try {
+            List<Notification> notifications = notificationService.getNotificationsByUserId(userId);
+            return ResponseEntity.ok(notifications);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
@@ -91,10 +60,14 @@ public class NotificationController {
      */
     @GetMapping("/user/{userId}/unread")
     public ResponseEntity<List<Notification>> getUnreadByUserId(@PathVariable UUID userId) {
-        List<Notification> unreadNotifications = NOTIFICATIONS.stream()
-                .filter(n -> n.getUserId().equals(userId) && !n.isRead())
-                .toList();
-        return ResponseEntity.ok(unreadNotifications);
+        try {
+            List<Notification> notifications = notificationService.getUnreadNotificationsByUserId(userId);
+            return ResponseEntity.ok(notifications);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
@@ -104,43 +77,101 @@ public class NotificationController {
      */
     @GetMapping("/user/{userId}/unread/count")
     public ResponseEntity<Long> getUnreadCount(@PathVariable UUID userId) {
-        long count = NOTIFICATIONS.stream()
-                .filter(n -> n.getUserId().equals(userId) && !n.isRead())
-                .count();
-        return ResponseEntity.ok(count);
+        try {
+            long count = notificationService.getUnreadNotificationCount(userId);
+            return ResponseEntity.ok(count);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
-     * Crea una nueva notificación usando el constructor específico del domain
+     * Obtiene notificaciones recientes por usuario (últimas 24 horas)
+     * @param userId ID del usuario
+     * @return Lista de notificaciones recientes
+     */
+    @GetMapping("/user/{userId}/recent")
+    public ResponseEntity<List<Notification>> getRecentByUserId(@PathVariable UUID userId) {
+        try {
+            List<Notification> notifications = notificationService.getRecentNotificationsByUserId(userId);
+            return ResponseEntity.ok(notifications);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Obtiene notificaciones por usuario y tipo
+     * @param userId ID del usuario
+     * @param type Tipo de notificación
+     * @return Lista de notificaciones del tipo especificado
+     */
+    @GetMapping("/user/{userId}/type/{type}")
+    public ResponseEntity<List<Notification>> getByUserIdAndType(@PathVariable UUID userId,
+                                                                 @PathVariable Notification.NotificationType type) {
+        try {
+            List<Notification> notifications = notificationService.getNotificationsByUserIdAndType(userId, type);
+            return ResponseEntity.ok(notifications);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Obtiene notificaciones por usuario y prioridad
+     * @param userId ID del usuario
+     * @param priority Prioridad de la notificación
+     * @return Lista de notificaciones de la prioridad especificada
+     */
+    @GetMapping("/user/{userId}/priority/{priority}")
+    public ResponseEntity<List<Notification>> getByUserIdAndPriority(@PathVariable UUID userId,
+                                                                     @PathVariable Notification.NotificationPriority priority) {
+        try {
+            List<Notification> notifications = notificationService.getNotificationsByUserIdAndPriority(userId, priority);
+            return ResponseEntity.ok(notifications);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Crea una nueva notificación
      * @param notificationRequest Datos de la notificación
      * @return Notificación creada
      */
     @PostMapping
     public ResponseEntity<Notification> create(@RequestBody NotificationCreateRequest notificationRequest) {
-        // Validación básica
-        if (notificationRequest.getMessage() == null || notificationRequest.getMessage().trim().isEmpty()) {
+        try {
+            // Validación básica
+            if (notificationRequest.getMessage() == null || notificationRequest.getMessage().trim().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+            if (notificationRequest.getUserId() == null) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            // Crear notificación usando el service
+            Notification notification = notificationService.createNotification(
+                    notificationRequest.getUserId(),
+                    notificationRequest.getMessage(),
+                    notificationRequest.getType() != null ? notificationRequest.getType() : Notification.NotificationType.INFO,
+                    notificationRequest.getPriority() != null ? notificationRequest.getPriority() : Notification.NotificationPriority.NORMAL
+            );
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(notification);
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        if (notificationRequest.getUserId() == null) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        // Crear nueva notificación usando el constructor específico del domain
-        Notification notification = new Notification(
-                UUID.randomUUID(),
-                notificationRequest.getUserId(),
-                notificationRequest.getMessage(),
-                notificationRequest.getType() != null ? notificationRequest.getType() : Notification.NotificationType.INFO,
-                notificationRequest.getPriority() != null ? notificationRequest.getPriority() : Notification.NotificationPriority.NORMAL,
-                false, // Nueva notificación siempre no leída
-                new Date(), // Fecha de creación actual
-                null // readAt es null hasta que se marque como leída
-        );
-
-        // Agregar a la lista
-        NOTIFICATIONS.add(notification);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(notification);
     }
 
     /**
@@ -150,11 +181,13 @@ public class NotificationController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<Notification> getById(@PathVariable UUID id) {
-        return NOTIFICATIONS.stream()
-                .filter(n -> n.getId().equals(id))
-                .findFirst()
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            Optional<Notification> notificationOpt = notificationService.getNotificationById(id);
+            return notificationOpt.map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
@@ -164,15 +197,19 @@ public class NotificationController {
      */
     @PutMapping("/{id}/read")
     public ResponseEntity<Notification> markAsRead(@PathVariable UUID id) {
-        return NOTIFICATIONS.stream()
-                .filter(n -> n.getId().equals(id))
-                .findFirst()
-                .map(notification -> {
-                    // Usar el método markAsRead() del domain
-                    notification.markAsRead();
-                    return ResponseEntity.ok(notification);
-                })
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            boolean updated = notificationService.markNotificationAsRead(id);
+            if (updated) {
+                // Obtener la notificación actualizada
+                Optional<Notification> notificationOpt = notificationService.getNotificationById(id);
+                return notificationOpt.map(ResponseEntity::ok)
+                        .orElse(ResponseEntity.notFound().build());
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
@@ -182,16 +219,14 @@ public class NotificationController {
      */
     @PutMapping("/user/{userId}/read-all")
     public ResponseEntity<NotificationBulkUpdateResponse> markAllAsReadByUser(@PathVariable UUID userId) {
-        int updatedCount = 0;
-
-        for (Notification notification : NOTIFICATIONS) {
-            if (notification.getUserId().equals(userId) && !notification.isRead()) {
-                notification.markAsRead();
-                updatedCount++;
-            }
+        try {
+            int updatedCount = notificationService.markAllNotificationsAsReadByUserId(userId);
+            return ResponseEntity.ok(new NotificationBulkUpdateResponse(updatedCount, "Notificaciones marcadas como leídas"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
-        return ResponseEntity.ok(new NotificationBulkUpdateResponse(updatedCount, "Notificaciones marcadas como leídas"));
     }
 
     /**
@@ -201,8 +236,12 @@ public class NotificationController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        boolean removed = NOTIFICATIONS.removeIf(n -> n.getId().equals(id));
-        return removed ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+        try {
+            boolean deleted = notificationService.deleteNotification(id);
+            return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
@@ -212,11 +251,14 @@ public class NotificationController {
      */
     @DeleteMapping("/user/{userId}/read")
     public ResponseEntity<NotificationBulkUpdateResponse> deleteReadByUser(@PathVariable UUID userId) {
-        int initialSize = NOTIFICATIONS.size();
-        NOTIFICATIONS.removeIf(n -> n.getUserId().equals(userId) && n.isRead());
-        int deletedCount = initialSize - NOTIFICATIONS.size();
-
-        return ResponseEntity.ok(new NotificationBulkUpdateResponse(deletedCount, "Notificaciones leídas eliminadas"));
+        try {
+            int deletedCount = notificationService.deleteReadNotificationsByUserId(userId);
+            return ResponseEntity.ok(new NotificationBulkUpdateResponse(deletedCount, "Notificaciones leídas eliminadas"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     // =================== CLASES AUXILIARES ===================
