@@ -1,19 +1,40 @@
 package com.familyspencesapi.domain.tasks;
 
+import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
-
+@Entity
+@Table(name = "task")
 public class Tasks {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-    private UUID familiId;
+
+    @Column(nullable = false)
+    private UUID familyId;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false)
     private String description;
+
+    @Column(nullable = false)
     private boolean status;
+
+    @Column(nullable = false)
     private LocalDate creationDate;
+
+    @Column(nullable = false)
     private UUID idResponsible;
+
+    @Column(nullable = false)
     private UUID idVacations;
+
+    @Column(nullable = false)
     private UUID idExpenseve;
 
     public Tasks() {
@@ -83,12 +104,12 @@ public class Tasks {
         this.idExpenseve = idExpenseve;
     }
 
-    public UUID getFamiliId() {
-        return familiId;
+    public UUID getFamilyId() {
+        return familyId;
     }
 
-    public void setFamiliId(UUID familiId) {
-        this.familiId = familiId;
+    public void setFamilyId(UUID familyId) {
+        this.familyId = familyId;
     }
 }
 
