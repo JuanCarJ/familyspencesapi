@@ -24,16 +24,16 @@ public class RankingController {
         this.rankingService = rankingService;
     }
 
-    @PostMapping(value="/ranking/{idFamily}")
-    public ResponseEntity<Response> rankingReport(@PathVariable UUID idFamily){
-        if(idFamily==null){
+    @PostMapping(value="/ranking/{familyId}")
+    public ResponseEntity<Response> rankingReport(@PathVariable UUID familyId){
+        if(familyId==null){
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new FailedResponse("El id de laa familia no puede ser nulo "));
         }
 
         try {
-            byte[] excel = rankingService.generateRankingExcel(idFamily);
+            byte[] excel = rankingService.generateRankingExcel(familyId);
             return ResponseEntity
                     .ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=ranking.xlsx")
