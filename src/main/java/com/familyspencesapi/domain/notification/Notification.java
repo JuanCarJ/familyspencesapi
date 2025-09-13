@@ -1,21 +1,48 @@
 package com.familyspencesapi.domain.notification;
 
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
 
+@Entity
+@Table(name = "notifications")
 public class Notification {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", columnDefinition = "UUID")
     private UUID id;
-    private UUID userId;          // usuario al que pertenece
-    private String message;       // contenido de la notificación
-    private NotificationType type; // tipo de notificación (opcional)
-    private NotificationPriority priority; // prioridad (opcional)
-    private boolean read;         // true si ya fue leída
-    private Date createdAt;       // fecha de creación
-    private Date readAt;          // fecha de lectura
 
-    // Constructor completo
+    @Column(name = "user_id", nullable = false, columnDefinition = "UUID")
+    private UUID userId;
+
+    @Column(name = "message", nullable = false, length = 1000)
+    private String message;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false, length = 50)
+    private NotificationType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", nullable = false, length = 20)
+    private NotificationPriority priority;
+
+    @Column(name = "is_read", nullable = false)
+    private boolean read = false;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAtInternal;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAtInternal;
+
+    // Constructor completo (mantiene compatibilidad con código existente)
     public Notification(UUID id, UUID userId, String message, NotificationType type,
                         NotificationPriority priority, boolean read,
                         Date createdAt, Date readAt) {
@@ -25,8 +52,8 @@ public class Notification {
         this.type = type;
         this.priority = priority;
         this.read = read;
-        this.createdAt = createdAt;
-        this.readAt = readAt;
+        this.createdAtInternal = dateToLocalDateTime(createdAt);
+        this.readAtInternal = dateToLocalDateTime(readAt);
     }
 
     // Constructor simplificado para crear nuevas notificaciones
@@ -36,8 +63,8 @@ public class Notification {
         this.type = type;
         this.priority = priority;
         this.read = false;
-        this.createdAt = new Date();
-        this.readAt = null;
+        // createdAtInternal se establece automáticamente por @CreationTimestamp
+        this.readAtInternal = null;
     }
 
     // Constructor mínimo
@@ -45,20 +72,22 @@ public class Notification {
         this(userId, message, NotificationType.INFO, NotificationPriority.NORMAL);
     }
 
+    // Constructor vacío para JPA
+    public Notification() {}
+
     // Método para marcar como leída
     public void markAsRead() {
         this.read = true;
-        this.readAt = new Date();
+        this.readAtInternal = LocalDateTime.now();
     }
 
     // Método para verificar si la notificación es reciente (menos de 24 horas)
     public boolean isRecent() {
-        if (createdAt == null) return false;
-        long dayInMillis = 24 * 60 * 60 * 1000;
-        return createdAt.getTime() > (System.currentTimeMillis() - dayInMillis);
+        if (createdAtInternal == null) return false;
+        return createdAtInternal.isAfter(LocalDateTime.now().minusHours(24));
     }
 
-    // Getters y Setters
+    // Getters y Setters (mantenemos compatibilidad con Date para la API externa)
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -77,16 +106,45 @@ public class Notification {
     public boolean isRead() { return read; }
     public void setRead(boolean read) {
         this.read = read;
-        if (read && this.readAt == null) {
-            this.readAt = new Date();
+        if (read && this.readAtInternal == null) {
+            this.readAtInternal = LocalDateTime.now();
         }
     }
 
-    public Date getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+    // Métodos para mantener compatibilidad con Date en la API
+    public Date getCreatedAt() {
+        return localDateTimeToDate(createdAtInternal);
+    }
 
-    public Date getReadAt() { return readAt; }
-    public void setReadAt(Date readAt) { this.readAt = readAt; }
+    public void setCreatedAt(Date createdAt) {
+        this.createdAtInternal = dateToLocalDateTime(createdAt);
+    }
+
+    public Date getReadAt() {
+        return localDateTimeToDate(readAtInternal);
+    }
+
+    public void setReadAt(Date readAt) {
+        this.readAtInternal = dateToLocalDateTime(readAt);
+    }
+
+    // Métodos internos para JPA (LocalDateTime)
+    public LocalDateTime getCreatedAtInternal() { return createdAtInternal; }
+    public void setCreatedAtInternal(LocalDateTime createdAtInternal) { this.createdAtInternal = createdAtInternal; }
+
+    public LocalDateTime getReadAtInternal() { return readAtInternal; }
+    public void setReadAtInternal(LocalDateTime readAtInternal) { this.readAtInternal = readAtInternal; }
+
+    // Métodos de conversión entre Date y LocalDateTime
+    private Date localDateTimeToDate(LocalDateTime localDateTime) {
+        if (localDateTime == null) return null;
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    private LocalDateTime dateToLocalDateTime(Date date) {
+        if (date == null) return null;
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
 
     // equals y hashCode
     @Override
@@ -112,8 +170,8 @@ public class Notification {
                 ", type=" + type +
                 ", priority=" + priority +
                 ", read=" + read +
-                ", createdAt=" + createdAt +
-                ", readAt=" + readAt +
+                ", createdAt=" + getCreatedAt() +
+                ", readAt=" + getReadAt() +
                 '}';
     }
 
