@@ -1,6 +1,8 @@
 package com.familyspencesapi.controllers.categories;
 
+import com.familyspencesapi.domain.categories.BudgetPeriod;
 import com.familyspencesapi.domain.categories.Category;
+import com.familyspencesapi.domain.categories.CategoryType;
 import com.familyspencesapi.service.category.CategoryService;
 import com.familyspencesapi.utils.CategoryException;
 import org.springframework.http.HttpStatus;
@@ -21,7 +23,7 @@ public class CategoryController {
 
     // POST
     @PostMapping
-    public ResponseEntity<?> createCategory(@RequestBody Category category) {
+    public ResponseEntity<Map<String, String>> createCategory(@RequestBody Category category) {
         try {
             Category created = categoryService.createCategory(category);
             return ResponseEntity.
@@ -42,7 +44,7 @@ public class CategoryController {
 
    // GET BY ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getCategoryById(@PathVariable UUID id) {
+    public ResponseEntity<Object> getCategoryById(@PathVariable UUID id) {
         try {
             return ResponseEntity.ok(categoryService.getCategoryById(id));
         } catch (CategoryException ex) {
@@ -50,11 +52,19 @@ public class CategoryController {
         }
     }
 
+    // GET BY CATEGORY O GET BY PERIOD
+    @GetMapping("/filter")
+    public List<Category> filter(@RequestParam(required = false) CategoryType type,
+                                 @RequestParam(required = false) BudgetPeriod period) {
+        return categoryService.getFiltered(type, period);
+    }
+
+
     // PUT
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCategory(@PathVariable UUID id, @RequestBody Category category) {
+    public ResponseEntity<Map<String, String>> updateCategory(@PathVariable UUID id, @RequestBody Category category) {
         try {
-            Category updated = categoryService.updateCategory(id, category);
+            categoryService.updateCategory(id, category);
             return ResponseEntity.ok(Map.of("mensaje", "La categoría ha sido actualizada exitosamente"));
         } catch (CategoryException ex) {
             return ResponseEntity.badRequest().body(Map.of("mensaje", ex.getMessage()));
@@ -63,7 +73,7 @@ public class CategoryController {
 
     // DELETE
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteCategory(@PathVariable UUID id) {
+    public ResponseEntity<Map<String, String>> deleteCategory(@PathVariable UUID id) {
         try {
             categoryService.deleteCategory(id);
             return ResponseEntity.ok(Map.of("mensaje", "La categoría ha sido eliminada exitosamente"));
