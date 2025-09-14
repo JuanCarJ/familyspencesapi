@@ -1,67 +1,66 @@
-
 package com.familyspencesapi.service.income;
 
 import com.familyspencesapi.domain.income.Income;
+import com.familyspencesapi.repositories.income.RepositoryIncome;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class IncomeService {
 
-    private final List<Income> incomes = new ArrayList<>();
-    private final AtomicLong idCounter = new AtomicLong(1L);
+    private final RepositoryIncome repositoryIncome;
 
-    // Obtener todos los ingresos
+    public IncomeService(RepositoryIncome repositoryIncome) {
+        this.repositoryIncome = repositoryIncome;
+    }
+
     public List<Income> getAllIncomes() {
-        return incomes;
+        return repositoryIncome.findAll();
     }
 
-    // Crear un ingreso
+    @Transactional
     public Income createIncome(Income income) {
-        income.setId(idCounter.getAndIncrement());
-        incomes.add(income);
-        return income;
+        if (income.getTotal() == null || income.getTotal() < 0) {
+            throw new IllegalArgumentException("El total no puede ser nulo ni negativo");
+        }
+        return repositoryIncome.save(income);
     }
 
-    // Buscar ingreso por ID
     public Optional<Income> getIncomeById(Long id) {
-        return incomes.stream()
-                .filter(i -> Objects.equals(i.getId(), id))
-                .findFirst();
+        return repositoryIncome.findById(id);
     }
 
-    // Actualizar un ingreso
+    @Transactional
     public Optional<Income> updateIncome(Long id, Income updated) {
-        return getIncomeById(id).map(income -> {
+        return repositoryIncome.findById(id).map(income -> {
             income.setResponsible(updated.getResponsible());
             income.setTitle(updated.getTitle());
             income.setDescription(updated.getDescription());
             income.setPeriod(updated.getPeriod());
             income.setTotal(updated.getTotal());
             income.setFamilyId(updated.getFamilyId());
-            return income;
+            return repositoryIncome.save(income);
         });
     }
 
-    // Eliminar un ingreso
+    @Transactional
     public boolean deleteIncome(Long id) {
-        return incomes.removeIf(i -> Objects.equals(i.getId(), id));
+        if (!repositoryIncome.existsById(id)) return false;
+        repositoryIncome.deleteById(id);
+        return true;
     }
 
-    // Buscar ingresos por familia (UUID)
     public List<Income> getIncomesByFamilyId(UUID familyId) {
-        return incomes.stream()
-                .filter(i -> familyId.equals(i.getFamilyId()))
-                .collect(Collectors.toList());
+        return repositoryIncome.findByFamilyId(familyId);
     }
 
-    // Calcular total de ingresos por familia
     public Double getTotalByFamilyId(UUID familyId) {
-        return incomes.stream()
-                .filter(i -> familyId.equals(i.getFamilyId()))
+        return repositoryIncome.findByFamilyId(familyId)
+                .stream()
                 .mapToDouble(i -> i.getTotal() != null ? i.getTotal() : 0.0)
                 .sum();
     }
