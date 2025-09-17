@@ -1,6 +1,8 @@
 package com.familyspencesapi.service.category;
 
+import com.familyspencesapi.domain.categories.BudgetPeriod;
 import com.familyspencesapi.domain.categories.Category;
+import com.familyspencesapi.domain.categories.CategoryType;
 import com.familyspencesapi.repositories.categories.CategoryRepository;
 import com.familyspencesapi.utils.CategoryException;
 
@@ -25,7 +27,6 @@ public class CategoryService {
     // POST - Crear Categoria
     public Category createCategory(Category category) {
         validateCategory(category);
-        category.setId(UUID.randomUUID());
 
         return categoryRepository.save(category);
     }
@@ -67,6 +68,7 @@ public class CategoryService {
         return categoryRepository.save(existing);
     }
 
+    // DELETE - Elimina una categoria existente
     public void deleteCategory(UUID id) {
         Category existing = categoryRepository.findById(id).
                 orElseThrow(() -> new CategoryException("Categoria no encntrada"));// lanza excepción si no existe
@@ -74,98 +76,123 @@ public class CategoryService {
         categoryRepository.delete(existing);
     }
 
+    // Filtra las categorias por el tipo
+    public List<Category> getCategoriesByType(CategoryType type) {
+        return categoryRepository.findByCategoryType(type);
+    }
+
+    // Filtra las categorias por el periodo de presupuesto
+    public List<Category> getCategoriesByPeriod(BudgetPeriod period) {
+        return categoryRepository.findByBudgetPeriod(period);
+    }
+
 
     private void validateCategory(Category category) {
+        validateName(category.getName());
+        validateCategoryType(category.getCategoryType());
+        validateDescription(category.getDescription());
+        validateBudget(category.getAllocatedBudget());
+        validatePeriod(category.getBudgetPeriod());
 
-        if (category.getName() == null || category.getName().trim().isEmpty()) {
+        if (categoryRepository.existsByNameIgnoreCase(category.getName())){
+            throw new CategoryException("Ya existe una categoria con el nombre " + category.getName());
+        }
+    }
+
+    private void validateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
             throw new CategoryException("El nombre de la categoria es obligatorio y no puede estar vacío");
         }
-        if (!NAME_PATTERN.matcher(category.getName()).matches()) {
+        if (!NAME_PATTERN.matcher(name).matches()) {
             throw new CategoryException("El nombre de la categoría es inválido");
         }
-        if (category.getName().length() < 3 || category.getName().length() > 50) {
+        if (name.length() < 3 || name.length() > 50) {
             throw new CategoryException("El nombre de la categoría debe tener entre 3 y 50 caracteres");
         }
+    }
 
-
-        if (category.getCategoryType() == null || category.getCategoryType().toString().trim().isEmpty()) {
+    private void validateCategoryType(CategoryType type) {
+        if (type == null || type.toString().trim().isEmpty()) {
             throw new CategoryException("El tipo de la categoría es obligatorio y no puede estar vacío");
         }
-        if (category.getCategoryType() == null) {
-            throw new CategoryException("El tipo de la categoría es inválido");
-        }
+    }
 
-
-        if (category.getDescription() != null && category.getDescription().length() > 255) {
+    private void validateDescription(String description) {
+        if (description != null && description.length() > 255) {
             throw new CategoryException("La descripción de la categoría no puede exceder los 255 caracteres");
         }
+    }
 
-
-        if (category.getAllocatedBudget() == null) {
+    private void validateBudget(BigDecimal budget) {
+        if (budget == null) {
             throw new CategoryException("El presupuesto destinado es obligatorio y no puede estar vacío");
         }
-        if (category.getAllocatedBudget() != null && category.getAllocatedBudget().compareTo(BigDecimal.ZERO) <= 0) {
+        if (budget.compareTo(BigDecimal.ZERO) <= 0) {
             throw new CategoryException("El presupuesto destinado no puede ser negativo o cero");
         }
-        if (category.getAllocatedBudget() != null && category.getAllocatedBudget().compareTo(BigDecimal.valueOf(100000000)) > 0) {
+        if (budget.compareTo(BigDecimal.valueOf(100000000)) > 0) {
             throw new CategoryException("El presupuesto destinado no puede exceder los 100.000.000 de pesos");
         }
+    }
 
-
-        if (category.getBudgetPeriod() == null || category.getBudgetPeriod().toString().trim().isEmpty()) {
+    private void validatePeriod(BudgetPeriod period) {
+        if (period == null || period.toString().trim().isEmpty()) {
             throw new CategoryException("El periodo del presupuesto es obligatorio y no puede estar vacío");
         }
     }
 
+    private void validateCategoryUpdate(Category updates, Category existing) {
+        validateUpdateName(updates.getName(), existing.getName());
+        validateUpdateCategoryType(updates.getCategoryType(), existing.getCategoryType());
+        validateUpdateDescription(updates.getDescription());
+        validateUpdateBudget(updates.getAllocatedBudget(), existing.getAllocatedBudget());
+        validateUpdatePeriod(updates.getBudgetPeriod(), existing.getBudgetPeriod());
+    }
 
-    private void validateCategoryUpdate (Category updates, Category existing){
-
-        if (updates.getName() != null) {
-            if (updates.getName().trim().isEmpty()) {
-                throw new CategoryException("El nombre de la categoría es obligatorio y no puede estar vacío");
-            }
-            if (!NAME_PATTERN.matcher(updates.getName()).matches()) {
-                throw new CategoryException("El nombre de la categoría es inválido");
-            }
-            if (updates.getName().length() < 3 || updates.getName().length() > 50) {
-                throw new CategoryException("El nombre de la categoría debe tener entre 3 y 50 caracteres");
-            }
-        } else if (existing.getName() == null) {
+    private void validateUpdateName(String newName, String existingName) {
+        if (newName != null) {
+            validateName(newName); // reutilizamos la validación normal
+        } else if (existingName == null) {
             throw new CategoryException("El nombre de la categoría es obligatorio");
         }
+    }
 
-
-        if (updates.getCategoryType() != null) {
-            // válido porque es un enum
-        } else if (existing.getCategoryType() == null) {
+    private void validateUpdateCategoryType(CategoryType newType, CategoryType existingType) {
+        if (newType == null && existingType == null) {
             throw new CategoryException("El tipo de la categoría es obligatorio");
         }
+    }
 
+    private void validateUpdateDescription(String description) {
+        validateDescription(description); // ya cubre la longitud
+    }
 
-        if (updates.getDescription() != null && updates.getDescription().length() > 255) {
-            throw new CategoryException("La descripción de la categoría no puede exceder los 255 caracteres");
-        }
-
-
-        if (updates.getAllocatedBudget() != null) {
-            if (updates.getAllocatedBudget().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new CategoryException("El presupuesto destinado no puede ser negativo o cero");
-            }
-            if (updates.getAllocatedBudget().compareTo(BigDecimal.valueOf(100000000)) > 0) {
-                throw new CategoryException("El presupuesto destinado no puede superar los 100,000,000 de pesos");
-            }
-        } else if (existing.getAllocatedBudget() == null) {
+    private void validateUpdateBudget(BigDecimal newBudget, BigDecimal existingBudget) {
+        if (newBudget != null) {
+            validateBudget(newBudget); // reutilizamos validación normal
+        } else if (existingBudget == null) {
             throw new CategoryException("El presupuesto destinado es obligatorio");
         }
+    }
 
-
-        if (updates.getBudgetPeriod() != null) {
-            // válido porque es un enum
-        } else if (existing.getBudgetPeriod() == null) {
+    private void validateUpdatePeriod(BudgetPeriod newPeriod, BudgetPeriod existingPeriod) {
+        if (newPeriod == null && existingPeriod == null) {
             throw new CategoryException("El período del presupuesto es obligatorio");
         }
     }
 
+
+    public List<Category> getFiltered(CategoryType type, BudgetPeriod period){
+        if (type != null && period != null) {
+            return categoryRepository.findByCategoryTypeAndBudgetPeriod(type, period);
+        } else if (type != null) {
+            return categoryRepository.findByCategoryType(type);
+        } else if (period != null) {
+            return categoryRepository.findByBudgetPeriod(period);
+        } else {
+            return categoryRepository.findAll();
+        }
+    }
 }
 
 
