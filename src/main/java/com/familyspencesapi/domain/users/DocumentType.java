@@ -1,15 +1,25 @@
 package com.familyspencesapi.domain.users;
 
+
+import jakarta.persistence.*;
+
+import java.util.List;
 import java.util.UUID;
 
+@Entity
+@Table(name = "document_types")
 public class DocumentType {
+    @Id
+    @GeneratedValue(strategy =  GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
+    @Column(name = "type", nullable = false)
     private String type;
+    @OneToMany(mappedBy = "documentType")
+    private List<RegisterUser> users;
 
-    public DocumentType(UUID id, String type) {
-        this.id = id;
-        this.type = type;
-    }
+
+
     public UUID getId() {
         return id;
     }
