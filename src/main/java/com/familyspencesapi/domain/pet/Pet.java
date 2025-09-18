@@ -1,16 +1,42 @@
 package com.familyspencesapi.domain.pet;
 
+import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
+
+@Entity
+@Table(name = "pets")
 public class Pet {
 
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", columnDefinition = "UUID")
     private UUID id;
+
+
+    @Column(name = "full name", nullable = false, length = 100)
     private String fullName;
+
+
+    @Column(name = "pet type", nullable = false, length = 100)
     private String petType;
+
+
+    @Column(name = "breed", nullable = false, length = 100)
     private String breed;
+
+
+    @Column(name = "birth date", nullable = false, length = 100)
     private LocalDate birthDate;
+
+
+    @Column(name = "familyId", nullable = false, length = 100)
     private UUID familyId;
+
+
 
     // Constructor vacío
     public Pet() {
