@@ -3,6 +3,7 @@ package com.familyspencesapi.service.users;
 import com.familyspencesapi.domain.users.LoginUser;
 import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
+import com.familyspencesapi.service.jwt.JwtService; // ¡Importar!
 import com.familyspencesapi.utils.LoginUserException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,13 +20,15 @@ public class LoginUserService {
 
     private final RegisterUserRepository registerUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public LoginUserService(RegisterUserRepository registerUserRepository, PasswordEncoder passwordEncoder) {
+    public LoginUserService(RegisterUserRepository registerUserRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.registerUserRepository = registerUserRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
-    public Map<String, String> authenticate(LoginUser loginRequest) {
+    public String authenticate(LoginUser loginRequest) {
         if (loginRequest.getEmail() == null || loginRequest.getPassword() == null ||
                 loginRequest.getEmail().trim().isEmpty() || loginRequest.getPassword().trim().isEmpty()) {
             throw new LoginUserException("El correo y la contraseña no pueden estar vacíos.");
@@ -46,10 +49,10 @@ public class LoginUserService {
             throw new LoginUserException("Contraseña incorrecta.");
         }
 
-        Map<String, String> authResponse = new HashMap<>();
-        authResponse.put("idFamily", user.getFamilyId().toString());
-        authResponse.put("idUser", user.getId().toString());
+        Map<String, String> claims = new HashMap<>();
+        claims.put("idFamily", user.getFamilyId().toString());
+        claims.put("idUser", user.getId().toString());
 
-        return authResponse;
+        return jwtService.generateToken(claims);
     }
 }
