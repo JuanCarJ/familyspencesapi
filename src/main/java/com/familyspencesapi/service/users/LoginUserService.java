@@ -3,7 +3,7 @@ package com.familyspencesapi.service.users;
 import com.familyspencesapi.domain.users.LoginUser;
 import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
-import com.familyspencesapi.service.jwt.JwtService; // ¡Importar!
+import com.familyspencesapi.service.jwt.JwtService;
 import com.familyspencesapi.utils.LoginUserException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -49,10 +49,10 @@ public class LoginUserService {
             throw new LoginUserException("Contraseña incorrecta.");
         }
 
-        Map<String, String> claims = new HashMap<>();
-        claims.put("idFamily", user.getFamilyId().toString());
-        claims.put("idUser", user.getId().toString());
+        Map<String, String> authResponse = new HashMap<>();
+        authResponse.put("idFamily", user.getFamilyId().toString());
+        authResponse.put("idUser", user.getId().toString());
 
-        return jwtService.generateToken(claims);
+        return jwtService.generateToken(authResponse);
     }
 }

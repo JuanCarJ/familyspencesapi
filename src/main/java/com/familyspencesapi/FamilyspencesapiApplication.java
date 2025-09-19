@@ -12,8 +12,4 @@ public class FamilyspencesapiApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(FamilyspencesapiApplication.class, args);
 	}
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
 }
