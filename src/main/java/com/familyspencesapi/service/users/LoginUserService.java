@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
@@ -43,16 +44,24 @@ public class LoginUserService {
             throw new LoginUserException("Usuario no encontrado.");
         }
 
+
         RegisterUser user = userOptional.get();
+
+
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new LoginUserException("Contraseña incorrecta.");
         }
 
-        Map<String, String> authResponse = new HashMap<>();
-        authResponse.put("idFamily", user.getFamilyId().toString());
-        authResponse.put("idUser", user.getId().toString());
+        UUID familyId = user.getFamilyId();
+        if (familyId == null) {
+            throw new LoginUserException("El usuario no tiene una familia asignada.");
+        }
 
-        return jwtService.generateToken(authResponse);
+        Map<String, String> claims = new HashMap<>();
+        claims.put("idFamily", familyId.toString());
+        claims.put("idUser", user.getId().toString());
+
+        return jwtService.generateToken(claims);
     }
 }
