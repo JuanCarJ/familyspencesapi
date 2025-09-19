@@ -1,5 +1,7 @@
 package com.familyspencesapi.domain.tasks;
 
+import com.familyspencesapi.domain.expense.Expense;
+import com.familyspencesapi.domain.vacation.Vacation;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -31,11 +33,13 @@ public class Tasks {
     @Column(nullable = false)
     private UUID idResponsible;
 
-    @Column(nullable = false)
-    private UUID idVacations;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vacation_id")
+    private Vacation idVacations;
 
-    @Column(nullable = false)
-    private UUID idExpenseve;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "expenseve_id")
+    private Expense idExpenseve;
 
     public Tasks() {
     }
@@ -88,19 +92,19 @@ public class Tasks {
         this.idResponsible = idResponsible;
     }
 
-    public UUID getIdVacations() {
+    public Vacation getIdVacations() {
         return idVacations;
     }
 
-    public void setIdVacations(final UUID idVacations) {
+    public void setIdVacations(final Vacation idVacations) {
         this.idVacations = idVacations;
     }
 
-    public UUID getIdExpenseve() {
+    public Expense getIdExpenseve() {
         return idExpenseve;
     }
 
-    public void setIdExpenseve(final UUID idExpenseve) {
+    public void setIdExpenseve(final Expense idExpenseve) {
         this.idExpenseve = idExpenseve;
     }
 
