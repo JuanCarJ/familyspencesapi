@@ -20,7 +20,7 @@ public class LoginUserController {
     }
 
     @PostMapping(value = "/users/login", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> login(@RequestBody LoginUser loginRequest) {
+    public ResponseEntity<Object> login(@RequestBody LoginUser loginRequest) {
         try {
             String token = loginService.authenticate(loginRequest);
             return ResponseEntity.ok(new AuthResponse(token));

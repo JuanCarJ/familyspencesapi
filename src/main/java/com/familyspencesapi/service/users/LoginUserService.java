@@ -16,8 +16,8 @@ import java.util.regex.Pattern;
 
 @Service
 public class LoginUserService {
-    private static final String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
-    private static final Pattern emailChecker = Pattern.compile(emailRegex);
+    private static final String EMAILREGEX = "^[A-Za-z0-9+_.-]+@(.+)$";
+    private static final Pattern emailChecker = Pattern.compile(EMAILREGEX);
 
     private final RegisterUserRepository registerUserRepository;
     private final PasswordEncoder passwordEncoder;
@@ -44,7 +44,6 @@ public class LoginUserService {
             throw new LoginUserException("Usuario no encontrado.");
         }
 
-
         RegisterUser user = userOptional.get();
 
 
@@ -58,10 +57,11 @@ public class LoginUserService {
             throw new LoginUserException("El usuario no tiene una familia asignada.");
         }
 
-        Map<String, String> claims = new HashMap<>();
-        claims.put("idFamily", familyId.toString());
-        claims.put("idUser", user.getId().toString());
+        Map<String, String> ids = new HashMap<>();
+        ids.put("idFamily", familyId.toString());
+        ids.put("idUser", user.getId().toString());
 
-        return jwtService.generateToken(claims);
+        return jwtService.generateToken(ids);
     }
+
 }
