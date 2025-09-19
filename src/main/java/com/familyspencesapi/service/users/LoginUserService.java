@@ -1,9 +1,15 @@
 package com.familyspencesapi.service.users;
 
 import com.familyspencesapi.domain.users.LoginUser;
+import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.repositories.users.RegisterUserRepository;
 import com.familyspencesapi.utils.LoginUserException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Service
@@ -11,7 +17,15 @@ public class LoginUserService {
     private static final String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
     private static final Pattern emailChecker = Pattern.compile(emailRegex);
 
-    public String authenticate(LoginUser loginRequest) {
+    private final RegisterUserRepository registerUserRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public LoginUserService(RegisterUserRepository registerUserRepository, PasswordEncoder passwordEncoder) {
+        this.registerUserRepository = registerUserRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public Map<String, String> authenticate(LoginUser loginRequest) {
         if (loginRequest.getEmail() == null || loginRequest.getPassword() == null ||
                 loginRequest.getEmail().trim().isEmpty() || loginRequest.getPassword().trim().isEmpty()) {
             throw new LoginUserException("El correo y la contraseña no pueden estar vacíos.");
@@ -19,6 +33,23 @@ public class LoginUserService {
         if (!emailChecker.matcher(loginRequest.getEmail()).matches()) {
             throw new LoginUserException("El formato del correo electrónico no es válido.");
         }
-        return "b285701f-9955-4331-aaff-0fa3e11dee7b";
+
+        Optional<RegisterUser> userOptional = registerUserRepository.findByEmail(loginRequest.getEmail());
+
+        if (userOptional.isEmpty()) {
+            throw new LoginUserException("Usuario no encontrado.");
+        }
+
+        RegisterUser user = userOptional.get();
+
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            throw new LoginUserException("Contraseña incorrecta.");
+        }
+
+        Map<String, String> authResponse = new HashMap<>();
+        authResponse.put("idFamily", user.getFamilyId().toString());
+        authResponse.put("idUser", user.getId().toString());
+
+        return authResponse;
     }
 }

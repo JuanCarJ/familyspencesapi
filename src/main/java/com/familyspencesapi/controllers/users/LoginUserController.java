@@ -22,8 +22,8 @@ public class LoginUserController {
     @PostMapping(value = "/users/login", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> login(@RequestBody LoginUser loginRequest) {
         try {
-            String familyId = loginService.authenticate(loginRequest);
-            return ResponseEntity.ok(Map.of("idFamily", familyId));
+            Map<String, String> authResponse = loginService.authenticate(loginRequest);
+            return ResponseEntity.ok(authResponse);
 
         } catch (LoginUserException e) {
             return ResponseEntity
@@ -32,4 +32,3 @@ public class LoginUserController {
         }
     }
 }
-
