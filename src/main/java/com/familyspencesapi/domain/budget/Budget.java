@@ -1,9 +1,5 @@
-package com.familyspencesapi.domain.monthlyBudget;
-
-import com.familyspencesapi.domain.expense.Expense;
+package com.familyspencesapi.domain.budget;
 import com.familyspencesapi.domain.family.FamilyMember;
-import com.familyspencesapi.domain.income.Income;
-import com.familyspencesapi.domain.users.RegisterUser;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -15,7 +11,7 @@ import java.util.UUID;
 public class Budget {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID budgetId;
 
     @Column(nullable = false)
@@ -30,7 +26,6 @@ public class Budget {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsible_id", nullable = false)
     private FamilyMember responsible;
-
 
     public Budget() {
     }

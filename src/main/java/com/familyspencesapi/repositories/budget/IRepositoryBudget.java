@@ -1,6 +1,6 @@
 package com.familyspencesapi.repositories.budget;
 
-import com.familyspencesapi.domain.monthlyBudget.Budget;
+import com.familyspencesapi.domain.budget.Budget;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

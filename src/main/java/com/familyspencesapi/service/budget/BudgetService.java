@@ -1,43 +1,123 @@
-package com.familyspencesapi.service.budget;// Archivo: BudgetService.java
-
+package com.familyspencesapi.service.budget;
+import com.familyspencesapi.domain.family.FamilyMember;
+import com.familyspencesapi.domain.budget.Budget;
+import com.familyspencesapi.repositories.budget.IRepositoryBudget;
+import com.familyspencesapi.repositories.expense.ExpenseRepository;
+import com.familyspencesapi.repositories.family.FamilyMemberRepository;
+import com.familyspencesapi.service.income.IncomeService;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.util.Map;
-import java.util.UUID;
+import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BudgetService {
 
-    public Map<String, Object> createBudget(UUID familyId, CreateBudgetRequest request) {
-        System.out.println("Petecion llego" + familyId );
-        System.out.println("Datos recibidos del postman " + request);
+    private static final String BUDGET_ID = "budgetId";
 
-        return Map.of(
-                "budgetId", UUID.randomUUID(),
-                "familyId", familyId,
-                "period", request.period(),
-                "budgetAmount", request.budgetAmount(),
-                "responsibleId", request.responsibleId(),
-                "message", "Budget successfully added from Service"
-        );
+    private final IRepositoryBudget repositoryBudget;
+    private final FamilyMemberRepository familyMemberRepository;
+    private final ExpenseRepository expenseRepository;
+    private final IncomeService incomeService;
+
+    public BudgetService(IRepositoryBudget repositoryBudget,
+                         FamilyMemberRepository familyMemberRepository,
+                         ExpenseRepository expenseRepository,
+                         IncomeService incomeService) {
+        this.repositoryBudget = repositoryBudget;
+        this.familyMemberRepository = familyMemberRepository;
+        this.expenseRepository = expenseRepository;
+        this.incomeService = incomeService;
     }
 
+    /** Busca un mienbro usando el responsibleId*/
+    public Map<String, Object> createBudget(UUID familyId, CreateBudgetRequest request) {
+        FamilyMember responsible = familyMemberRepository.findById(request.responsibleId())
+                .orElseThrow(() -> new IllegalArgumentException("El responsable con el ID proporcionado no existe."));
+
+        Budget newBudget = new Budget();
+        newBudget.setFamilyId(familyId);
+        newBudget.setPeriod(request.period());
+        newBudget.setBudgetAmount(request.budgetAmount());
+        newBudget.setResponsible(responsible);
+
+        Budget savedBudget = repositoryBudget.save(newBudget);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put(BUDGET_ID, savedBudget.getBudgetId());
+        response.put("familyId", savedBudget.getFamilyId());
+        response.put("period", savedBudget.getPeriod().toString());
+        response.put("budgetAmount", savedBudget.getBudgetAmount());
+        response.put("responsibleId", savedBudget.getResponsible().getId());
+        response.put("message", "Budget successfully added");
+        return response;
+    }
+    /** Busca un presupuesto por ID*/
     public Map<String, Object> getBudgetDetails(UUID budgetId) {
-        System.out.println("Presupuesto con ID " + budgetId );
-        return Map.of(
-                "budgetId", budgetId,
-                "period", "2025-09-05",
-                "budgetAmount", 2000000,
-                "responsible", Map.of(
-                        "responsibleId", UUID.randomUUID(),
-                        "name", "Mom"
-                ),
-                "summary", Map.of(
-                        "familyTotalIncome", 3500000,
-                        "totalExpenses", 1600000,
-                        "balance", 1900000
-                )
-        );
+        Budget budget = repositoryBudget.findById(budgetId)
+                .orElseThrow(() -> new NoSuchElementException("Presupuesto no encontrado con ID: " + budgetId));
+
+        /** LLama  para obtener el total de la familia*/
+        Double totalIncome = incomeService.getTotalByFamilyId(budget.getFamilyId());
+
+        /** Formatea la fecha*/
+        String periodAsString = budget.getPeriod().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        BigDecimal totalExpenses = expenseRepository.calculateTotalByPeriod(periodAsString);
+        if (totalExpenses == null) {
+            totalExpenses = BigDecimal.ZERO;
+        }
+
+        BigDecimal balance = BigDecimal.valueOf(totalIncome).subtract(totalExpenses);
+
+        Map<String, Object> responsibleMap = new LinkedHashMap<>();
+        responsibleMap.put("responsibleId", budget.getResponsible().getId());
+        responsibleMap.put("name", budget.getResponsible().getName());
+
+        Map<String, Object> summaryMap = new LinkedHashMap<>();
+        summaryMap.put("familyTotalIncome", totalIncome);
+        summaryMap.put("totalExpenses", totalExpenses);
+        summaryMap.put("balance", balance);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put(BUDGET_ID, budget.getBudgetId());
+        response.put("period", budget.getPeriod().toString());
+        response.put("budgetAmount", budget.getBudgetAmount());
+        response.put("responsible", responsibleMap);
+        response.put("summary", summaryMap);
+
+        return response;
+    }
+    /** Obtener todos los presupuestos por familia*/
+    public List<Map<String, Object>> getAllBudgetsForFamily(UUID familyId) {
+        List<Budget> budgets = repositoryBudget.findByFamilyIdOrderByPeriod(familyId);
+
+        return budgets.stream().map(budget -> {
+            BigDecimal budgetAmount = BigDecimal.valueOf(budget.getBudgetAmount());
+
+            Double totalIncome = incomeService.getTotalByFamilyId(budget.getFamilyId());
+            BigDecimal income = BigDecimal.valueOf(totalIncome);
+
+            String periodAsString = budget.getPeriod().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            BigDecimal totalExpenses = expenseRepository.calculateTotalByPeriod(periodAsString);
+            totalExpenses = (totalExpenses == null) ? BigDecimal.ZERO : totalExpenses;
+
+            BigDecimal incomeDifference = income.subtract(budgetAmount);
+            BigDecimal expensesDifference = budgetAmount.add(income).subtract(totalExpenses);
+            BigDecimal balance = expensesDifference;
+
+            Map<String, Object> budgetMap = new LinkedHashMap<>();
+            budgetMap.put(BUDGET_ID, budget.getBudgetId());
+            budgetMap.put("periodo", periodAsString);
+            budgetMap.put("presupuesto", budget.getBudgetAmount());
+            budgetMap.put("income", totalIncome);
+            budgetMap.put("expenses", totalExpenses);
+            budgetMap.put("incomeDifference", incomeDifference);
+            budgetMap.put("expensesDifference", expensesDifference);
+            budgetMap.put("balance", balance);
+            budgetMap.put("responsable", budget.getResponsible().getName());
+
+            return budgetMap;
+        }).collect(Collectors.toList());
     }
 }
