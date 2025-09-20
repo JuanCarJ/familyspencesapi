@@ -2,6 +2,7 @@ package com.familyspencesapi.domain.expense;
 
 import com.familyspencesapi.domain.users.RegisterUser;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -39,6 +40,7 @@ public class Expense {
     @NotNull(message = "El responsable es obligatorio")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsible_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private RegisterUser responsible;
 
     @NotNull(message = "El valor es obligatorio")
