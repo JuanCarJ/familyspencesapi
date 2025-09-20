@@ -1,5 +1,6 @@
 package com.familyspencesapi.domain.users;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.List;
@@ -15,6 +16,7 @@ public class Family {
     @Column(name = "family_name")
     private String familyName;
     @OneToMany(mappedBy = "family")
+    @JsonIgnore
     private List<RegisterUser> users;
 
     public Family() {
