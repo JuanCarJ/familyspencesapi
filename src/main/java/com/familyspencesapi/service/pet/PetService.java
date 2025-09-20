@@ -29,7 +29,7 @@ public class PetService {
 
     // Crear nueva mascota
     public Pet createPet(Pet pet) {
-        pet.setId(UUID.randomUUID()); // Generamos un UUID para el nuevo registro
+        // JPA generará automáticamente el ID
         return petRepository.save(pet);
     }
 

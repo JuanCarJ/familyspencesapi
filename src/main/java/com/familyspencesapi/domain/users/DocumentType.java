@@ -1,6 +1,7 @@
 package com.familyspencesapi.domain.users;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public class DocumentType {
     @Column(name = "type", nullable = false)
     private String type;
     @OneToMany(mappedBy = "documentType")
+    @JsonIgnore
     private List<RegisterUser> users;
 
 

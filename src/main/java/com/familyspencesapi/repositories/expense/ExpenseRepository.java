@@ -2,7 +2,7 @@ package com.familyspencesapi.repositories.expense;
 
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
-import com.familyspencesapi.domain.family.FamilyMember;
+import com.familyspencesapi.domain.users.RegisterUser;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,10 +29,17 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
 
     List<Expense> findByPeriodIgnoreCase(String period);
 
-    // Buscar por responsable
-    Page<Expense> findByResponsible(FamilyMember responsible, Pageable pageable);
+    // Buscar por responsable (RegisterUser)
+    Page<Expense> findByResponsible(RegisterUser responsible, Pageable pageable);
 
-    List<Expense> findByResponsible(FamilyMember responsible);
+    List<Expense> findByResponsible(RegisterUser responsible);
+
+    // Buscar por ID del responsable
+    List<Expense> findByResponsibleId(UUID responsibleId);
+
+    // Buscar por familia del responsable
+    @Query("SELECT e FROM Expense e WHERE e.responsible.family.id = :familyId")
+    List<Expense> findByResponsibleFamilyId(@Param("familyId") UUID familyId);
 
     // Buscar gastos costosos (mayor que un valor)
     List<Expense> findByValueGreaterThan(BigDecimal value);
@@ -58,7 +65,15 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
 
     // Calcular total por responsable
     @Query("SELECT COALESCE(SUM(e.value), 0) FROM Expense e WHERE e.responsible = :responsible")
-    BigDecimal calculateTotalByResponsible(@Param("responsible") FamilyMember responsible);
+    BigDecimal calculateTotalByResponsible(@Param("responsible") RegisterUser responsible);
+
+    // Calcular total por familia
+    @Query("SELECT COALESCE(SUM(e.value), 0) FROM Expense e WHERE e.responsible.family.id = :familyId")
+    BigDecimal calculateTotalByFamily(@Param("familyId") UUID familyId);
+
+    // Calcular total por familia y período
+    @Query("SELECT COALESCE(SUM(e.value), 0) FROM Expense e WHERE e.responsible.family.id = :familyId AND LOWER(e.period) = LOWER(:period)")
+    BigDecimal calculateTotalByFamilyAndPeriod(@Param("familyId") UUID familyId, @Param("period") String period);
 
     // Obtener estadísticas básicas
     @Query("SELECT COUNT(e), COALESCE(SUM(e.value), 0), COALESCE(AVG(e.value), 0) FROM Expense e")
@@ -78,7 +93,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
             @Param("title") String title,
             @Param("period") String period,
             @Param("category") ExpenseCategory category,
-            @Param("responsible") FamilyMember responsible,
+            @Param("responsible") RegisterUser responsible,
             Pageable pageable);
 
     // Encontrar gastos del mes actual
@@ -96,7 +111,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     // Buscar gastos por rango de fechas y responsable
     @Query("SELECT e FROM Expense e WHERE e.responsible = :responsible AND e.createdAt BETWEEN :startDate AND :endDate")
     List<Expense> findByResponsibleAndDateRange(
-            @Param("responsible") FamilyMember responsible,
+            @Param("responsible") RegisterUser responsible,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 
@@ -105,10 +120,22 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     boolean existsSimilarExpense(
             @Param("title") String title,
             @Param("period") String period,
-            @Param("responsible") FamilyMember responsible,
+            @Param("responsible") RegisterUser responsible,
             @Param("excludeId") UUID excludeId);
 
     // Buscar gastos recientes (últimos N días)
     @Query("SELECT e FROM Expense e WHERE e.createdAt >= :since ORDER BY e.createdAt DESC")
     List<Expense> findRecentExpenses(@Param("since") LocalDateTime since);
+
+    // Encontrar gastos caros (usando método del dominio)
+    @Query("SELECT e FROM Expense e WHERE e.value > 1000.00")
+    List<Expense> findExpensiveExpenses();
+
+    // Estadísticas por familia
+    @Query("SELECT e.responsible.family.id, COUNT(e), SUM(e.value) FROM Expense e GROUP BY e.responsible.family.id")
+    List<Object[]> getExpenseStatisticsByFamily();
+
+    // Gastos por usuario en un período específico
+    @Query("SELECT e FROM Expense e WHERE e.responsible.id = :userId AND LOWER(e.period) = LOWER(:period)")
+    List<Expense> findByUserIdAndPeriod(@Param("userId") UUID userId, @Param("period") String period);
 }
