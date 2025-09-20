@@ -28,12 +28,8 @@ public class NotificationController {
      */
     @GetMapping
     public ResponseEntity<List<Notification>> getAll() {
-        try {
-            List<Notification> notifications = notificationService.getAllNotifications();
-            return ResponseEntity.ok(notifications);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        List<Notification> notifications = notificationService.getAllNotifications();
+        return ResponseEntity.ok(notifications);
     }
 
     /**
@@ -48,8 +44,6 @@ public class NotificationController {
             return ResponseEntity.ok(notifications);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -65,8 +59,6 @@ public class NotificationController {
             return ResponseEntity.ok(notifications);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -82,8 +74,6 @@ public class NotificationController {
             return ResponseEntity.ok(count);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -99,8 +89,6 @@ public class NotificationController {
             return ResponseEntity.ok(notifications);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -118,8 +106,6 @@ public class NotificationController {
             return ResponseEntity.ok(notifications);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -137,8 +123,6 @@ public class NotificationController {
             return ResponseEntity.ok(notifications);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -149,15 +133,15 @@ public class NotificationController {
      */
     @PostMapping
     public ResponseEntity<Notification> create(@RequestBody NotificationCreateRequest notificationRequest) {
-        try {
-            // Validación básica
-            if (notificationRequest.getMessage() == null || notificationRequest.getMessage().trim().isEmpty()) {
-                return ResponseEntity.badRequest().build();
-            }
-            if (notificationRequest.getUserId() == null) {
-                return ResponseEntity.badRequest().build();
-            }
+        // Validación de campos requeridos
+        if (notificationRequest.getMessage() == null || notificationRequest.getMessage().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (notificationRequest.getUserId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
 
+        try {
             // Crear notificación usando el service
             Notification notification = notificationService.createNotification(
                     notificationRequest.getUserId(),
@@ -169,8 +153,6 @@ public class NotificationController {
             return ResponseEntity.status(HttpStatus.CREATED).body(notification);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -181,13 +163,9 @@ public class NotificationController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<Notification> getById(@PathVariable UUID id) {
-        try {
-            Optional<Notification> notificationOpt = notificationService.getNotificationById(id);
-            return notificationOpt.map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        Optional<Notification> notificationOpt = notificationService.getNotificationById(id);
+        return notificationOpt.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     /**
@@ -197,18 +175,14 @@ public class NotificationController {
      */
     @PutMapping("/{id}/read")
     public ResponseEntity<Notification> markAsRead(@PathVariable UUID id) {
-        try {
-            boolean updated = notificationService.markNotificationAsRead(id);
-            if (updated) {
-                // Obtener la notificación actualizada
-                Optional<Notification> notificationOpt = notificationService.getNotificationById(id);
-                return notificationOpt.map(ResponseEntity::ok)
-                        .orElse(ResponseEntity.notFound().build());
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        boolean updated = notificationService.markNotificationAsRead(id);
+        if (updated) {
+            // Obtener la notificación actualizada
+            Optional<Notification> notificationOpt = notificationService.getNotificationById(id);
+            return notificationOpt.map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -224,8 +198,6 @@ public class NotificationController {
             return ResponseEntity.ok(new NotificationBulkUpdateResponse(updatedCount, "Notificaciones marcadas como leídas"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -236,12 +208,8 @@ public class NotificationController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        try {
-            boolean deleted = notificationService.deleteNotification(id);
-            return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        boolean deleted = notificationService.deleteNotification(id);
+        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
     /**
@@ -256,8 +224,6 @@ public class NotificationController {
             return ResponseEntity.ok(new NotificationBulkUpdateResponse(deletedCount, "Notificaciones leídas eliminadas"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -300,8 +266,8 @@ public class NotificationController {
      * DTO para respuestas de operaciones masivas
      */
     public static class NotificationBulkUpdateResponse {
-        private int count;
-        private String message;
+        private final int count;
+        private final String message;
 
         public NotificationBulkUpdateResponse(int count, String message) {
             this.count = count;
