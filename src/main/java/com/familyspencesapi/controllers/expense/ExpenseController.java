@@ -22,23 +22,31 @@ import jakarta.validation.constraints.Pattern;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/rest/expenses")
 @CrossOrigin(origins = "*")
 public class ExpenseController {
 
+    // Constantes para mensajes y validaciones
+    private static final String ERROR_VALIDATION_MESSAGE = "Errores de validación: ";
+    private static final String ERROR_USER_NOT_FOUND = "Error: Usuario no encontrado con ID: ";
+    private static final String ERROR_INVALID_PERIOD = "Error: El período '%s' no es válido";
+    private static final String SUCCESS_EXPENSE_CREATED = "Gasto registrado correctamente";
+    private static final String SUCCESS_EXPENSE_UPDATED = "Gasto actualizado correctamente";
+    private static final String SUCCESS_EXPENSE_DELETED = "Gasto eliminado correctamente";
+    private static final String ERROR_VALIDATION_PREFIX = "Error de validación: ";
+    private static final String ERROR_INTERNAL_SERVER = "Error interno del servidor: ";
+    private static final String DEFAULT_RELATIONSHIP = "Sin relación";
+
     private final ExpenseService expenseService;
     private final RegisterUserService userService;
 
-    // Constructor injection
     public ExpenseController(ExpenseService expenseService, RegisterUserService userService) {
         this.expenseService = expenseService;
         this.userService = userService;
     }
 
-    // GET: api/v1/rest/expenses
     @GetMapping("")
     public ResponseEntity<List<Expense>> getAll() {
         try {
@@ -49,7 +57,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/{id}
     @GetMapping("/{id}")
     public ResponseEntity<Expense> getById(@PathVariable UUID id) {
         try {
@@ -60,7 +67,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/by-category/{category}
     @GetMapping("/by-category/{category}")
     public ResponseEntity<List<Expense>> getByCategory(@PathVariable ExpenseCategory category) {
         try {
@@ -71,7 +77,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/by-period/{period}
     @GetMapping("/by-period/{period}")
     public ResponseEntity<List<Expense>> getByPeriod(@PathVariable String period) {
         try {
@@ -82,7 +87,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/by-family/{familyId}
     @GetMapping("/by-family/{familyId}")
     public ResponseEntity<List<Expense>> getByFamily(@PathVariable UUID familyId) {
         try {
@@ -93,7 +97,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/by-user/{userId}
     @GetMapping("/by-user/{userId}")
     public ResponseEntity<List<Expense>> getByUser(@PathVariable UUID userId) {
         try {
@@ -104,7 +107,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/expensive
     @GetMapping("/expensive")
     public ResponseEntity<List<Expense>> getExpensiveExpenses() {
         try {
@@ -115,7 +117,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/total-by-period/{period}
     @GetMapping("/total-by-period/{period}")
     public ResponseEntity<TotalResponse> getTotalByPeriod(@PathVariable String period) {
         try {
@@ -126,7 +127,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/total-by-family/{familyId}/{period}
     @GetMapping("/total-by-family/{familyId}/{period}")
     public ResponseEntity<TotalResponse> getTotalByFamilyAndPeriod(
             @PathVariable UUID familyId, @PathVariable String period) {
@@ -138,7 +138,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/statistics
     @GetMapping("/statistics")
     public ResponseEntity<ExpenseService.ExpenseStatistics> getStatistics() {
         try {
@@ -149,24 +148,21 @@ public class ExpenseController {
         }
     }
 
-    // POST: api/v1/rest/expenses
     @PostMapping("")
-    public ResponseEntity<?> create(@Valid @RequestBody ExpenseRequest request, BindingResult result) {
+    public ResponseEntity<ApiResponse> create(@Valid @RequestBody ExpenseRequest request, BindingResult result) {
         try {
-            // Validar errores de binding
             if (result.hasErrors()) {
                 List<String> errors = result.getAllErrors().stream()
                         .map(error -> error.getDefaultMessage())
-                        .collect(Collectors.toList());
+                        .toList();
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse("Errores de validación: " + String.join(", ", errors)));
+                        .body(new ApiResponse(ERROR_VALIDATION_MESSAGE + String.join(", ", errors)));
             }
 
-            // Verificar que el usuario existe
             Optional<RegisterUser> userOpt = userService.findById(request.getUserId());
             if (userOpt.isEmpty()) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse("Error: Usuario no encontrado con ID: " + request.getUserId()));
+                        .body(new ApiResponse(ERROR_USER_NOT_FOUND + request.getUserId()));
             }
 
             RegisterUser responsible = userOpt.get();
@@ -179,37 +175,34 @@ public class ExpenseController {
                     request.getCategory()
             );
 
-            // Validar período personalizado
             if (!expense.isValidPeriod()) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse("Error: El período '" + request.getPeriod() + "' no es válido"));
+                        .body(new ApiResponse(String.format(ERROR_INVALID_PERIOD, request.getPeriod())));
             }
 
             Expense savedExpense = expenseService.save(expense);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponse("Gasto registrado correctamente", savedExpense.getId().toString()));
+                    .body(new ApiResponse(SUCCESS_EXPENSE_CREATED, savedExpense.getId().toString()));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse("Error de validación: " + e.getMessage()));
+                    .body(new ApiResponse(ERROR_VALIDATION_PREFIX + e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse("Error interno del servidor: " + e.getMessage()));
+                    .body(new ApiResponse(ERROR_INTERNAL_SERVER + e.getMessage()));
         }
     }
 
-    // PUT: api/v1/rest/expenses/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable UUID id, @Valid @RequestBody ExpenseRequest request, BindingResult result) {
+    public ResponseEntity<ApiResponse> update(@PathVariable UUID id, @Valid @RequestBody ExpenseRequest request, BindingResult result) {
         try {
-            // Validar errores de binding
             if (result.hasErrors()) {
                 List<String> errors = result.getAllErrors().stream()
                         .map(error -> error.getDefaultMessage())
-                        .collect(Collectors.toList());
+                        .toList();
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse("Errores de validación: " + String.join(", ", errors)));
+                        .body(new ApiResponse(ERROR_VALIDATION_MESSAGE + String.join(", ", errors)));
             }
 
             Optional<Expense> expenseOpt = expenseService.findById(id);
@@ -220,13 +213,12 @@ public class ExpenseController {
             Optional<RegisterUser> userOpt = userService.findById(request.getUserId());
             if (userOpt.isEmpty()) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse("Error: Usuario no encontrado con ID: " + request.getUserId()));
+                        .body(new ApiResponse(ERROR_USER_NOT_FOUND + request.getUserId()));
             }
 
             Expense expense = expenseOpt.get();
             RegisterUser responsible = userOpt.get();
 
-            // Actualizar el gasto existente
             expense.setTitle(request.getTitle().trim());
             expense.setDescription(request.getDescription() != null ? request.getDescription().trim() : "");
             expense.setPeriod(request.getPeriod().trim());
@@ -234,42 +226,39 @@ public class ExpenseController {
             expense.setValue(request.getValue());
             expense.setCategory(request.getCategory());
 
-            // Validar período personalizado
             if (!expense.isValidPeriod()) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse("Error: El período '" + request.getPeriod() + "' no es válido"));
+                        .body(new ApiResponse(String.format(ERROR_INVALID_PERIOD, request.getPeriod())));
             }
 
             expenseService.save(expense);
 
-            return ResponseEntity.ok(new ApiResponse("Gasto actualizado correctamente", id.toString()));
+            return ResponseEntity.ok(new ApiResponse(SUCCESS_EXPENSE_UPDATED, id.toString()));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse("Error de validación: " + e.getMessage()));
+                    .body(new ApiResponse(ERROR_VALIDATION_PREFIX + e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse("Error interno del servidor: " + e.getMessage()));
+                    .body(new ApiResponse(ERROR_INTERNAL_SERVER + e.getMessage()));
         }
     }
 
-    // DELETE: api/v1/rest/expenses/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> delete(@PathVariable UUID id) {
         try {
             boolean deleted = expenseService.deleteById(id);
             if (deleted) {
-                return ResponseEntity.ok(new ApiResponse("Gasto eliminado correctamente", id.toString()));
+                return ResponseEntity.ok(new ApiResponse(SUCCESS_EXPENSE_DELETED, id.toString()));
             }
             return ResponseEntity.notFound().build();
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse("Error interno del servidor: " + e.getMessage()));
+                    .body(new ApiResponse(ERROR_INTERNAL_SERVER + e.getMessage()));
         }
     }
 
-    // GET: api/v1/rest/expenses/users
     @GetMapping("/users")
     public ResponseEntity<List<UserInfo>> getUsers() {
         try {
@@ -279,17 +268,16 @@ public class ExpenseController {
                             user.getId(),
                             user.getfullName(),
                             user.getEmail(),
-                            user.getRelationship() != null ? user.getRelationship().getType() : "Sin relación",
+                            user.getRelationship() != null ? user.getRelationship().getType() : DEFAULT_RELATIONSHIP,
                             user.getFamilyId()
                     ))
-                    .collect(Collectors.toList());
+                    .toList();
             return ResponseEntity.ok(userInfos);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    // GET: api/v1/rest/expenses/users/by-family/{familyId}
     @GetMapping("/users/by-family/{familyId}")
     public ResponseEntity<List<UserInfo>> getUsersByFamily(@PathVariable UUID familyId) {
         try {
@@ -299,30 +287,28 @@ public class ExpenseController {
                             user.getId(),
                             user.getfullName(),
                             user.getEmail(),
-                            user.getRelationship() != null ? user.getRelationship().getType() : "Sin relación",
+                            user.getRelationship() != null ? user.getRelationship().getType() : DEFAULT_RELATIONSHIP,
                             user.getFamilyId()
                     ))
-                    .collect(Collectors.toList());
+                    .toList();
             return ResponseEntity.ok(userInfos);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    // GET: api/v1/rest/expenses/categories
     @GetMapping("/categories")
     public ResponseEntity<List<CategoryInfo>> getCategories() {
         try {
             List<CategoryInfo> categories = Arrays.stream(ExpenseCategory.values())
                     .map(category -> new CategoryInfo(category.name(), category.getDisplayName()))
-                    .collect(Collectors.toList());
+                    .toList();
             return ResponseEntity.ok(categories);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    // GET: api/v1/rest/expenses/recent/{days}
     @GetMapping("/recent/{days}")
     public ResponseEntity<List<Expense>> getRecentExpenses(@PathVariable int days) {
         try {
@@ -333,7 +319,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/current-month
     @GetMapping("/current-month")
     public ResponseEntity<List<Expense>> getCurrentMonthExpenses() {
         try {
@@ -344,7 +329,6 @@ public class ExpenseController {
         }
     }
 
-    // GET: api/v1/rest/expenses/top/{limit}
     @GetMapping("/top/{limit}")
     public ResponseEntity<List<Expense>> getTopExpenses(@PathVariable int limit) {
         try {
@@ -355,7 +339,6 @@ public class ExpenseController {
         }
     }
 
-    // DTO para requests con validaciones mejoradas
     public static class ExpenseRequest {
         @NotBlank(message = "El título es obligatorio")
         @Size(min = 3, max = 100, message = "El título debe tener entre 3 y 100 caracteres")
@@ -381,7 +364,6 @@ public class ExpenseController {
         @NotNull(message = "La categoría es obligatoria")
         private ExpenseCategory category;
 
-        // Constructores
         public ExpenseRequest() {}
 
         public ExpenseRequest(String title, String description, String period,
@@ -394,7 +376,6 @@ public class ExpenseController {
             this.category = category;
         }
 
-        // Getters y Setters
         public String getTitle() { return title; }
         public void setTitle(String title) { this.title = title; }
 
@@ -414,7 +395,6 @@ public class ExpenseController {
         public void setCategory(ExpenseCategory category) { this.category = category; }
     }
 
-    // DTO para información de usuarios
     public static class UserInfo {
         private UUID id;
         private String fullName;
@@ -430,7 +410,6 @@ public class ExpenseController {
             this.familyId = familyId;
         }
 
-        // Getters y Setters
         public UUID getId() { return id; }
         public void setId(UUID id) { this.id = id; }
 
@@ -447,7 +426,6 @@ public class ExpenseController {
         public void setFamilyId(UUID familyId) { this.familyId = familyId; }
     }
 
-    // DTO para responses
     public static class ApiResponse {
         private String mensaje;
         private String idExpense;
@@ -464,7 +442,6 @@ public class ExpenseController {
             this.timestamp = System.currentTimeMillis();
         }
 
-        // Getters y Setters
         public String getMensaje() { return mensaje; }
         public void setMensaje(String mensaje) { this.mensaje = mensaje; }
 
@@ -475,7 +452,6 @@ public class ExpenseController {
         public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
     }
 
-    // DTO para información de categorías
     public static class CategoryInfo {
         private String code;
         private String displayName;
@@ -485,7 +461,6 @@ public class ExpenseController {
             this.displayName = displayName;
         }
 
-        // Getters y Setters
         public String getCode() { return code; }
         public void setCode(String code) { this.code = code; }
 
@@ -493,7 +468,6 @@ public class ExpenseController {
         public void setDisplayName(String displayName) { this.displayName = displayName; }
     }
 
-    // DTO para totales
     public static class TotalResponse {
         private String period;
         private BigDecimal total;
@@ -505,7 +479,6 @@ public class ExpenseController {
             this.formattedTotal = String.format("$%.2f", total);
         }
 
-        // Getters y Setters
         public String getPeriod() { return period; }
         public void setPeriod(String period) { this.period = period; }
 
