@@ -1,7 +1,8 @@
 package com.familyspencesapi.domain.expense;
 
-import com.familyspencesapi.domain.family.FamilyMember;
+import com.familyspencesapi.domain.users.RegisterUser;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -35,10 +36,12 @@ public class Expense {
     @Column(nullable = false, length = 50)
     private String period;
 
+    // CAMBIO: Ahora usa RegisterUser en lugar de FamilyMemberDomain
     @NotNull(message = "El responsable es obligatorio")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsible_id", nullable = false)
-    private FamilyMember responsible;
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private RegisterUser responsible;
 
     @NotNull(message = "El valor es obligatorio")
     @DecimalMin(value = "0.01", message = "El valor debe ser mayor que 0")
@@ -91,7 +94,7 @@ public class Expense {
 
     // Constructor completo para datos existentes
     public Expense(UUID id, String title, String description, String period,
-                   FamilyMember responsible, BigDecimal value, ExpenseCategory category) {
+                   RegisterUser responsible, BigDecimal value, ExpenseCategory category) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -103,7 +106,7 @@ public class Expense {
 
     // Constructor para nuevos gastos (sin ID)
     public Expense(String title, String description, String period,
-                   FamilyMember responsible, BigDecimal value, ExpenseCategory category) {
+                   RegisterUser responsible, BigDecimal value, ExpenseCategory category) {
         this.title = title;
         this.description = description;
         this.period = period;
@@ -113,7 +116,7 @@ public class Expense {
     }
 
     // Constructor mínimo para gastos básicos
-    public Expense(String title, String period, FamilyMember responsible,
+    public Expense(String title, String period, RegisterUser responsible,
                    BigDecimal value, ExpenseCategory category) {
         this.title = title;
         this.period = period;
@@ -155,11 +158,11 @@ public class Expense {
         this.period = period;
     }
 
-    public FamilyMember getResponsible() {
+    public RegisterUser getResponsible() {
         return responsible;
     }
 
-    public void setResponsible(FamilyMember responsible) {
+    public void setResponsible(RegisterUser responsible) {
         this.responsible = responsible;
     }
 
@@ -231,6 +234,21 @@ public class Expense {
         return false;
     }
 
+    // Método para obtener el nombre del responsable
+    public String getResponsibleName() {
+        return responsible != null ? responsible.getfullName() : "Sin responsable";
+    }
+
+    // Método para obtener la familia del responsable
+    public UUID getResponsibleFamilyId() {
+        return responsible != null ? responsible.getFamilyId() : null;
+    }
+
+    // Método para verificar si el gasto pertenece a una familia específica
+    public boolean belongsToFamily(UUID familyId) {
+        return familyId != null && familyId.equals(getResponsibleFamilyId());
+    }
+
     // Método equals mejorado
     @Override
     public boolean equals(Object o) {
@@ -251,7 +269,7 @@ public class Expense {
                 "id=" + id +
                 ", title='" + title + '\'' +
                 ", period='" + period + '\'' +
-                ", responsible=" + (responsible != null ? responsible.getName() : "null") +
+                ", responsible=" + getResponsibleName() +
                 ", value=" + getFormattedValue() +
                 ", category=" + (category != null ? category.getDisplayName() : "null") +
                 ", createdAt=" + createdAt +
