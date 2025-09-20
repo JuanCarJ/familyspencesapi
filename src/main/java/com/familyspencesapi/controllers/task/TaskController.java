@@ -17,10 +17,11 @@ public class TaskController {
     private TaskService taskService;
 
     @GetMapping("/all")
-    public ResponseEntity<List<Tasks>> getAllTasks(@RequestParam(required = true) UUID familyId){
-        List<Tasks> listOfTasks = taskService.getAllTasks(familyId);
+    public ResponseEntity<List<Tasks>> getAllTasks(@RequestParam(required = true) UUID familyId) {
 
+        List<Tasks>listOfTasks = taskService.getAllTasks(familyId);
         return ResponseEntity.ok(listOfTasks);
+
     }
     @GetMapping
     public ResponseEntity<Tasks> getTask(@RequestParam(required = true) UUID familyId, @RequestParam(required = true) UUID taskId){
@@ -37,7 +38,7 @@ public class TaskController {
     }
 
     @PutMapping
-    public ResponseEntity<String> putTask(@RequestParam(required = true) UUID familyId ,@RequestParam(required = true) UUID taskId,@RequestBody Tasks task){
+    public ResponseEntity<String> putTask(@RequestParam(required = true) UUID familyId,@RequestParam(required = true) UUID taskId,@RequestBody Tasks task){
 
         String responseTask = taskService.updateTask(familyId,taskId,task);
 

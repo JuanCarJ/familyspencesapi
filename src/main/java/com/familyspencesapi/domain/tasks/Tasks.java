@@ -2,13 +2,16 @@ package com.familyspencesapi.domain.tasks;
 
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.vacation.Vacation;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
 @Table(name = "task")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Tasks {
 
     @Id
@@ -33,13 +36,14 @@ public class Tasks {
     @Column(nullable = false)
     private UUID idResponsible;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(name = "vacation_id")
     private Vacation idVacations;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(name = "expenseve_id")
     private Expense idExpenseve;
+
 
     public Tasks() {
     }
@@ -99,7 +103,6 @@ public class Tasks {
     public void setIdVacations(final Vacation idVacations) {
         this.idVacations = idVacations;
     }
-
     public Expense getIdExpenseve() {
         return idExpenseve;
     }
