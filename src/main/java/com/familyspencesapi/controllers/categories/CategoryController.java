@@ -1,5 +1,6 @@
 package com.familyspencesapi.controllers.categories;
 
+import com.familyspencesapi.controllers.categories.response.CategoryResponse;
 import com.familyspencesapi.domain.categories.BudgetPeriod;
 import com.familyspencesapi.domain.categories.Category;
 import com.familyspencesapi.domain.categories.CategoryType;
@@ -23,16 +24,16 @@ public class CategoryController {
 
     // POST
     @PostMapping
-    public ResponseEntity<Map<String, String>> createCategory(@RequestBody Category category) {
+    public ResponseEntity<CategoryResponse> createCategory(@RequestBody Category category) {
         try {
             Category created = categoryService.createCategory(category);
             return ResponseEntity.
                     status(HttpStatus.CREATED).
-                    body(Map.of("mensaje", "La categoría " + created.getName() + " ha sido creada exitosamente"));
+                    body(new CategoryResponse("La categoría " + created.getName() + " ha sido creada exitosamente", created));
         } catch (CategoryException ex) {
             return ResponseEntity.
                     badRequest().
-                    body(Map.of("mensaje", ex.getMessage()));
+                    body(new CategoryResponse( ex.getMessage()));
         }
     }
 
