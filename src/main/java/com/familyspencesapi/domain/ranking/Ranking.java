@@ -1,6 +1,6 @@
 package com.familyspencesapi.domain.ranking;
 
-import com.familyspencesapi.domain.expenseControl.Expense;
+import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.income.Income;
 
 import java.util.List;
@@ -11,10 +11,10 @@ public class Ranking {
     private UUID idFamily;
     private List<String> nameFamilyMembers;
     private Expense expense;
-    //private Income income;
+    private Income income;
 
 
-    public Ranking(UUID idFamily, List<String> nameFamilyMembers, Expense expense) {
+    public Ranking(final UUID idFamily,final List<String> nameFamilyMembers,final Expense expense) {
         this.idFamily = idFamily;
         this.nameFamilyMembers = nameFamilyMembers;
         this.expense = expense;
@@ -42,5 +42,13 @@ public class Ranking {
 
     public void setExpense(Expense expense) {
         this.expense = expense;
+    }
+
+    public Income getIncome() {
+        return income;
+    }
+
+    public void setIncome(Income income) {
+        this.income = income;
     }
 }
