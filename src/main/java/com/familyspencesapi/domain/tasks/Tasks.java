@@ -1,22 +1,50 @@
 package com.familyspencesapi.domain.tasks;
 
+import com.familyspencesapi.domain.expense.Expense;
+import com.familyspencesapi.domain.vacation.Vacation;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
-
+@Entity
+@Table(name = "task")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Tasks {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-    private UUID familiId;
-    private String name;
-    private String description;
-    private boolean status;
-    private LocalDate creationDate;
-    private UUID idResponsible;
-    private UUID idVacations;
-    private UUID idExpenseve;
 
-    public Tasks() {
+    @Column(nullable = false)
+    private UUID familyId;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String description;
+
+    @Column(nullable = false)
+    private boolean status;
+
+    @Column(nullable = false)
+    private LocalDate creationDate;
+
+    @Column(nullable = false)
+    private UUID idResponsible;
+
+    @OneToOne
+    @JoinColumn(name = "vacation_id")
+    private Vacation idVacations;
+
+    @OneToOne
+    @JoinColumn(name = "expenseve_id")
+    private Expense idExpenseve;
+
+
+    public Tasks() { // Noncompliant - method is empty
     }
 
     public UUID getId() {
@@ -67,28 +95,27 @@ public class Tasks {
         this.idResponsible = idResponsible;
     }
 
-    public UUID getIdVacations() {
+    public Vacation getIdVacations() {
         return idVacations;
     }
 
-    public void setIdVacations(final UUID idVacations) {
+    public void setIdVacations(final Vacation idVacations) {
         this.idVacations = idVacations;
     }
-
-    public UUID getIdExpenseve() {
+    public Expense getIdExpenseve() {
         return idExpenseve;
     }
 
-    public void setIdExpenseve(final UUID idExpenseve) {
+    public void setIdExpenseve(final Expense idExpenseve) {
         this.idExpenseve = idExpenseve;
     }
 
-    public UUID getFamiliId() {
-        return familiId;
+    public UUID getFamilyId() {
+        return familyId;
     }
 
-    public void setFamiliId(UUID familiId) {
-        this.familiId = familiId;
+    public void setFamilyId(UUID familyId) {
+        this.familyId = familyId;
     }
 }
 

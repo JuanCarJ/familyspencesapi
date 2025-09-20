@@ -8,33 +8,36 @@ import com.familyspencesapi.repositories.users.DocumentTypeRepository;
 import com.familyspencesapi.repositories.users.FamilyRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
 import com.familyspencesapi.repositories.users.RelationshipRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
 public class RegisterUserService {
 
-
     private RegisterUserRepository userRepository;
     private FamilyRepository familyRepository;
     private DocumentTypeRepository documentTypeRepository;
     private RelationshipRepository relationshipRepository;
+    private PasswordEncoder passwordEncoder;
 
     public RegisterUserService(RelationshipRepository relationshipRepository, RegisterUserRepository userRepository,
                                FamilyRepository familyRepository,
-                               DocumentTypeRepository documentTypeRepository) {
+                               DocumentTypeRepository documentTypeRepository, PasswordEncoder passwordEncoder) {
         this.relationshipRepository = relationshipRepository;
         this.userRepository = userRepository;
         this.familyRepository = familyRepository;
         this.documentTypeRepository = documentTypeRepository;
+        this.passwordEncoder = passwordEncoder;
     }
-
 
     private static final Pattern NAME_PATTERN =
             Pattern.compile("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{2,50}$");
@@ -47,12 +50,39 @@ public class RegisterUserService {
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-]).{8,}$");
 
+    // ===== MÉTODOS NUEVOS PARA EL EXPENSE CONTROLLER =====
+
+    /**
+     * Obtener todos los usuarios
+     */
+    @Transactional(readOnly = true)
+    public List<RegisterUser> findAll() {
+        return userRepository.findAll();
+    }
+
+    /**
+     * Buscar usuario por ID - retorna Optional
+     */
+    @Transactional(readOnly = true)
+    public Optional<RegisterUser> findById(UUID id) {
+        return userRepository.findById(id);
+    }
+
+    /**
+     * Obtener usuarios por familia
+     */
+    @Transactional(readOnly = true)
+    public List<RegisterUser> findByFamilyId(UUID familyId) {
+        return userRepository.findByFamily_Id(familyId);
+    }
+
+    // ===== MÉTODOS EXISTENTES =====
+
     @Transactional
     public RegisterUser createUser(RegisterUser user) {
         validate(user);
-
         validateUniqueFields(user);
-
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         Family family = createOrFindFamily(user);
         user.setFamily(family);
 
@@ -64,7 +94,6 @@ public class RegisterUserService {
         Family newFamily = new Family(familyName);
         return familyRepository.save(newFamily);
     }
-
 
     private void validateUniqueFields(RegisterUser user) {
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -129,7 +158,6 @@ public class RegisterUserService {
                 .orElseThrow(() -> new IllegalArgumentException("Tipo de documento no encontrado"));
     }
 
-
     private void validateDocument(String document) {
         if (!StringUtils.hasText(document)) {
             throw new IllegalArgumentException("El documento no puede estar vacío");
@@ -178,10 +206,6 @@ public class RegisterUserService {
                     "La contraseña debe tener mínimo 8 caracteres, con minúscula, mayúscula, número y símbolo"
             );
         }
-    }
-    public RegisterUser findById(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
     }
 
     public boolean existsByEmail(String email) {
