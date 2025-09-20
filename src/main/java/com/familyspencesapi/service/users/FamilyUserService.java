@@ -39,37 +39,43 @@ public class FamilyUserService {
     // PATCH
     public RegisterUser updateUser(String email, RegisterUser updatedData) {
         Optional<RegisterUser> optionalUser = registerUserRepository.findByEmail(email);
-        validate(updatedData);
         if (optionalUser.isEmpty()) {
             return null;
         }
 
         RegisterUser existingUser = optionalUser.get();
 
-        if (updatedData.getfullName() != null && !updatedData.getfullName().isBlank()) {
-            existingUser.setFirstName(updatedData.getfullName());
+        if (updatedData.getFirstName() != null && !updatedData.getFirstName().isBlank()) {
+            validateFirstName(updatedData.getFirstName());
+            existingUser.setFirstName(updatedData.getFirstName());
         }
         if (updatedData.getLastName() != null && !updatedData.getLastName().isBlank()) {
+            validateLastName(updatedData.getLastName());
             existingUser.setLastName(updatedData.getLastName());
         }
 
-        if (updatedData.getdocumentType() != null && doucmentTypeRepository.findById(updatedData.getdocumentType().getId()).isPresent()) {
+        if (updatedData.getdocumentType() != null) {
+            validateDocumentType(updatedData.getdocumentType());
             existingUser.setdocumentType(updatedData.getdocumentType());
         }
         if (updatedData.getdocument() != null && !updatedData.getdocument().isBlank()) {
+            validateDocument(updatedData.getdocument());
             existingUser.setdocument(updatedData.getdocument());
         }
         if (updatedData.getcreditCard() != null && !updatedData.getcreditCard().isBlank()) {
+            validateCreditCard(updatedData.getcreditCard());
             existingUser.setcreditCard(updatedData.getcreditCard());
         }
         if (updatedData.getphone() != null && !updatedData.getphone().isBlank()) {
+            validatePhone(updatedData.getphone());
             existingUser.setphone(updatedData.getphone());
         }
         if (updatedData.getAddress() != null && !updatedData.getAddress().isBlank()) {
+            validateAddress(updatedData.getAddress());
             existingUser.setAddress(updatedData.getAddress());
         }
 
-        return existingUser;
+        return registerUserRepository.save(existingUser);
     }
 
     // PUT (actualización completa)
@@ -81,7 +87,7 @@ public class FamilyUserService {
         }
 
         RegisterUser existingUser = optionalUser.get();
-        existingUser.setFirstName(updatedUser.getfullName());
+        existingUser.setFirstName(updatedUser.getFirstName());
         existingUser.setLastName(updatedUser.getLastName());
         existingUser.setdocumentType(updatedUser.getdocumentType());
         existingUser.setdocument(updatedUser.getdocument());
@@ -89,7 +95,7 @@ public class FamilyUserService {
         existingUser.setphone(updatedUser.getphone());
         existingUser.setAddress(updatedUser.getAddress());
 
-        return existingUser;
+        return registerUserRepository.save(existingUser);
     }
 
     public void validate(RegisterUser user) {
@@ -97,7 +103,8 @@ public class FamilyUserService {
             throw new IllegalArgumentException("El usuario no puede ser nulo");
         }
 
-        validateFullName(user.getfullName());
+        validateFirstName(user.getFirstName());
+        validateLastName(user.getLastName());
         validateDocumentType(user.getdocumentType());
         validateDocument(user.getdocument());
         validateCreditCard(user.getcreditCard());
@@ -105,10 +112,18 @@ public class FamilyUserService {
         validateAddress(user.getAddress());
     }
 
-    private void validateFullName(String fullName) {
-        if (!StringUtils.hasText(fullName) || !NAME_PATTERN.matcher(fullName).matches()) {
+    private void validateFirstName(String firstName) {
+        if (!StringUtils.hasText(firstName) || !NAME_PATTERN.matcher(firstName).matches()) {
             throw new IllegalArgumentException(
-                    "El nombre debe tener entre 3 y 100 letras y espacios, sin números ni símbolos"
+                    "El nombre debe tener entre 2 y 50 letras y espacios, sin números ni símbolos"
+            );
+        }
+    }
+
+    private void validateLastName(String lastName) {
+        if (!StringUtils.hasText(lastName) || !NAME_PATTERN.matcher(lastName).matches()) {
+            throw new IllegalArgumentException(
+                    "El apellido debe tener entre 2 y 50 letras y espacios, sin números ni símbolos"
             );
         }
     }
