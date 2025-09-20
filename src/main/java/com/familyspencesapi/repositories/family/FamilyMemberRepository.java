@@ -1,9 +1,7 @@
 package com.familyspencesapi.repositories.family;
 
-import com.familyspencesapi.domain.family.FamilyMember;
+import com.familyspencesapi.domain.family.FamilyMemberDomain;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,31 +9,25 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface FamilyMemberRepository extends JpaRepository<FamilyMember, UUID> {
+public interface FamilyMemberRepository extends JpaRepository<FamilyMemberDomain, UUID> {
 
     // Buscar por email
-    Optional<FamilyMember> findByEmail(String email);
+    Optional<FamilyMemberDomain> findByEmail(String email);
 
     // Buscar por nombre (case insensitive)
-    List<FamilyMember> findByNameContainingIgnoreCase(String name);
+    List<FamilyMemberDomain> findByNameContainingIgnoreCase(String name);
 
     // Buscar por rol
-    List<FamilyMember> findByRole(String role);
+    List<FamilyMemberDomain> findByRole(String role);
 
     // Verificar si existe un email
     boolean existsByEmail(String email);
 
-    // Buscar miembros activos (si tienes un campo de estado)
-    // List<FamilyMember> findByActiveTrue();
+    // Verificar si existe un documento
+    boolean existsByDocument(String document);
 
     // Buscar por nombre exacto
-    Optional<FamilyMember> findByNameIgnoreCase(String name);
+    Optional<FamilyMemberDomain> findByNameIgnoreCase(String name);
 
-    // Contar miembros por rol
-    @Query("SELECT f.role, COUNT(f) FROM FamilyMember f GROUP BY f.role")
-    List<Object[]> countMembersByRole();
-
-    // Buscar miembros con gastos asociados
-    @Query("SELECT DISTINCT f FROM FamilyMember f JOIN f.expenses e")
-    List<FamilyMember> findMembersWithExpenses();
+    boolean existsByDocumentNumber(String documentNumber);
 }

@@ -2,9 +2,9 @@ package com.familyspencesapi.service.expense;
 
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
-import com.familyspencesapi.domain.family.FamilyMember;
+import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
-import com.familyspencesapi.repositories.family.FamilyMemberRepository;
+import com.familyspencesapi.repositories.users.RegisterUserRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,17 +26,92 @@ public class ExpenseService {
     private static final Logger logger = LoggerFactory.getLogger(ExpenseService.class);
 
     private final ExpenseRepository expenseRepository;
-    private final FamilyMemberRepository familyMemberRepository;
+    private final RegisterUserRepository registerUserRepository;
 
-    // Constructor injection instead of field injection
-    public ExpenseService(ExpenseRepository expenseRepository, FamilyMemberRepository familyMemberRepository) {
+    // Constructor injection
+    public ExpenseService(ExpenseRepository expenseRepository, RegisterUserRepository registerUserRepository) {
         this.expenseRepository = expenseRepository;
-        this.familyMemberRepository = familyMemberRepository;
+        this.registerUserRepository = registerUserRepository;
+    }
+
+    /**
+     * Encontrar todos los gastos
+     */
+    @Transactional(readOnly = true)
+    public List<Expense> findAll() {
+        return expenseRepository.findAll();
+    }
+
+    /**
+     * Encontrar gasto por ID
+     */
+    @Transactional(readOnly = true)
+    public Optional<Expense> findById(UUID id) {
+        return expenseRepository.findById(id);
+    }
+
+    /**
+     * Guardar gasto
+     */
+    public Expense save(Expense expense) {
+        return expenseRepository.save(expense);
+    }
+
+    /**
+     * Eliminar gasto por ID
+     */
+    public boolean deleteById(UUID id) {
+        if (expenseRepository.existsById(id)) {
+            expenseRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Encontrar gastos por categoría
+     */
+    @Transactional(readOnly = true)
+    public List<Expense> findByCategory(ExpenseCategory category) {
+        return expenseRepository.findByCategory(category);
+    }
+
+    /**
+     * Encontrar gastos por período
+     */
+    @Transactional(readOnly = true)
+    public List<Expense> findByPeriod(String period) {
+        return expenseRepository.findByPeriodIgnoreCase(period);
+    }
+
+    /**
+     * Encontrar gastos por responsable (usuario)
+     */
+    @Transactional(readOnly = true)
+    public List<Expense> findByResponsibleId(UUID userId) {
+        return expenseRepository.findByResponsibleId(userId);
+    }
+
+    /**
+     * Encontrar gastos por familia
+     */
+    @Transactional(readOnly = true)
+    public List<Expense> findByResponsibleFamilyId(UUID familyId) {
+        return expenseRepository.findByResponsibleFamilyId(familyId);
+    }
+
+    /**
+     * Encontrar gastos caros
+     */
+    @Transactional(readOnly = true)
+    public List<Expense> findExpensiveExpenses() {
+        return expenseRepository.findExpensiveExpenses();
     }
 
     /**
      * Calcular total de gastos por período
      */
+    @Transactional(readOnly = true)
     public BigDecimal calculateTotalByPeriod(String period) {
         return expenseRepository.calculateTotalByPeriod(period);
     }
@@ -44,15 +119,25 @@ public class ExpenseService {
     /**
      * Calcular total de gastos por categoría
      */
+    @Transactional(readOnly = true)
     public BigDecimal calculateTotalByCategory(ExpenseCategory category) {
         return expenseRepository.calculateTotalByCategory(category);
     }
 
     /**
+     * Calcular total de gastos por familia y período
+     */
+    @Transactional(readOnly = true)
+    public BigDecimal calculateTotalByFamilyAndPeriod(UUID familyId, String period) {
+        return expenseRepository.calculateTotalByFamilyAndPeriod(familyId, period);
+    }
+
+    /**
      * Calcular total de gastos por responsable
      */
+    @Transactional(readOnly = true)
     public BigDecimal calculateTotalByResponsible(UUID responsibleId) {
-        Optional<FamilyMember> responsible = familyMemberRepository.findById(responsibleId);
+        Optional<RegisterUser> responsible = registerUserRepository.findById(responsibleId);
         if (responsible.isPresent()) {
             return expenseRepository.calculateTotalByResponsible(responsible.get());
         }
@@ -62,6 +147,7 @@ public class ExpenseService {
     /**
      * Obtener estadísticas generales de gastos
      */
+    @Transactional(readOnly = true)
     public ExpenseStatistics getExpenseStatistics() {
         Object[] basicStats = expenseRepository.getBasicStatistics();
 
@@ -80,11 +166,12 @@ public class ExpenseService {
     /**
      * Buscar gastos con múltiples filtros
      */
+    @Transactional(readOnly = true)
     public List<Expense> searchExpenses(String title, String period, ExpenseCategory category,
                                         UUID responsibleId, Pageable pageable) {
-        FamilyMember responsible = null;
+        RegisterUser responsible = null;
         if (responsibleId != null) {
-            Optional<FamilyMember> responsibleOpt = familyMemberRepository.findById(responsibleId);
+            Optional<RegisterUser> responsibleOpt = registerUserRepository.findById(responsibleId);
             responsible = responsibleOpt.orElse(null);
         }
 
@@ -99,9 +186,9 @@ public class ExpenseService {
                                  UUID responsibleId, BigDecimal value, ExpenseCategory category) {
 
         // Verificar que el responsable existe
-        Optional<FamilyMember> responsible = familyMemberRepository.findById(responsibleId);
+        Optional<RegisterUser> responsible = registerUserRepository.findById(responsibleId);
         if (responsible.isEmpty()) {
-            throw new IllegalArgumentException("Miembro de familia no encontrado");
+            throw new IllegalArgumentException("Usuario no encontrado");
         }
 
         // Crear el gasto
@@ -137,9 +224,9 @@ public class ExpenseService {
         }
 
         // Verificar que el responsable existe
-        Optional<FamilyMember> responsible = familyMemberRepository.findById(responsibleId);
+        Optional<RegisterUser> responsible = registerUserRepository.findById(responsibleId);
         if (responsible.isEmpty()) {
-            throw new IllegalArgumentException("Miembro de familia no encontrado");
+            throw new IllegalArgumentException("Usuario no encontrado");
         }
 
         Expense expense = expenseOpt.get();
@@ -172,6 +259,7 @@ public class ExpenseService {
     /**
      * Obtener gastos recientes (últimos N días)
      */
+    @Transactional(readOnly = true)
     public List<Expense> getRecentExpenses(int days) {
         LocalDateTime since = LocalDateTime.now().minusDays(days);
         return expenseRepository.findRecentExpenses(since);
@@ -180,6 +268,7 @@ public class ExpenseService {
     /**
      * Obtener gastos del mes actual
      */
+    @Transactional(readOnly = true)
     public List<Expense> getCurrentMonthExpenses() {
         return expenseRepository.findCurrentMonthExpenses();
     }
@@ -187,6 +276,7 @@ public class ExpenseService {
     /**
      * Obtener top gastos por valor
      */
+    @Transactional(readOnly = true)
     public List<Expense> getTopExpensesByValue(int limit) {
         return expenseRepository.findTopExpensesByValue(
                 org.springframework.data.domain.PageRequest.of(0, limit)
@@ -194,12 +284,13 @@ public class ExpenseService {
     }
 
     /**
-     * Verificar si un miembro tiene gastos asociados
+     * Verificar si un usuario tiene gastos asociados
      */
-    public boolean memberHasExpenses(UUID memberId) {
-        Optional<FamilyMember> member = familyMemberRepository.findById(memberId);
-        if (member.isPresent()) {
-            List<Expense> expenses = expenseRepository.findByResponsible(member.get());
+    @Transactional(readOnly = true)
+    public boolean userHasExpenses(UUID userId) {
+        Optional<RegisterUser> user = registerUserRepository.findById(userId);
+        if (user.isPresent()) {
+            List<Expense> expenses = expenseRepository.findByResponsible(user.get());
             return !expenses.isEmpty();
         }
         return false;
@@ -208,17 +299,19 @@ public class ExpenseService {
     /**
      * Obtener gastos por rango de fechas
      */
+    @Transactional(readOnly = true)
     public List<Expense> getExpensesByDateRange(LocalDateTime start, LocalDateTime end) {
         return expenseRepository.findByCreatedAtBetween(start, end);
     }
 
     /**
-     * Obtener gastos de un miembro en un rango de fechas
+     * Obtener gastos de un usuario en un rango de fechas
      */
-    public List<Expense> getMemberExpensesByDateRange(UUID memberId, LocalDateTime start, LocalDateTime end) {
-        Optional<FamilyMember> member = familyMemberRepository.findById(memberId);
-        if (member.isPresent()) {
-            return expenseRepository.findByResponsibleAndDateRange(member.get(), start, end);
+    @Transactional(readOnly = true)
+    public List<Expense> getUserExpensesByDateRange(UUID userId, LocalDateTime start, LocalDateTime end) {
+        Optional<RegisterUser> user = registerUserRepository.findById(userId);
+        if (user.isPresent()) {
+            return expenseRepository.findByResponsibleAndDateRange(user.get(), start, end);
         }
         return List.of();
     }
@@ -226,6 +319,7 @@ public class ExpenseService {
     /**
      * Calcular promedio de gastos por categoría
      */
+    @Transactional(readOnly = true)
     public BigDecimal calculateAverageByCategory(ExpenseCategory category) {
         List<Expense> expenses = expenseRepository.findByCategory(category);
         if (expenses.isEmpty()) {
@@ -242,31 +336,33 @@ public class ExpenseService {
     /**
      * Obtener conteo de gastos por categoría
      */
+    @Transactional(readOnly = true)
     public List<Object[]> getExpenseCountByCategory() {
         return expenseRepository.countExpensesByCategory();
     }
 
     /**
-     * Validar si se puede eliminar un miembro de familia
+     * Validar si se puede eliminar un usuario
      */
-    public boolean canDeleteFamilyMember(UUID memberId) {
-        return !memberHasExpenses(memberId);
+    @Transactional(readOnly = true)
+    public boolean canDeleteUser(UUID userId) {
+        return !userHasExpenses(userId);
     }
 
     /**
-     * Transferir gastos de un miembro a otro
+     * Transferir gastos de un usuario a otro
      */
-    public int transferExpenses(UUID fromMemberId, UUID toMemberId) {
-        Optional<FamilyMember> fromMember = familyMemberRepository.findById(fromMemberId);
-        Optional<FamilyMember> toMember = familyMemberRepository.findById(toMemberId);
+    public int transferExpenses(UUID fromUserId, UUID toUserId) {
+        Optional<RegisterUser> fromUser = registerUserRepository.findById(fromUserId);
+        Optional<RegisterUser> toUser = registerUserRepository.findById(toUserId);
 
-        if (fromMember.isEmpty() || toMember.isEmpty()) {
-            throw new IllegalArgumentException("Uno o ambos miembros no existen");
+        if (fromUser.isEmpty() || toUser.isEmpty()) {
+            throw new IllegalArgumentException("Uno o ambos usuarios no existen");
         }
 
-        List<Expense> expenses = expenseRepository.findByResponsible(fromMember.get());
+        List<Expense> expenses = expenseRepository.findByResponsible(fromUser.get());
 
-        expenses.forEach(expense -> expense.setResponsible(toMember.get()));
+        expenses.forEach(expense -> expense.setResponsible(toUser.get()));
 
         expenseRepository.saveAll(expenses);
         return expenses.size();

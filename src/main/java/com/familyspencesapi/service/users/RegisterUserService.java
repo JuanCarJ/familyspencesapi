@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -179,7 +180,7 @@ public class RegisterUserService {
             );
         }
     }
-    public RegisterUser findById(UUID id) {
+    public Optional<RegisterUser> findById(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
     }
