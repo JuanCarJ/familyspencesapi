@@ -9,5 +9,4 @@ public class FamilyspencesapiApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(FamilyspencesapiApplication.class, args);
 	}
-
 }
