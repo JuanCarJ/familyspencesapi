@@ -36,7 +36,7 @@ public class GoalService {
             goal.setSavingsCap(goalDetails.getSavingsCap());
             goal.setDeadline(goalDetails.getDeadline());
             goal.setDailyGoal(goalDetails.getDailyGoal());
-            goal.setCategory(goalDetails.getCategory());  // Si activas la relación
+            goal.setCategory(goalDetails.getCategory());
             return repository.save(goal);
         });
     }

@@ -7,8 +7,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
+
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 
 @Entity
 @Table(name = "goal")
@@ -31,7 +33,7 @@ public class Goal {
 
 
      @ManyToOne
-     @JoinColumn(name = "id", nullable = false)
+     @JoinColumn(name = "id_category", referencedColumnName = "id", nullable = false)
      private Category category;
 
     @Column(name = "tope_goal", nullable = false)
