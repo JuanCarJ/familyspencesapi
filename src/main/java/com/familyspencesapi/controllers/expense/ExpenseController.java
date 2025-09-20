@@ -89,9 +89,13 @@ public class ExpenseController {
     public ResponseEntity<Expense> getById(@PathVariable UUID id) {
         try {
             Optional<Expense> expense = expenseService.findById(id);
-            return expense.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+            if (expense.isPresent()) {
+                return ResponseEntity.status(HttpStatus.OK).body(expense.get()); // 200 explícito
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // 404 explícito
+            }
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500 explícito
         }
     }
 
@@ -277,9 +281,11 @@ public class ExpenseController {
         try {
             boolean deleted = expenseService.deleteById(id);
             if (deleted) {
-                return ResponseEntity.ok(new ApiResponse(SUCCESS_EXPENSE_DELETED, id.toString()));
+                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                        .body(new ApiResponse(SUCCESS_EXPENSE_DELETED, id.toString()));
             }
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse("Gasto no encontrado con ID: " + id));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
