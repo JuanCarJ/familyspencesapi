@@ -73,7 +73,7 @@ public class RegisterUserService {
      */
     @Transactional(readOnly = true)
     public List<RegisterUser> findByFamilyId(UUID familyId) {
-        return userRepository.findByFamilyId(familyId);
+        return userRepository.findByFamily_Id(familyId);
     }
 
     // ===== MÉTODOS EXISTENTES =====
