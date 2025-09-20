@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
-import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -45,7 +44,7 @@ public class Tasks {
     private Expense idExpenseve;
 
 
-    public Tasks() {
+    public Tasks() { // Noncompliant - method is empty
     }
 
     public UUID getId() {

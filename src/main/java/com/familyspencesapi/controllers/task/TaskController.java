@@ -2,7 +2,6 @@ package com.familyspencesapi.controllers.task;
 
 import com.familyspencesapi.domain.tasks.Tasks;
 import com.familyspencesapi.service.task.TaskService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,8 +12,11 @@ import java.util.UUID;
 @RequestMapping("/api/tasks")
 public class TaskController {
 
-    @Autowired
-    private TaskService taskService;
+    private final TaskService taskService;
+
+    public TaskController(TaskService taskService) {
+        this.taskService = taskService;
+    }
 
     @GetMapping("/all")
     public ResponseEntity<List<Tasks>> getAllTasks(@RequestParam(required = true) UUID familyId) {
