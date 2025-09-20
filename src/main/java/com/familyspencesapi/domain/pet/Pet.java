@@ -1,55 +1,47 @@
 package com.familyspencesapi.domain.pet;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
-
 
 @Entity
 @Table(name = "pets")
 public class Pet {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", columnDefinition = "UUID")
     private UUID id;
 
-
-    @Column(name = "full name", nullable = false, length = 100)
+    @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-
-    @Column(name = "pet type", nullable = false, length = 100)
+    @Column(name = "pet_type", nullable = false, length = 50)
     private String petType;
 
-
-    @Column(name = "breed", nullable = false, length = 100)
-    private String breed;
-
-
-    @Column(name = "birth date", nullable = false, length = 100)
+    @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "familyId", nullable = false, length = 100)
-    private UUID familyId;
-
-
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     // Constructor vacío
     public Pet() {
     }
 
     // Constructor con todos los atributos
-    public Pet(UUID id, String fullName, String petType, String breed, LocalDate birthDate, UUID familyId) {
+    public Pet(UUID id, String fullName, String petType, LocalDate birthDate,
+               LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.fullName = fullName;
         this.petType = petType;
-        this.breed = breed;
         this.birthDate = birthDate;
-        this.familyId = familyId;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     // Getters y setters
@@ -77,14 +69,6 @@ public class Pet {
         this.petType = petType;
     }
 
-    public String getBreed() {
-        return breed;
-    }
-
-    public void setBreed(String breed) {
-        this.breed = breed;
-    }
-
     public LocalDate getBirthDate() {
         return birthDate;
     }
@@ -93,12 +77,20 @@ public class Pet {
         this.birthDate = birthDate;
     }
 
-    public UUID getFamilyId() {
-        return familyId;
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
-    public void setFamilyId(UUID familyId) {
-        this.familyId = familyId;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     // toString
@@ -108,10 +100,9 @@ public class Pet {
                 "id=" + id +
                 ", fullName='" + fullName + '\'' +
                 ", petType='" + petType + '\'' +
-                ", breed='" + breed + '\'' +
                 ", birthDate=" + birthDate +
-                ", familyId=" + familyId +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
                 '}';
     }
 }
-
