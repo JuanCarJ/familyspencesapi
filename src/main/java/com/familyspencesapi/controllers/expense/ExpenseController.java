@@ -279,7 +279,7 @@ public class ExpenseController {
                             user.getId(),
                             user.getfullName(),
                             user.getEmail(),
-                            user.getRelationship().getName(),
+                            user.getRelationship() != null ? user.getRelationship().getType() : "Sin relación",
                             user.getFamilyId()
                     ))
                     .collect(Collectors.toList());
@@ -299,7 +299,7 @@ public class ExpenseController {
                             user.getId(),
                             user.getfullName(),
                             user.getEmail(),
-                            user.getRelationship().getName(),
+                            user.getRelationship() != null ? user.getRelationship().getType() : "Sin relación",
                             user.getFamilyId()
                     ))
                     .collect(Collectors.toList());

@@ -15,13 +15,13 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
 public class RegisterUserService {
-
 
     private RegisterUserRepository userRepository;
     private FamilyRepository familyRepository;
@@ -39,7 +39,6 @@ public class RegisterUserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-
     private static final Pattern NAME_PATTERN =
             Pattern.compile("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{2,50}$");
     private static final Pattern EMAIL_PATTERN =
@@ -50,6 +49,34 @@ public class RegisterUserService {
             Pattern.compile("^\\d{13,19}$");
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-]).{8,}$");
+
+    // ===== MÉTODOS NUEVOS PARA EL EXPENSE CONTROLLER =====
+
+    /**
+     * Obtener todos los usuarios
+     */
+    @Transactional(readOnly = true)
+    public List<RegisterUser> findAll() {
+        return userRepository.findAll();
+    }
+
+    /**
+     * Buscar usuario por ID - retorna Optional
+     */
+    @Transactional(readOnly = true)
+    public Optional<RegisterUser> findById(UUID id) {
+        return userRepository.findById(id);
+    }
+
+    /**
+     * Obtener usuarios por familia
+     */
+    @Transactional(readOnly = true)
+    public List<RegisterUser> findByFamilyId(UUID familyId) {
+        return userRepository.findByFamilyId(familyId);
+    }
+
+    // ===== MÉTODOS EXISTENTES =====
 
     @Transactional
     public RegisterUser createUser(RegisterUser user) {
@@ -67,7 +94,6 @@ public class RegisterUserService {
         Family newFamily = new Family(familyName);
         return familyRepository.save(newFamily);
     }
-
 
     private void validateUniqueFields(RegisterUser user) {
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -132,7 +158,6 @@ public class RegisterUserService {
                 .orElseThrow(() -> new IllegalArgumentException("Tipo de documento no encontrado"));
     }
 
-
     private void validateDocument(String document) {
         if (!StringUtils.hasText(document)) {
             throw new IllegalArgumentException("El documento no puede estar vacío");
@@ -181,10 +206,6 @@ public class RegisterUserService {
                     "La contraseña debe tener mínimo 8 caracteres, con minúscula, mayúscula, número y símbolo"
             );
         }
-    }
-    public Optional<RegisterUser> findById(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
     }
 
     public boolean existsByEmail(String email) {
