@@ -20,55 +20,30 @@ public class FamilyMemberController {
         this.familyMemberService = familyMemberService;
     }
 
-    /**
-     * Crear un nuevo miembro de familia asociado a la familia del usuario logueado
-     */
     @PostMapping("/members")
-    public ResponseEntity<?> createFamilyMember(@RequestBody RegisterUser newUser,
-                                                @RequestParam String familyId) {
+    public ResponseEntity<Object> createFamilyMember(@RequestBody RegisterUser newUser,
+                                                     @RequestParam String familyId) {
         try {
             RegisterUser createdUser = familyMemberService.createUser(newUser, familyId);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error interno del servidor"));
+            Map<String, String> errorResponse = Map.of("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
-
-    /**
-     * Obtener todos los miembros de una familia
-     */
     @GetMapping("/members")
-    public ResponseEntity<?> getFamilyMembers(@RequestParam String familyId) {
+    public ResponseEntity<Object> getFamilyMembers(@RequestParam String familyId) {
         try {
-            List<RegisterUser> familyMembers = familyMemberService.getFamilyMembers(familyId);
+            List<RegisterUser> familyMembers = familyMemberService.getFamilyMembers(
+                    UUID.fromString(familyId)
+            );
             return ResponseEntity.ok(familyMembers);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+            Map<String, String> errorResponse = Map.of("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error interno del servidor"));
-        }
-    }
-
-    /**
-     * Obtener un miembro específico por ID
-     */
-    @GetMapping("/members/{id}")
-    public ResponseEntity<?> getFamilyMemberById(@PathVariable UUID id) {
-        try {
-            RegisterUser user = familyMemberService.findById(id);
-            return ResponseEntity.ok(user);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error interno del servidor"));
+            Map<String, String> errorResponse = Map.of("error", "Error interno del servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 }

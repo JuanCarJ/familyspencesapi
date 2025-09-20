@@ -46,54 +46,18 @@ public class FamilyMemberService {
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-]).{8,}$");
 
-    /**
-     * Crea un nuevo usuario asociándolo a la familia del usuario logueado
-     * @param user El nuevo usuario a registrar
-     * @param familyId El ID de la familia del usuario logueado (como String desde el login)
-     * @return El usuario registrado
-     */
+
     @Transactional
     public RegisterUser createUser(RegisterUser user, String familyId) {
         validate(user);
-
         validateUniqueFields(user);
-
-        // Convertir String a UUID y obtener la familia existente
         UUID familyUUID = convertStringToUUID(familyId);
         Family existingFamily = validateAndGetFamily(familyUUID);
-
-        // Asociar el nuevo usuario a la familia existente
         user.setFamily(existingFamily);
 
         return userRepository.save(user);
     }
 
-    /**
-     * Sobrecarga del método para cuando se tiene el UUID de la familia
-     * @param user El nuevo usuario a registrar
-     * @param familyId El ID de la familia del usuario logueado como UUID
-     * @return El usuario registrado
-     */
-    @Transactional
-    public RegisterUser createUser(RegisterUser user, UUID familyId) {
-        validate(user);
-
-        validateUniqueFields(user);
-
-        // Obtener la familia existente del usuario logueado
-        Family existingFamily = validateAndGetFamily(familyId);
-
-        // Asociar el nuevo usuario a la familia existente
-        user.setFamily(existingFamily);
-
-        return userRepository.save(user);
-    }
-
-    /**
-     * Convierte un String a UUID y valida el formato
-     * @param familyIdString ID de la familia como String
-     * @return UUID válido
-     */
     private UUID convertStringToUUID(String familyIdString) {
         if (!StringUtils.hasText(familyIdString)) {
             throw new IllegalArgumentException("El ID de la familia no puede estar vacío");
@@ -106,11 +70,6 @@ public class FamilyMemberService {
         }
     }
 
-    /**
-     * Valida que la familia exista y la retorna
-     * @param familyId ID de la familia
-     * @return La familia encontrada
-     */
     private Family validateAndGetFamily(UUID familyId) {
         if (familyId == null) {
             throw new IllegalArgumentException("El ID de la familia no puede ser nulo");
@@ -120,10 +79,6 @@ public class FamilyMemberService {
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró la familia con ID: " + familyId));
     }
 
-    /**
-     * Valida que no existan campos únicos duplicados
-     * @param user Usuario a validar
-     */
     private void validateUniqueFields(RegisterUser user) {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalArgumentException("Ya existe un usuario con este email");
@@ -134,10 +89,6 @@ public class FamilyMemberService {
         }
     }
 
-    /**
-     * Valida todos los campos del usuario
-     * @param user Usuario a validar
-     */
     public void validate(RegisterUser user) {
         if (user == null) {
             throw new IllegalArgumentException("El usuario no puede ser nulo");
@@ -241,54 +192,22 @@ public class FamilyMemberService {
         }
     }
 
-    /**
-     * Busca un usuario por ID
-     * @param id ID del usuario
-     * @return El usuario encontrado
-     */
     public RegisterUser findById(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
     }
 
-    /**
-     * Verifica si existe un usuario con el email dado
-     * @param email Email a verificar
-     * @return true si existe, false si no
-     */
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
 
-    /**
-     * Verifica si existe un usuario con el documento dado
-     * @param document Documento a verificar
-     * @return true si existe, false si no
-     */
     public boolean existsByDocument(String document) {
         return userRepository.existsByDocument(document);
     }
 
-    /**
-     * Obtiene todos los miembros de una familia
-     * @param familyId ID de la familia
-     * @return Lista de usuarios de la familia
-     */
     public java.util.List<RegisterUser> getFamilyMembers(UUID familyId) {
-        // Validar que la familia existe antes de buscar sus miembros
         validateAndGetFamily(familyId);
-
-        // Obtener todos los miembros de la familia usando el método del repository
         return userRepository.findByFamily_Id(familyId);
     }
 
-    /**
-     * Sobrecarga que recibe familyId como String (desde login)
-     * @param familyIdString ID de la familia como String
-     * @return Lista de usuarios de la familia
-     */
-    public java.util.List<RegisterUser> getFamilyMembers(String familyIdString) {
-        UUID familyId = convertStringToUUID(familyIdString);
-        return getFamilyMembers(familyId);
-    }
 }
