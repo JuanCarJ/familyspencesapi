@@ -8,6 +8,7 @@ import com.familyspencesapi.repositories.users.DocumentTypeRepository;
 import com.familyspencesapi.repositories.users.FamilyRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
 import com.familyspencesapi.repositories.users.RelationshipRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -26,14 +27,16 @@ public class RegisterUserService {
     private FamilyRepository familyRepository;
     private DocumentTypeRepository documentTypeRepository;
     private RelationshipRepository relationshipRepository;
+    private PasswordEncoder passwordEncoder;
 
     public RegisterUserService(RelationshipRepository relationshipRepository, RegisterUserRepository userRepository,
                                FamilyRepository familyRepository,
-                               DocumentTypeRepository documentTypeRepository) {
+                               DocumentTypeRepository documentTypeRepository, PasswordEncoder passwordEncoder) {
         this.relationshipRepository = relationshipRepository;
         this.userRepository = userRepository;
         this.familyRepository = familyRepository;
         this.documentTypeRepository = documentTypeRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
 
@@ -51,9 +54,8 @@ public class RegisterUserService {
     @Transactional
     public RegisterUser createUser(RegisterUser user) {
         validate(user);
-
         validateUniqueFields(user);
-
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         Family family = createOrFindFamily(user);
         user.setFamily(family);
 

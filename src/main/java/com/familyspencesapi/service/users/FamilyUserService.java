@@ -1,47 +1,50 @@
 package com.familyspencesapi.service.users;
 
 import com.familyspencesapi.domain.users.DocumentType;
-import com.familyspencesapi.domain.users.FamilyUser;
 import com.familyspencesapi.domain.users.RegisterUser;
-import com.familyspencesapi.domain.users.Relationship;
+import com.familyspencesapi.repositories.users.DocumentTypeRepository;
+import com.familyspencesapi.repositories.users.RegisterUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
 public class FamilyUserService {
 
+
+    private final RegisterUserRepository registerUserRepository;
+    private final DocumentTypeRepository doucmentTypeRepository;
+
+    public FamilyUserService(RegisterUserRepository registerUserRepository,  DocumentTypeRepository doucmentTypeRepository) {
+        this.registerUserRepository = registerUserRepository;
+        this.doucmentTypeRepository = doucmentTypeRepository;
+    }
+
     private static final Pattern NAME_PATTERN =
             Pattern.compile("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{3,100}$");
-    private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final Pattern PHONE_PATTERN =
             Pattern.compile("^3\\d{9}$");
     private static final Pattern CREDIT_CARD_PATTERN =
             Pattern.compile("^\\d{13,19}$");
-    private static final Pattern PASSWORD_PATTERN =
-            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-]).{8,}$");
 
 
-
+    // GET user by email
+    public RegisterUser getUserByEmail(String email) {
+        return registerUserRepository.findByEmail(email).orElse(null);
+    }
 
 
     // PATCH
     public RegisterUser updateUser(String email, RegisterUser updatedData) {
-        RegisterUser optionalUser = new RegisterUser(
-        );
+        Optional<RegisterUser> optionalUser = registerUserRepository.findByEmail(email);
         validate(updatedData);
-        if (optionalUser.equals(null)) {
+        if (optionalUser.isEmpty()) {
             return null;
         }
 
-        RegisterUser existingUser = optionalUser;
+        RegisterUser existingUser = optionalUser.get();
 
         if (updatedData.getfullName() != null && !updatedData.getfullName().isBlank()) {
             existingUser.setFirstName(updatedData.getfullName());
@@ -50,7 +53,7 @@ public class FamilyUserService {
             existingUser.setLastName(updatedData.getLastName());
         }
 
-        if (updatedData.getdocumentType() != null && !updatedData.getdocumentType().equals(null)) {
+        if (updatedData.getdocumentType() != null && doucmentTypeRepository.findById(updatedData.getdocumentType().getId()).isPresent()) {
             existingUser.setdocumentType(updatedData.getdocumentType());
         }
         if (updatedData.getdocument() != null && !updatedData.getdocument().isBlank()) {
@@ -71,14 +74,13 @@ public class FamilyUserService {
 
     // PUT (actualización completa)
     public RegisterUser updateAllUser(String email, RegisterUser updatedUser) {
-        RegisterUser optionalUser = new RegisterUser(
-        );
+        Optional<RegisterUser> optionalUser = registerUserRepository.findByEmail(email);
         validate(updatedUser);
-        if (optionalUser.equals(null)) {
+        if (optionalUser.isEmpty()) {
             return null;
         }
 
-        RegisterUser existingUser = optionalUser;
+        RegisterUser existingUser = optionalUser.get();
         existingUser.setFirstName(updatedUser.getfullName());
         existingUser.setLastName(updatedUser.getLastName());
         existingUser.setdocumentType(updatedUser.getdocumentType());
@@ -112,7 +114,7 @@ public class FamilyUserService {
     }
 
     private void validateDocumentType(DocumentType type) {
-        if (type == null || type.getId() == null) {
+        if (type == null || type.getId() == null || doucmentTypeRepository.findById(type.getId()).isPresent()) {
             throw new IllegalArgumentException("Tipo de documento invalido");
         }
     }
