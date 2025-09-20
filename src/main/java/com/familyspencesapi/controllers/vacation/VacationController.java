@@ -43,7 +43,7 @@ public class VacationController {
     @PutMapping("/{id}")
     public ResponseEntity<Vacation> updateVacation(@PathVariable UUID id, @RequestBody Vacation vacationDetails) {
         return vacationService.updateVacation(id, vacationDetails)
-                .map(updated -> ResponseEntity.ok(updated))
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
