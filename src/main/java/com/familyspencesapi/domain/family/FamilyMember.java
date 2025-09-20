@@ -2,6 +2,7 @@ package com.familyspencesapi.domain.family;
 
 import com.familyspencesapi.domain.expense.Expense;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "family_members")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class FamilyMember {
 
     @Id
