@@ -1,9 +1,9 @@
 package com.familyspencesapi.service.budget;
-import com.familyspencesapi.domain.family.FamilyMember;
 import com.familyspencesapi.domain.budget.Budget;
+import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.repositories.budget.IRepositoryBudget;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
-import com.familyspencesapi.repositories.family.FamilyMemberRepository;
+import com.familyspencesapi.repositories.users.RegisterUserRepository;
 import com.familyspencesapi.service.income.IncomeService;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
@@ -17,23 +17,23 @@ public class BudgetService {
     private static final String BUDGET_ID = "budgetId";
 
     private final IRepositoryBudget repositoryBudget;
-    private final FamilyMemberRepository familyMemberRepository;
     private final ExpenseRepository expenseRepository;
     private final IncomeService incomeService;
+    private final RegisterUserRepository registerUserRepository;
 
     public BudgetService(IRepositoryBudget repositoryBudget,
-                         FamilyMemberRepository familyMemberRepository,
                          ExpenseRepository expenseRepository,
-                         IncomeService incomeService) {
+                         IncomeService incomeService,
+                         RegisterUserRepository registerUserRepository1) {
         this.repositoryBudget = repositoryBudget;
-        this.familyMemberRepository = familyMemberRepository;
         this.expenseRepository = expenseRepository;
         this.incomeService = incomeService;
+        this.registerUserRepository = registerUserRepository1;
     }
 
     /** Busca un mienbro usando el responsibleId*/
     public Map<String, Object> createBudget(UUID familyId, CreateBudgetRequest request) {
-        FamilyMember responsible = familyMemberRepository.findById(request.responsibleId())
+        RegisterUser responsible = registerUserRepository.findById(request.responsibleId())
                 .orElseThrow(() -> new IllegalArgumentException("El responsable con el ID proporcionado no existe."));
 
         Budget newBudget = new Budget();
@@ -72,7 +72,7 @@ public class BudgetService {
 
         Map<String, Object> responsibleMap = new LinkedHashMap<>();
         responsibleMap.put("responsibleId", budget.getResponsible().getId());
-        responsibleMap.put("name", budget.getResponsible().getName());
+        responsibleMap.put("name", budget.getResponsible().getfullName());
 
         Map<String, Object> summaryMap = new LinkedHashMap<>();
         summaryMap.put("familyTotalIncome", totalIncome);
@@ -115,7 +115,7 @@ public class BudgetService {
             budgetMap.put("incomeDifference", incomeDifference);
             budgetMap.put("expensesDifference", expensesDifference);
             budgetMap.put("balance", balance);
-            budgetMap.put("responsable", budget.getResponsible().getName());
+            budgetMap.put("responsable", budget.getResponsible().getfullName());
 
             return budgetMap;
         }).collect(Collectors.toList());

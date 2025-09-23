@@ -1,5 +1,5 @@
 package com.familyspencesapi.domain.budget;
-import com.familyspencesapi.domain.family.FamilyMember;
+import com.familyspencesapi.domain.users.RegisterUser;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -25,12 +25,12 @@ public class Budget {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsible_id", nullable = false)
-    private FamilyMember responsible;
+    private RegisterUser responsible;
 
     public Budget() {
     }
 
-    public Budget(UUID budgetId, FamilyMember responsible, UUID familyId, double budgetAmount, LocalDate period) {
+    public Budget(UUID budgetId, RegisterUser responsible, UUID familyId, double budgetAmount, LocalDate period) {
         this.budgetId = budgetId;
         this.responsible = responsible;
         this.familyId = familyId;
@@ -62,11 +62,11 @@ public class Budget {
         this.period = period;
     }
 
-    public FamilyMember getResponsible() {
+    public RegisterUser getResponsible() {
         return responsible;
     }
 
-    public void setResponsible(FamilyMember responsible) {
+    public void setResponsible(RegisterUser responsible) {
         this.responsible = responsible;
     }
 
