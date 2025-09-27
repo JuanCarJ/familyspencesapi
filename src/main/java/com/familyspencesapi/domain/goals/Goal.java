@@ -33,7 +33,7 @@ public class Goal {
 
 
      @ManyToOne
-     @JoinColumn(name = "id_category", referencedColumnName = "id")
+     @JoinColumn(name = "id_category", referencedColumnName = "id", nullable = false)
      private Category category;
 
     @Column(name = "tope_goal", nullable = false)
@@ -47,8 +47,6 @@ public class Goal {
     @Column(name = "meta_diaria_goal", nullable = false)
     @Positive(message = "La meta diaria debe ser mayor que 0")
     private double dailyGoal;
-
-
 
 
     public Goal() {}
@@ -122,4 +120,3 @@ public class Goal {
         this.dailyGoal = dailyGoal;
     }
 }
- 
