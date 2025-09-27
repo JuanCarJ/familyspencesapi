@@ -3,9 +3,9 @@ package com.familyspencesapi.domain.product;
 import jakarta.persistence.*;
 import java.util.UUID;
 
-@Entity//indica que es una entidad de base de datos
+@Entity
 @Table(name = "products")
-public class ProductDomain {//mapea la clase a la tabla "products"
+public class ProductDomain {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
