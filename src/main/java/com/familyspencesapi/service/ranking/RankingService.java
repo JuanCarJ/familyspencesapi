@@ -1,5 +1,10 @@
 package com.familyspencesapi.service.ranking;
 
+import com.familyspencesapi.domain.expense.Expense;
+import com.familyspencesapi.domain.users.Family;
+import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.repositories.expense.ExpenseRepository;
+import com.familyspencesapi.repositories.users.FamilyRepository;
 import com.familyspencesapi.utils.RankingException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -7,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -14,6 +20,13 @@ import java.util.logging.Logger;
 public class RankingService {
 
     private static final Logger logger = Logger.getLogger(RankingService.class.getName());
+    private final FamilyRepository familyRepository;
+    private final ExpenseRepository expenseRepository;
+
+    public RankingService(FamilyRepository familyRepository, ExpenseRepository expenseRepository) {
+        this.familyRepository = familyRepository;
+        this.expenseRepository = expenseRepository;
+    }
 
     public byte[] generateRankingExcel(UUID familyId, Map<String, Double> expenses, Map<String, Double> earnings) {
         try (Workbook workbook = new XSSFWorkbook()) {
@@ -183,8 +196,22 @@ public class RankingService {
 
     public Map<String, Double> generateRankingExpenses(UUID familyId) {
         Map<String, Double> expenses = new HashMap<>();
-        expenses.put("David Lopera", 0.25);
-        expenses.put("Farid Sanchez", 0.50);
+
+        Family family = familyRepository.findById(familyId)
+                .orElseThrow(() -> new RankingException("No se encontró la familia con id: " + familyId));
+
+        List<RegisterUser> users = family.getUsers();
+
+        for (RegisterUser user : users) {
+            List<Expense> expensesList = expenseRepository.findByResponsible(user);
+
+            BigDecimal total = expensesList.stream()
+                    .map(Expense::getValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            expenses.put(user.getfullName(), total.doubleValue());
+        }
+
         return expenses;
     }
 
