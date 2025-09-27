@@ -120,4 +120,3 @@ public class Goal {
         this.dailyGoal = dailyGoal;
     }
 }
- 
