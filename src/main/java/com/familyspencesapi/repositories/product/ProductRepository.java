@@ -6,8 +6,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 
-@Repository//indica que es un repositorio de datos
-public interface ProductRepository extends JpaRepository<ProductDomain, UUID> {//extiende JpaRepository para operaciones CRUD
-    //metodo para buscar productos que contengan una cadena ignorando mayusculas y minusculas
+@Repository
+public interface ProductRepository extends JpaRepository<ProductDomain, UUID> {
+
     List<ProductDomain> findByProductContainingIgnoreCase(String product);
 }

@@ -1,67 +1,80 @@
-
 package com.familyspencesapi.service.income;
 
 import com.familyspencesapi.domain.income.Income;
+import com.familyspencesapi.repositories.income.RepositoryIncome;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class IncomeService {
 
-    private final List<Income> incomes = new ArrayList<>();
-    private final AtomicLong idCounter = new AtomicLong(1L);
+    private final RepositoryIncome repositoryIncome;
 
-    // Obtener todos los ingresos
+    public IncomeService(RepositoryIncome repositoryIncome) {
+        this.repositoryIncome = repositoryIncome;
+    }
+
+    //Obtener todos los ingresos
     public List<Income> getAllIncomes() {
-        return incomes;
+        return repositoryIncome.findAll();
     }
 
-    // Crear un ingreso
+    //Crear ingreso con validaciones
+    @Transactional
     public Income createIncome(Income income) {
-        income.setId(idCounter.getAndIncrement());
-        incomes.add(income);
-        return income;
+        if (income.getTotal() == null || income.getTotal() < 0) {
+            throw new IllegalArgumentException("El total no puede ser nulo ni negativo");
+        }
+        if (income.getResponsible() == null || income.getResponsible().isBlank()) {
+            throw new IllegalArgumentException("El responsable no puede estar vacío");
+        }
+        if (income.getTitle() == null || income.getTitle().isBlank()) {
+            throw new IllegalArgumentException("El título no puede estar vacío");
+        }
+        return repositoryIncome.save(income);
     }
 
-    // Buscar ingreso por ID
+    // Buscar por ID
     public Optional<Income> getIncomeById(Long id) {
-        return incomes.stream()
-                .filter(i -> Objects.equals(i.getId(), id))
-                .findFirst();
+        return repositoryIncome.findById(id);
     }
 
-    // Actualizar un ingreso
+    // Actualizar ingreso
+    @Transactional
     public Optional<Income> updateIncome(Long id, Income updated) {
-        return getIncomeById(id).map(income -> {
-            income.setResponsible(updated.getResponsible());
-            income.setTitle(updated.getTitle());
-            income.setDescription(updated.getDescription());
-            income.setPeriod(updated.getPeriod());
-            income.setTotal(updated.getTotal());
-            income.setFamilyId(updated.getFamilyId());
-            return income;
+        return repositoryIncome.findById(id).map(income -> {
+            if (updated.getResponsible() != null) income.setResponsible(updated.getResponsible());
+            if (updated.getTitle() != null) income.setTitle(updated.getTitle());
+            if (updated.getDescription() != null) income.setDescription(updated.getDescription());
+            if (updated.getPeriod() != null) income.setPeriod(updated.getPeriod());
+            if (updated.getTotal() != null && updated.getTotal() >= 0) income.setTotal(updated.getTotal());
+            if (updated.getFamilyId() != null) income.setFamilyId(updated.getFamilyId());
+
+            return repositoryIncome.save(income);
         });
     }
 
-    // Eliminar un ingreso
+    //Eliminar ingreso
+    @Transactional
     public boolean deleteIncome(Long id) {
-        return incomes.removeIf(i -> Objects.equals(i.getId(), id));
+        if (!repositoryIncome.existsById(id)) return false;
+        repositoryIncome.deleteById(id);
+        return true;
     }
 
-    // Buscar ingresos por familia (UUID)
+    // Buscar ingresos por familia
     public List<Income> getIncomesByFamilyId(UUID familyId) {
-        return incomes.stream()
-                .filter(i -> familyId.equals(i.getFamilyId()))
-                .collect(Collectors.toList());
+        return repositoryIncome.findByFamilyId(familyId);
     }
 
-    // Calcular total de ingresos por familia
+    //Sumar total de ingresos de una familia
     public Double getTotalByFamilyId(UUID familyId) {
-        return incomes.stream()
-                .filter(i -> familyId.equals(i.getFamilyId()))
+        return repositoryIncome.findByFamilyId(familyId)
+                .stream()
                 .mapToDouble(i -> i.getTotal() != null ? i.getTotal() : 0.0)
                 .sum();
     }
