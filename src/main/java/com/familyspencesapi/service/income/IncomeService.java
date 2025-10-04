@@ -71,6 +71,10 @@ public class IncomeService {
         return repositoryIncome.findByFamilyId(familyId);
     }
 
+    public List<Income> getIncomesByResponsibleId(UUID responsibleId) {
+        return repositoryIncome.findByResponsibleId(responsibleId);
+    }
+
     //Sumar total de ingresos de una familia
     public Double getTotalByFamilyId(UUID familyId) {
         return repositoryIncome.findByFamilyId(familyId)
