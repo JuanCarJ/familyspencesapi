@@ -12,5 +12,8 @@ public interface RepositoryIncome extends JpaRepository<Income, Long> {
 
     // Buscar ingresos por el ID de la familia
     List<Income> findByFamilyId(UUID familyId);
-    List<Income> findByResponsableId(UUID responsableId);
+
+
+    List<Income> findByResponsibleId(UUID responsibleId);
+
 }

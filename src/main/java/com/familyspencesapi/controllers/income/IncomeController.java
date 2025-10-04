@@ -59,6 +59,11 @@ public class IncomeController {
         }
     }
 
+    @GetMapping("/responsible/id/{responsibleId}")
+    public List<Income> getIncomesByResponsibleId(@PathVariable UUID responsibleId) {
+        return incomeService.getIncomesByResponsibleId(responsibleId);
+    }
+
     //Obtener ingresos por familia
     @GetMapping("/family/{familyId}")
     public ResponseEntity<List<Income>> getIncomesByFamilyId(@PathVariable UUID familyId) {
