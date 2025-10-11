@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-
 import java.util.UUID;
 
 @Entity
@@ -12,12 +11,16 @@ import java.util.UUID;
 public class Income {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Autoincrement en PostgreSQL
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotNull(message = "El familyId no puede ser nulo")
     @Column(nullable = false, columnDefinition = "UUID")
     private UUID familyId;
+
+    @NotNull(message = "El responsibleId no puede ser nulo")
+    @Column(nullable = false, columnDefinition = "UUID")
+    private UUID responsibleId;
 
     @NotBlank(message = "El responsable no puede estar vacío")
     @Column(nullable = false)
@@ -29,7 +32,7 @@ public class Income {
 
     private String description;
 
-    @Enumerated(EnumType.STRING) // Guardará "MENSUAL", "SEMANAL" o "UNICO" en la BD
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private IncomePeriod period;
 
@@ -38,11 +41,12 @@ public class Income {
     @Column(nullable = false)
     private Double total;
 
-
     public Income() {}
 
-    public Income(UUID familyId, String responsible, String title, String description, IncomePeriod period, Double total) {
+    public Income(UUID familyId, UUID responsibleId, String responsible,
+                  String title, String description, IncomePeriod period, Double total) {
         this.familyId = familyId;
+        this.responsibleId = responsibleId;
         this.responsible = responsible;
         this.title = title;
         this.description = description;
@@ -50,12 +54,14 @@ public class Income {
         this.total = total;
     }
 
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public UUID getFamilyId() { return familyId; }
     public void setFamilyId(UUID familyId) { this.familyId = familyId; }
+
+    public UUID getResponsibleId() { return responsibleId; }
+    public void setResponsibleId(UUID responsibleId) { this.responsibleId = responsibleId; }
 
     public String getResponsible() { return responsible; }
     public void setResponsible(String responsible) { this.responsible = responsible; }
