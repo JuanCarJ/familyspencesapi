@@ -2,6 +2,7 @@ package com.familyspencesapi.repositories.income;
 
 import com.familyspencesapi.domain.income.Income;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,4 +19,7 @@ public interface RepositoryIncome extends JpaRepository<Income, UUID> {
 
     // Buscar ingresos por periodo
     List<Income> findByPeriod(String period);
+
+    @Query("SELECT SUM(i.total) FROM Income i WHERE i.family = :familyId")
+    Double sumTotalByFamilyId(UUID familyId);
 }

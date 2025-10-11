@@ -39,4 +39,9 @@ public class IncomeService {
     public void deleteIncome(UUID id) {
         repositoryIncome.deleteById(id);
     }
+
+    public Double getTotalByFamilyId(UUID familyId) {
+        Double total = repositoryIncome.sumTotalByFamilyId(familyId);
+        return total != null ? total : 0.0;
+    }
 }
