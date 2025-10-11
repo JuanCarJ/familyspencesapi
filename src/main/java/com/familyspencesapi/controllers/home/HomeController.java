@@ -1,11 +1,13 @@
 package com.familyspencesapi.controllers.home;
 
 import com.familyspencesapi.domain.home.GeneralBalance;
+import com.familyspencesapi.domain.home.Closings;
 import com.familyspencesapi.service.home.HomeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -43,5 +45,11 @@ public class HomeController {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to initiate closing process: " + e.getMessage()));
         }
+    }
+
+    @GetMapping("/balances/monthlyclosings/{familyId}")
+    public ResponseEntity<List<Closings>> getClosingHistory(@PathVariable UUID familyId) {
+        List<Closings> history = homeService.getClosingHistoryForFamily(familyId);
+        return ResponseEntity.ok(history);
     }
 }
