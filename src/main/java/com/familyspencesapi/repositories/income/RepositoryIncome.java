@@ -8,12 +8,14 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface RepositoryIncome extends JpaRepository<Income, Long> {
+public interface RepositoryIncome extends JpaRepository<Income, UUID> {
 
     // Buscar ingresos por el ID de la familia
-    List<Income> findByFamilyId(UUID familyId);
+    List<Income> findByFamily(UUID family);
 
+    // Buscar ingresos por el ID del responsable
+    List<Income> findByResponsible_Id(UUID responsibleId);
 
-    List<Income> findByResponsibleId(UUID responsibleId);
-
+    // Buscar ingresos por periodo
+    List<Income> findByPeriod(String period);
 }
