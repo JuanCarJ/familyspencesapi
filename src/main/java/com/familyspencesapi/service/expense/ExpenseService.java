@@ -46,8 +46,8 @@ public class ExpenseService {
      * Encontrar gasto por ID
      */
     @Transactional(readOnly = true)
-    public Optional<Expense> findById(UUID id) {
-        return expenseRepository.findById(id);
+    public Expense findById(UUID id) {
+        return expenseRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Expense not found"));
     }
 
     /**
@@ -156,7 +156,7 @@ public class ExpenseService {
         String mostExpensiveCategoryName = "N/A";
 
         if (!categoryTotals.isEmpty()) {
-            ExpenseCategory topCategory = (ExpenseCategory) categoryTotals.get(0)[0];
+            ExpenseCategory topCategory = (ExpenseCategory) categoryTotals.getFirst()[0];
             mostExpensiveCategoryName = topCategory.getDisplayName();
         }
 
