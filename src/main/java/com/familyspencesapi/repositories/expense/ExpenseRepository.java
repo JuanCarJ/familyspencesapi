@@ -19,18 +19,9 @@ import java.util.UUID;
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
 
-    // Buscar por categoría
-    Page<Expense> findByCategory(ExpenseCategory category, Pageable pageable);
-
     List<Expense> findByCategory(ExpenseCategory category);
 
-    // Buscar por período (case insensitive)
-    Page<Expense> findByPeriodIgnoreCase(String period, Pageable pageable);
-
     List<Expense> findByPeriodIgnoreCase(String period);
-
-    // Buscar por responsable (RegisterUser)
-    Page<Expense> findByResponsible(RegisterUser responsible, Pageable pageable);
 
     List<Expense> findByResponsible(RegisterUser responsible);
 
@@ -41,20 +32,11 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     @Query("SELECT e FROM Expense e WHERE e.responsible.family.id = :familyId")
     List<Expense> findByResponsibleFamilyId(@Param("familyId") UUID familyId);
 
-    // Buscar gastos costosos (mayor que un valor)
-    List<Expense> findByValueGreaterThan(BigDecimal value);
-
-    // Buscar gastos en un rango de valores
-    List<Expense> findByValueBetween(BigDecimal minValue, BigDecimal maxValue);
-
-    // Buscar por título (contains, case insensitive)
-    Page<Expense> findByTitleContainingIgnoreCase(String title, Pageable pageable);
-
     // Buscar por fecha de creación
     List<Expense> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
-    // Consultas personalizadas con @Query
 
+    // Consultas personalizadas con @Query
     // Calcular total por período
     @Query("SELECT COALESCE(SUM(e.value), 0) FROM Expense e WHERE LOWER(e.period) = LOWER(:period)")
     BigDecimal calculateTotalByPeriod(@Param("period") String period);
