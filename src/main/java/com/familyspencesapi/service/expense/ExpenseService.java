@@ -1,14 +1,12 @@
 package com.familyspencesapi.service.expense;
 
+import com.familyspencesapi.controllers.expense.ExpenseRequest;
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
 import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +21,6 @@ import java.util.UUID;
 @Transactional
 public class ExpenseService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExpenseService.class);
 
     private final ExpenseRepository expenseRepository;
     private final RegisterUserRepository registerUserRepository;
@@ -53,7 +50,26 @@ public class ExpenseService {
     /**
      * Guardar gasto
      */
-    public Expense save(Expense expense) {
+    public Expense save(ExpenseRequest request, String userMail, UUID familyId) {
+        Optional<RegisterUser> userOpt = registerUserRepository.findByEmail(userMail);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("Responsible not found");
+        }
+
+        Expense expense = new Expense(
+                request.getTitle().trim(),
+                request.getDescription() != null ? request.getDescription().trim() : "",
+                request.getPeriod().trim(),
+                userMail,
+                request.getValue(),
+                request.getCategory(),
+                familyId
+        );
+
+        if (!expense.isValidPeriod()) {
+            throw new IllegalArgumentException("Invalid period");
+        }
+
         return expenseRepository.save(expense);
     }
 
@@ -88,8 +104,8 @@ public class ExpenseService {
      * Encontrar gastos por responsable (usuario)
      */
     @Transactional(readOnly = true)
-    public List<Expense> findByResponsibleId(UUID userId) {
-        return expenseRepository.findByResponsibleId(userId);
+    public List<Expense> findByResponsibleId(String responsibleMail) {
+        return expenseRepository.findByResponsible(responsibleMail);
     }
 
     /**
@@ -133,18 +149,6 @@ public class ExpenseService {
     }
 
     /**
-     * Calcular total de gastos por responsable
-     */
-    @Transactional(readOnly = true)
-    public BigDecimal calculateTotalByResponsible(UUID responsibleId) {
-        Optional<RegisterUser> responsible = registerUserRepository.findById(responsibleId);
-        if (responsible.isPresent()) {
-            return expenseRepository.calculateTotalByResponsible(responsible.get());
-        }
-        return BigDecimal.ZERO;
-    }
-
-    /**
      * Obtener estadísticas generales de gastos
      */
     @Transactional(readOnly = true)
@@ -164,58 +168,9 @@ public class ExpenseService {
     }
 
     /**
-     * Buscar gastos con múltiples filtros
-     */
-    @Transactional(readOnly = true)
-    public List<Expense> searchExpenses(String title, String period, ExpenseCategory category,
-                                        UUID responsibleId, Pageable pageable) {
-        RegisterUser responsible = null;
-        if (responsibleId != null) {
-            Optional<RegisterUser> responsibleOpt = registerUserRepository.findById(responsibleId);
-            responsible = responsibleOpt.orElse(null);
-        }
-
-        return expenseRepository.findExpensesByCriteria(title, period, category, responsible, pageable)
-                .getContent();
-    }
-
-    /**
-     * Crear un nuevo gasto con validaciones adicionales
-     */
-    public Expense createExpense(String title, String description, String period,
-                                 UUID responsibleId, BigDecimal value, ExpenseCategory category) {
-
-        // Verificar que el responsable existe
-        Optional<RegisterUser> responsible = registerUserRepository.findById(responsibleId);
-        if (responsible.isEmpty()) {
-            throw new IllegalArgumentException("Usuario no encontrado");
-        }
-
-        // Crear el gasto
-        Expense expense = new Expense(title, description, period, responsible.get(), value, category);
-
-        // Validar período
-        if (!expense.isValidPeriod()) {
-            throw new IllegalArgumentException("Período inválido: " + period);
-        }
-
-        // Verificar si ya existe un gasto similar
-        boolean exists = expenseRepository.existsSimilarExpense(
-                title, period, responsible.get(), UUID.randomUUID()
-        );
-
-        if (exists) {
-            logger.warn("Ya existe un gasto similar para el título: {}, período: {}", title, period);
-        }
-
-        return expenseRepository.save(expense);
-    }
-
-    /**
      * Actualizar un gasto existente
      */
-    public Expense updateExpense(UUID expenseId, String title, String description, String period,
-                                 UUID responsibleId, BigDecimal value, ExpenseCategory category) {
+    public Expense updateExpense(ExpenseRequest request,String responsiblemail, UUID expenseId) {
 
         // Verificar que el gasto existe
         Optional<Expense> expenseOpt = expenseRepository.findById(expenseId);
@@ -224,22 +179,21 @@ public class ExpenseService {
         }
 
         // Verificar que el responsable existe
-        Optional<RegisterUser> responsible = registerUserRepository.findById(responsibleId);
+        Optional<RegisterUser> responsible = registerUserRepository.findByEmail(responsiblemail);
         if (responsible.isEmpty()) {
             throw new IllegalArgumentException("Usuario no encontrado");
         }
 
         Expense expense = expenseOpt.get();
-        expense.setTitle(title);
-        expense.setDescription(description);
-        expense.setPeriod(period);
-        expense.setResponsible(responsible.get());
-        expense.setValue(value);
-        expense.setCategory(category);
+        expense.setTitle(request.getTitle().trim());
+        expense.setDescription(request.getDescription() != null ? request.getDescription().trim() : "");
+        expense.setPeriod(request.getPeriod().trim());
+        expense.setResponsible(responsiblemail);
+        expense.setValue(request.getValue());
+        expense.setCategory(request.getCategory());
 
-        // Validar período
         if (!expense.isValidPeriod()) {
-            throw new IllegalArgumentException("Período inválido: " + period);
+            throw new IllegalArgumentException("Período inválido: " + expense.getPeriod());
         }
 
         return expenseRepository.save(expense);
@@ -286,15 +240,6 @@ public class ExpenseService {
     /**
      * Verificar si un usuario tiene gastos asociados
      */
-    @Transactional(readOnly = true)
-    public boolean userHasExpenses(UUID userId) {
-        Optional<RegisterUser> user = registerUserRepository.findById(userId);
-        if (user.isPresent()) {
-            List<Expense> expenses = expenseRepository.findByResponsible(user.get());
-            return !expenses.isEmpty();
-        }
-        return false;
-    }
 
     /**
      * Obtener gastos por rango de fechas
@@ -302,18 +247,6 @@ public class ExpenseService {
     @Transactional(readOnly = true)
     public List<Expense> getExpensesByDateRange(LocalDateTime start, LocalDateTime end) {
         return expenseRepository.findByCreatedAtBetween(start, end);
-    }
-
-    /**
-     * Obtener gastos de un usuario en un rango de fechas
-     */
-    @Transactional(readOnly = true)
-    public List<Expense> getUserExpensesByDateRange(UUID userId, LocalDateTime start, LocalDateTime end) {
-        Optional<RegisterUser> user = registerUserRepository.findById(userId);
-        if (user.isPresent()) {
-            return expenseRepository.findByResponsibleAndDateRange(user.get(), start, end);
-        }
-        return List.of();
     }
 
     /**
@@ -339,33 +272,6 @@ public class ExpenseService {
     @Transactional(readOnly = true)
     public List<Object[]> getExpenseCountByCategory() {
         return expenseRepository.countExpensesByCategory();
-    }
-
-    /**
-     * Validar si se puede eliminar un usuario
-     */
-    @Transactional(readOnly = true)
-    public boolean canDeleteUser(UUID userId) {
-        return !userHasExpenses(userId);
-    }
-
-    /**
-     * Transferir gastos de un usuario a otro
-     */
-    public int transferExpenses(UUID fromUserId, UUID toUserId) {
-        Optional<RegisterUser> fromUser = registerUserRepository.findById(fromUserId);
-        Optional<RegisterUser> toUser = registerUserRepository.findById(toUserId);
-
-        if (fromUser.isEmpty() || toUser.isEmpty()) {
-            throw new IllegalArgumentException("Uno o ambos usuarios no existen");
-        }
-
-        List<Expense> expenses = expenseRepository.findByResponsible(fromUser.get());
-
-        expenses.forEach(expense -> expense.setResponsible(toUser.get()));
-
-        expenseRepository.saveAll(expenses);
-        return expenses.size();
     }
 
     /**

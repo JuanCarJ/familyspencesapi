@@ -4,7 +4,6 @@ import com.familyspencesapi.domain.expense.Expense;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 public class ExpenseRequest {
     @NotBlank(message = "El título es obligatorio")
@@ -19,9 +18,6 @@ public class ExpenseRequest {
             message = "El período debe ser un mes válido en español o formato YYYY-MM")
     private String period;
 
-    @NotNull(message = "El ID del usuario es obligatorio")
-    private UUID userId;
-
     @NotNull(message = "El valor es obligatorio")
     @DecimalMin(value = "0.01", message = "El valor debe ser mayor que 0")
     @DecimalMax(value = "999999999.99", message = "El valor excede el límite permitido")
@@ -33,12 +29,11 @@ public class ExpenseRequest {
 
     public ExpenseRequest() {}
 
-    public ExpenseRequest(String title, String description, String period,
-                          UUID userId, BigDecimal value, Expense.ExpenseCategory category) {
+    public ExpenseRequest(String title, String description, String period
+            , BigDecimal value, Expense.ExpenseCategory category) {
         this.title = title;
         this.description = description;
         this.period = period;
-        this.userId = userId;
         this.value = value;
         this.category = category;
     }
@@ -51,9 +46,6 @@ public class ExpenseRequest {
 
     public String getPeriod() { return period; }
     public void setPeriod(String period) { this.period = period; }
-
-    public UUID getUserId() { return userId; }
-    public void setUserId(UUID userId) { this.userId = userId; }
 
     public BigDecimal getValue() { return value; }
     public void setValue(BigDecimal value) { this.value = value; }

@@ -1,6 +1,5 @@
 package com.familyspencesapi.domain.expense;
 
-import com.familyspencesapi.domain.users.RegisterUser;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.CreationTimestamp;
@@ -37,11 +36,9 @@ public class Expense {
     private String period;
 
     // CAMBIO: Ahora usa RegisterUser en lugar de FamilyMemberDomain
-    @NotNull(message = "El responsable es obligatorio")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "responsible_id", nullable = false)
+    @Column(nullable = false, length = 50)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private RegisterUser responsible;
+    private String responsible;
 
     @NotNull(message = "El valor es obligatorio")
     @DecimalMin(value = "0.01", message = "El valor debe ser mayor que 0")
@@ -64,6 +61,9 @@ public class Expense {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(nullable = false)
+    private UUID familyId;
 
     // Enum para categorías
     public enum ExpenseCategory {
@@ -94,7 +94,7 @@ public class Expense {
 
     // Constructor completo para datos existentes
     public Expense(UUID id, String title, String description, String period,
-                   RegisterUser responsible, BigDecimal value, ExpenseCategory category) {
+                   String responsible, BigDecimal value, ExpenseCategory category) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -106,17 +106,20 @@ public class Expense {
 
     // Constructor para nuevos gastos (sin ID)
     public Expense(String title, String description, String period,
-                   RegisterUser responsible, BigDecimal value, ExpenseCategory category) {
+                   String responsible, BigDecimal value, ExpenseCategory category, UUID familyId) {
         this.title = title;
         this.description = description;
         this.period = period;
         this.responsible = responsible;
         this.value = value;
         this.category = category;
+        this.familyId = familyId;
     }
 
+
+
     // Constructor mínimo para gastos básicos
-    public Expense(String title, String period, RegisterUser responsible,
+    public Expense(String title, String period, String responsible,
                    BigDecimal value, ExpenseCategory category) {
         this.title = title;
         this.period = period;
@@ -158,11 +161,11 @@ public class Expense {
         this.period = period;
     }
 
-    public RegisterUser getResponsible() {
+    public String getResponsible() {
         return responsible;
     }
 
-    public void setResponsible(RegisterUser responsible) {
+    public void setResponsible(String responsible) {
         this.responsible = responsible;
     }
 
@@ -208,6 +211,14 @@ public class Expense {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public UUID getFamilyId() {
+        return familyId;
+    }
+
+    public void setFamilyId(UUID familyId) {
+        this.familyId = familyId;
+    }
+
     // Validación personalizada para el período
     public boolean isValidPeriod() {
         if (period == null || period.isBlank()) {
@@ -234,21 +245,6 @@ public class Expense {
         return false;
     }
 
-    // Método para obtener el nombre del responsable
-    public String getResponsibleName() {
-        return responsible != null ? responsible.getfullName() : "Sin responsable";
-    }
-
-    // Método para obtener la familia del responsable
-    public UUID getResponsibleFamilyId() {
-        return responsible != null ? responsible.getFamilyId() : null;
-    }
-
-    // Método para verificar si el gasto pertenece a una familia específica
-    public boolean belongsToFamily(UUID familyId) {
-        return familyId != null && familyId.equals(getResponsibleFamilyId());
-    }
-
     // Método equals mejorado
     @Override
     public boolean equals(Object o) {
@@ -263,17 +259,4 @@ public class Expense {
         return Objects.hash(id);
     }
 
-    @Override
-    public String toString() {
-        return "Expense{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", period='" + period + '\'' +
-                ", responsible=" + getResponsibleName() +
-                ", value=" + getFormattedValue() +
-                ", category=" + (category != null ? category.getDisplayName() : "null") +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
-    }
 }

@@ -2,9 +2,7 @@ package com.familyspencesapi.controllers.expense;
 
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
-import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.service.expense.ExpenseService;
-import com.familyspencesapi.service.users.RegisterUserService;
 
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
@@ -23,11 +21,8 @@ import java.util.*;
 public class ExpenseController {
 
     private final ExpenseService expenseService;
-    private final RegisterUserService userService;
-
-    public ExpenseController(ExpenseService expenseService, RegisterUserService userService) {
+    public ExpenseController(ExpenseService expenseService) {
         this.expenseService = expenseService;
-        this.userService = userService;
     }
 
 
@@ -86,10 +81,10 @@ public class ExpenseController {
         }
     }
 
-    @GetMapping("/by-user/{userId}")
-    public ResponseEntity<List<Expense>> getByUser(@PathVariable UUID userId) {
+    @GetMapping("/by-user/{userMail}")
+    public ResponseEntity<List<Expense>> getByUser(@PathVariable String userMail) {
         try {
-            List<Expense> expenses = expenseService.findByResponsibleId(userId);
+            List<Expense> expenses = expenseService.findByResponsibleId(userMail);
             return ResponseEntity.ok(expenses);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -127,8 +122,8 @@ public class ExpenseController {
         }
     }
 
-    @PostMapping("")
-    public ResponseEntity<ApiResponse> create(@Valid @RequestBody ExpenseRequest request, BindingResult result) {
+    @PostMapping("/{familyId}/{mail}")
+    public ResponseEntity<ApiResponse> create(@PathVariable UUID familyId,@PathVariable String mail,@Valid @RequestBody ExpenseRequest request, BindingResult result) {
         try {
             if (result.hasErrors()) {
                 List<String> errors = result.getAllErrors().stream()
@@ -138,28 +133,7 @@ public class ExpenseController {
                         .body(new ApiResponse(Messages.ERROR_VALIDATION_MESSAGE + String.join(", ", errors)));
             }
 
-            Optional<RegisterUser> userOpt = userService.findById(request.getUserId());
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse(Messages.ERROR_USER_NOT_FOUND + request.getUserId()));
-            }
-
-            RegisterUser responsible = userOpt.get();
-            Expense expense = new Expense(
-                    request.getTitle().trim(),
-                    request.getDescription() != null ? request.getDescription().trim() : "",
-                    request.getPeriod().trim(),
-                    responsible,
-                    request.getValue(),
-                    request.getCategory()
-            );
-
-            if (!expense.isValidPeriod()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse(String.format(Messages.ERROR_INVALID_PERIOD, request.getPeriod())));
-            }
-
-            Expense savedExpense = expenseService.save(expense);
+            Expense savedExpense = expenseService.save(request,mail,familyId);
 
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse(Messages.SUCCESS_EXPENSE_CREATED, savedExpense.getId().toString()));
@@ -173,8 +147,8 @@ public class ExpenseController {
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> update(@PathVariable UUID id, @Valid @RequestBody ExpenseRequest request, BindingResult result) {
+    @PutMapping("/{mail}/{idExpense}")
+    public ResponseEntity<ApiResponse> update(@PathVariable String mail,@PathVariable UUID idExpense, @Valid @RequestBody ExpenseRequest request, BindingResult result) {
         try {
             if (result.hasErrors()) {
                 List<String> errors = result.getAllErrors().stream()
@@ -184,34 +158,9 @@ public class ExpenseController {
                         .body(new ApiResponse(Messages.ERROR_VALIDATION_MESSAGE + String.join(", ", errors)));
             }
 
-            Expense expenseOpt = expenseService.findById(id);
-            if (expenseOpt == null) {
-                return ResponseEntity.notFound().build();
-            }
+            expenseService.updateExpense(request,mail,idExpense);
 
-            Optional<RegisterUser> userOpt = userService.findById(request.getUserId());
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse(Messages.ERROR_USER_NOT_FOUND + request.getUserId()));
-            }
-
-            RegisterUser responsible = userOpt.get();
-
-            expenseOpt.setTitle(request.getTitle().trim());
-            expenseOpt.setDescription(request.getDescription() != null ? request.getDescription().trim() : "");
-            expenseOpt.setPeriod(request.getPeriod().trim());
-            expenseOpt.setResponsible(responsible);
-            expenseOpt.setValue(request.getValue());
-            expenseOpt.setCategory(request.getCategory());
-
-            if (!expenseOpt.isValidPeriod()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse(String.format(Messages.ERROR_INVALID_PERIOD, request.getPeriod())));
-            }
-
-            expenseService.save(expenseOpt);
-
-            return ResponseEntity.ok(new ApiResponse(Messages.SUCCESS_EXPENSE_UPDATED, id.toString()));
+            return ResponseEntity.ok(new ApiResponse(Messages.SUCCESS_EXPENSE_UPDATED, idExpense.toString()));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
