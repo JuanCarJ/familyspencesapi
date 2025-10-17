@@ -133,10 +133,10 @@ public class ExpenseController {
                         .body(new ApiResponse(Messages.ERROR_VALIDATION_MESSAGE + String.join(", ", errors)));
             }
 
-            Expense savedExpense = expenseService.save(request,mail,familyId);
+            String savedExpense = expenseService.save(request,mail,familyId);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponse(Messages.SUCCESS_EXPENSE_CREATED, savedExpense.getId().toString()));
+                    .body(new ApiResponse(Messages.SUCCESS_EXPENSE_CREATED, savedExpense ));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()

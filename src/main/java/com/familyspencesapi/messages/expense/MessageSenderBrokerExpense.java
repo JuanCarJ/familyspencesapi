@@ -4,8 +4,6 @@ import com.familyspencesapi.config.messages.budgetprocessor.BudgetProcessQueueCo
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.utils.MessageSender;
 import com.familyspencesapi.utils.gson.MapperJsonObject;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.core.MessageProperties;
@@ -23,7 +21,6 @@ public class MessageSenderBrokerExpense implements MessageSender<Expense> {
     private final RabbitTemplate rabbitTemplate;
     private final MapperJsonObject mapperJson;
     private final BudgetProcessQueueConfig queueConfig;
-    private final Gson gson = new GsonBuilder().create();
     private static final Logger log = LoggerFactory.getLogger(MessageSenderBrokerExpense.class);
 
     public MessageSenderBrokerExpense(RabbitTemplate rabbitTemplate, MapperJsonObject mapper, BudgetProcessQueueConfig queueConfig) {
@@ -41,7 +38,7 @@ public class MessageSenderBrokerExpense implements MessageSender<Expense> {
             log.warn("No se pudo serializar el mensaje Expense: {}", message);
         }
 
-        rabbitTemplate.convertAndSend(queueConfig.getExchangeName(), queueConfig.getRoutingKeyName(), messageBody);
+        rabbitTemplate.convertAndSend(queueConfig.getExchangeName(),routingKey, messageBody);
     }
 
     public MessageProperties getMessageProperties(String idMessageSender) {

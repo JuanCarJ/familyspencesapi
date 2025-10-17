@@ -1,9 +1,11 @@
 package com.familyspencesapi.service.expense;
 
+import com.familyspencesapi.config.messages.budgetprocessor.BudgetProcessQueueConfig;
 import com.familyspencesapi.controllers.expense.ExpenseRequest;
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
 import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.messages.expense.MessageSenderBrokerExpense;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
 
@@ -24,11 +26,15 @@ public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
     private final RegisterUserRepository registerUserRepository;
+    private final MessageSenderBrokerExpense messageSenderBrokerExpense;
+    private final BudgetProcessQueueConfig processQueueConfig;
 
     // Constructor injection
-    public ExpenseService(ExpenseRepository expenseRepository, RegisterUserRepository registerUserRepository) {
+    public ExpenseService(ExpenseRepository expenseRepository, RegisterUserRepository registerUserRepository, MessageSenderBrokerExpense messageSenderBrokerExpense, BudgetProcessQueueConfig processQueueConfig) {
         this.expenseRepository = expenseRepository;
         this.registerUserRepository = registerUserRepository;
+        this.messageSenderBrokerExpense = messageSenderBrokerExpense;
+        this.processQueueConfig = processQueueConfig;
     }
 
     /**
@@ -50,7 +56,7 @@ public class ExpenseService {
     /**
      * Guardar gasto
      */
-    public Expense save(ExpenseRequest request, String userMail, UUID familyId) {
+    public String save(ExpenseRequest request, String userMail, UUID familyId) {
         Optional<RegisterUser> userOpt = registerUserRepository.findByEmail(userMail);
         if (userOpt.isEmpty()) {
             throw new IllegalArgumentException("Responsible not found");
@@ -70,7 +76,9 @@ public class ExpenseService {
             throw new IllegalArgumentException("Invalid period");
         }
 
-        return expenseRepository.save(expense);
+        messageSenderBrokerExpense.execute(expense, processQueueConfig.getRoutingKeyCreate());
+
+        return "The message was sent successfully.";
     }
 
     /**
