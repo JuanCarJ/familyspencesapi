@@ -12,15 +12,16 @@ public class BudgetProcessQueueConfig {
 
     private String exchangeName;
 
-    private String routingKeyCreate;
-    private String routingKeyUpdate;
-    private String routingKeyDelete;
+    private String routingKeyExpenseCreate;
+    private String routingKeyExpenseUpdate;
+    private String routingKeyExpenseDelete;
 
-    private String queueCreate;
-    private String queueUpdate;
-    private String queueDelete;
+    private String queueExpenseCreate;
+    private String queueExpenseUpdate;
+    private String queueExpenseDelete;
 
-    public String getExchangeName() {
+    public String getExchangeName()
+    {
         return exchangeName;
     }
 
@@ -28,51 +29,51 @@ public class BudgetProcessQueueConfig {
         this.exchangeName = exchangeName;
     }
 
-    public String getRoutingKeyCreate() {
-        return routingKeyCreate;
+    public String getRoutingKeyExpenseCreate() {
+        return routingKeyExpenseCreate;
     }
 
-    public void setRoutingKeyCreate(String routingKeyCreate) {
-        this.routingKeyCreate = routingKeyCreate;
+    public void setRoutingKeyExpenseCreate(String routingKeyExpenseCreate) {
+        this.routingKeyExpenseCreate = routingKeyExpenseCreate;
     }
 
-    public String getRoutingKeyUpdate() {
-        return routingKeyUpdate;
+    public String getRoutingKeyExpenseUpdate() {
+        return routingKeyExpenseUpdate;
     }
 
-    public void setRoutingKeyUpdate(String routingKeyUpdate) {
-        this.routingKeyUpdate = routingKeyUpdate;
+    public void setRoutingKeyExpenseUpdate(String routingKeyExpenseUpdate) {
+        this.routingKeyExpenseUpdate = routingKeyExpenseUpdate;
     }
 
-    public String getRoutingKeyDelete() {
-        return routingKeyDelete;
+    public String getRoutingKeyExpenseDelete() {
+        return routingKeyExpenseDelete;
     }
 
-    public void setRoutingKeyDelete(String routingKeyDelete) {
-        this.routingKeyDelete = routingKeyDelete;
+    public void setRoutingKeyExpenseDelete(String routingKeyExpenseDelete) {
+        this.routingKeyExpenseDelete = routingKeyExpenseDelete;
     }
 
-    public String getQueueCreate() {
-        return queueCreate;
+    public String getQueueExpenseCreate() {
+        return queueExpenseCreate;
     }
 
-    public void setQueueCreate(String queueCreate) {
-        this.queueCreate = queueCreate;
+    public void setQueueExpenseCreate(String queueExpenseCreate) {
+        this.queueExpenseCreate = queueExpenseCreate;
     }
 
-    public String getQueueUpdate() {
-        return queueUpdate;
+    public String getQueueExpenseUpdate() {
+        return queueExpenseUpdate;
     }
 
-    public void setQueueUpdate(String queueUpdate) {
-        this.queueUpdate = queueUpdate;
+    public void setQueueExpenseUpdate(String queueExpenseUpdate) {
+        this.queueExpenseUpdate = queueExpenseUpdate;
     }
 
-    public String getQueueDelete() {
-        return queueDelete;
+    public String getQueueExpenseDelete() {
+        return queueExpenseDelete;
     }
 
-    public void setQueueDelete(String queueDelete) {
-        this.queueDelete = queueDelete;
+    public void setQueueExpenseDelete(String queueExpenseDelete) {
+        this.queueExpenseDelete = queueExpenseDelete;
     }
 }

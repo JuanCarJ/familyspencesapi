@@ -34,11 +34,11 @@ public class MessageSenderBrokerExpense implements MessageSender<Expense> {
         MessageProperties messageProperties = getMessageProperties(routingKey);
 
         Optional<Message> messageBody = getMessageBody(message, messageProperties);
-        if (messageBody.isEmpty()) {
-            log.warn("No se pudo serializar el mensaje Expense: {}", message);
-        }
+        if (messageBody.isPresent()) {
 
-        rabbitTemplate.convertAndSend(queueConfig.getExchangeName(),routingKey, messageBody);
+            rabbitTemplate.convertAndSend(queueConfig.getExchangeName(),routingKey, messageBody.get());
+        }else {
+        log.warn("No se pudo serializar el mensaje Expense: {}", message);}
     }
 
     public MessageProperties getMessageProperties(String idMessageSender) {

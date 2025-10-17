@@ -76,7 +76,7 @@ public class ExpenseService {
             throw new IllegalArgumentException("Invalid period");
         }
 
-        messageSenderBrokerExpense.execute(expense, processQueueConfig.getRoutingKeyCreate());
+        messageSenderBrokerExpense.execute(expense, processQueueConfig.getRoutingKeyExpenseCreate());
 
         return "The message was sent successfully.";
     }
