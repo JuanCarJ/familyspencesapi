@@ -1,5 +1,6 @@
 package com.familyspencesapi.messages.balance;
 
+import com.familyspencesapi.domain.home.MonthlyClosing;
 import com.familyspencesapi.utils.MessageSender;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -12,7 +13,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Component
-public class BalanceMessageSenderBroker implements MessageSender<Object> {
+public class BalanceMessageSenderBroker implements MessageSender<MonthlyClosing> {
 
     private final RabbitTemplate rabbitTemplate;
     private final Gson gson;
@@ -29,10 +30,10 @@ public class BalanceMessageSenderBroker implements MessageSender<Object> {
     }
 
     @Override
-    public void execute(Object message, String routingKey) {
+    public void execute(MonthlyClosing message, String routingKey) {
     }
 
-    public void send(Object message, String exchange, String routingKey) {
+    public void send(MonthlyClosing message, String exchange, String routingKey) {
         String jsonMessage = gson.toJson(message);
         MessageProperties properties = new MessageProperties();
         properties.setContentType(MessageProperties.CONTENT_TYPE_JSON);

@@ -1,10 +1,10 @@
-package com.familyspencesapi.service.home;
+package com.familyspencesapi.service.balance;
 
 import com.familyspencesapi.config.messages.budgetprocessor.expense.ClosingProducerQueueConfig;
 import com.familyspencesapi.domain.home.GeneralBalance;
 import com.familyspencesapi.domain.home.MonthlyClosing;
 import com.familyspencesapi.domain.home.Closings;
-import com.familyspencesapi.messages.users.MessageSenderBroker;
+import com.familyspencesapi.messages.balance.BalanceMessageSenderBroker;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
 import com.familyspencesapi.repositories.balance.MonthlyClosingRepository;
 import com.familyspencesapi.service.income.IncomeService;
@@ -19,19 +19,20 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class HomeService {
+public class BalanceService {
 
-    private static final Logger logger = LoggerFactory.getLogger(HomeService.class);
+    private static final Logger logger = LoggerFactory.getLogger(BalanceService.class);
 
     private final ExpenseRepository expenseRepository;
     private final IncomeService incomeService;
-    private final MessageSenderBroker messageSender;
+    private final BalanceMessageSenderBroker messageSender;
     private final ClosingProducerQueueConfig config;
     private final MonthlyClosingRepository closingRepository;
 
-    public HomeService(ExpenseRepository expenseRepository, IncomeService incomeService,
-                       MessageSenderBroker messageSender, ClosingProducerQueueConfig config,
-                       MonthlyClosingRepository closingRepository) {
+    public BalanceService(ExpenseRepository expenseRepository, IncomeService incomeService,
+                          BalanceMessageSenderBroker messageSender,
+                          ClosingProducerQueueConfig config,
+                          MonthlyClosingRepository closingRepository) {
         this.expenseRepository = expenseRepository;
         this.incomeService = incomeService;
         this.messageSender = messageSender;
