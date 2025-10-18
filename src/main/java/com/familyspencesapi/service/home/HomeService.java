@@ -1,6 +1,6 @@
 package com.familyspencesapi.service.home;
 
-import com.familyspencesapi.config.messages.users.ClosingProducerQueueConfig;
+import com.familyspencesapi.config.messages.budgetprocessor.expense.ClosingProducerQueueConfig;
 import com.familyspencesapi.domain.home.GeneralBalance;
 import com.familyspencesapi.domain.home.MonthlyClosing;
 import com.familyspencesapi.domain.home.Closings;
