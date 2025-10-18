@@ -1,6 +1,6 @@
 package com.familyspencesapi.service.expense;
 
-import com.familyspencesapi.config.messages.budgetprocessor.BudgetProcessQueueConfig;
+import com.familyspencesapi.config.messages.budgetprocessor.expense.BudgetExpenseProcessQueueConfig;
 import com.familyspencesapi.controllers.expense.ExpenseRequest;
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
@@ -27,10 +27,10 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final RegisterUserRepository registerUserRepository;
     private final MessageSenderBrokerExpense messageSenderBrokerExpense;
-    private final BudgetProcessQueueConfig processQueueConfig;
+    private final BudgetExpenseProcessQueueConfig processQueueConfig;
 
     // Constructor injection
-    public ExpenseService(ExpenseRepository expenseRepository, RegisterUserRepository registerUserRepository, MessageSenderBrokerExpense messageSenderBrokerExpense, BudgetProcessQueueConfig processQueueConfig) {
+    public ExpenseService(ExpenseRepository expenseRepository, RegisterUserRepository registerUserRepository, MessageSenderBrokerExpense messageSenderBrokerExpense, BudgetExpenseProcessQueueConfig processQueueConfig) {
         this.expenseRepository = expenseRepository;
         this.registerUserRepository = registerUserRepository;
         this.messageSenderBrokerExpense = messageSenderBrokerExpense;

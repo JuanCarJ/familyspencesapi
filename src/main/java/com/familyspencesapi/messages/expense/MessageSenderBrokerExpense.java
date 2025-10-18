@@ -1,6 +1,6 @@
 package com.familyspencesapi.messages.expense;
 
-import com.familyspencesapi.config.messages.budgetprocessor.BudgetProcessQueueConfig;
+import com.familyspencesapi.config.messages.budgetprocessor.expense.BudgetExpenseProcessQueueConfig;
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.utils.MessageSender;
 import com.familyspencesapi.utils.gson.MapperJsonObject;
@@ -20,10 +20,10 @@ public class MessageSenderBrokerExpense implements MessageSender<Expense> {
 
     private final RabbitTemplate rabbitTemplate;
     private final MapperJsonObject mapperJson;
-    private final BudgetProcessQueueConfig queueConfig;
+    private final BudgetExpenseProcessQueueConfig queueConfig;
     private static final Logger log = LoggerFactory.getLogger(MessageSenderBrokerExpense.class);
 
-    public MessageSenderBrokerExpense(RabbitTemplate rabbitTemplate, MapperJsonObject mapper, BudgetProcessQueueConfig queueConfig) {
+    public MessageSenderBrokerExpense(RabbitTemplate rabbitTemplate, MapperJsonObject mapper, BudgetExpenseProcessQueueConfig queueConfig) {
         this.rabbitTemplate = rabbitTemplate;
         this.mapperJson = mapper;
         this.queueConfig = queueConfig;
