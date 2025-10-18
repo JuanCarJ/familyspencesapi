@@ -1,6 +1,7 @@
 package com.familyspencesapi.controllers.task;
 
 import com.familyspencesapi.domain.tasks.Tasks;
+import com.familyspencesapi.messages.task.TaskMessagePublisher;
 import com.familyspencesapi.service.task.TaskService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,45 +14,39 @@ import java.util.UUID;
 public class TaskController {
 
     private final TaskService taskService;
+    private final TaskMessagePublisher taskMessagePublisher;
 
-    public TaskController(TaskService taskService) {
+    public TaskController(TaskService taskService, TaskMessagePublisher taskMessagePublisher) {
         this.taskService = taskService;
+        this.taskMessagePublisher = taskMessagePublisher;
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<Tasks>> getAllTasks(@RequestParam(required = true) UUID familyId) {
-
-        List<Tasks>listOfTasks = taskService.getAllTasks(familyId);
+    public ResponseEntity<List<Tasks>> getAllTasks(@RequestParam UUID familyId) {
+        List<Tasks> listOfTasks = taskService.getAllTasks(familyId);
         return ResponseEntity.ok(listOfTasks);
-
-    }
-    @GetMapping
-    public ResponseEntity<Tasks> getTask(@RequestParam(required = true) UUID familyId, @RequestParam(required = true) UUID taskId){
-        Tasks tasks = taskService.getTask(familyId,taskId);
-        return ResponseEntity.ok(tasks);
     }
 
     @PostMapping
-    public ResponseEntity<String> postTask(@RequestParam(required = true) UUID familyId ,@RequestBody Tasks task){
-
-        String responseTask = taskService.saveTask(familyId,task);
-
-        return ResponseEntity.ok(responseTask);
+    public ResponseEntity<String> postTask(@RequestParam UUID familyId, @RequestBody Tasks task) {
+        task.setFamilyId(familyId);
+        taskMessagePublisher.publishTaskCreated(task);
+        return ResponseEntity.ok("Mensaje de creación de Task enviado a RabbitMQ.");
     }
 
     @PutMapping
-    public ResponseEntity<String> putTask(@RequestParam(required = true) UUID familyId,@RequestParam(required = true) UUID taskId,@RequestBody Tasks task){
-
-        String responseTask = taskService.updateTask(familyId,taskId,task);
-
-        return ResponseEntity.ok(responseTask);
+    public ResponseEntity<String> putTask(@RequestParam UUID familyId, @RequestParam UUID taskId, @RequestBody Tasks task) {
+        task.setFamilyId(familyId);
+        task.setId(taskId);
+        taskMessagePublisher.publishTaskUpdated(task);
+        return ResponseEntity.ok("Mensaje de actualización enviado a RabbitMQ.");
     }
 
     @DeleteMapping
-    public ResponseEntity<String> deleteTask(@RequestParam(required = true) UUID familyId ,@RequestParam(required = true) UUID taskId){
-        String responseTask = taskService.deleteTask(familyId,taskId);
-
-        return ResponseEntity.ok(responseTask);
+    public ResponseEntity<String> deleteTask(@RequestParam UUID familyId, @RequestParam UUID taskId) {
+        taskMessagePublisher.publishTaskDeleted(
+                java.util.Map.of("familyId", familyId, "taskId", taskId)
+        );
+        return ResponseEntity.ok("Mensaje de eliminación enviado a RabbitMQ.");
     }
-
 }
