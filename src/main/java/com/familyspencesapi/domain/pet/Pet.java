@@ -1,6 +1,7 @@
 package com.familyspencesapi.domain.pet;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import jakarta.persistence.*;
@@ -30,7 +31,6 @@ public class Pet {
     @JsonDeserialize(using = LocalDateDeserializer.class)
     private LocalDate birthDate;
 
-    // ✅ CORRECCIÓN: Cambiar el mapeo de columna
     @Column(name = "family_id", nullable = false)
     private UUID familyId;
 
@@ -93,6 +93,8 @@ public class Pet {
         return familyId;
     }
 
+    // ✅ JsonIgnore en el SETTER para que no se pueda enviar en el request body
+    @JsonIgnore
     public void setFamilyId(UUID familyId) {
         this.familyId = familyId;
     }
