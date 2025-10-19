@@ -23,11 +23,11 @@ import java.util.regex.Pattern;
 @Service
 public class RegisterUserService {
 
-    private RegisterUserRepository userRepository;
-    private FamilyRepository familyRepository;
-    private DocumentTypeRepository documentTypeRepository;
-    private RelationshipRepository relationshipRepository;
-    private PasswordEncoder passwordEncoder;
+    private final RegisterUserRepository userRepository;
+    private final FamilyRepository familyRepository;
+    private final DocumentTypeRepository documentTypeRepository;
+    private final RelationshipRepository relationshipRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public RegisterUserService(RelationshipRepository relationshipRepository, RegisterUserRepository userRepository,
                                FamilyRepository familyRepository,
