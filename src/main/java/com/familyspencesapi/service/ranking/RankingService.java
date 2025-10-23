@@ -203,7 +203,7 @@ public class RankingService {
         List<RegisterUser> users = family.getUsers();
 
         for (RegisterUser user : users) {
-            List<Expense> expensesList = expenseRepository.findByResponsible(user);
+            List<Expense> expensesList = expenseRepository.findByResponsible(user.getEmail());
 
             BigDecimal total = expensesList.stream()
                     .map(Expense::getValue)
