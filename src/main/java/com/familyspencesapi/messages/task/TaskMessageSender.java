@@ -1,47 +1,50 @@
 package com.familyspencesapi.messages.task;
 
-import com.familyspencesapi.config.messages.tasks.TaskProducerQueueConfig;
+import com.familyspencesapi.config.messages.task.TaskQueueConfig;
+import com.familyspencesapi.domain.tasks.Tasks;
 import com.familyspencesapi.utils.MessageSender;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.familyspencesapi.utils.gson.MapperJsonObject;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
 public class TaskMessageSender implements MessageSender<Object> {
 
     private final RabbitTemplate rabbitTemplate;
-    private final TaskProducerQueueConfig config;
-    private final Gson gson = new GsonBuilder().create();
+    private final TaskQueueConfig taskQueueConfig;
+    private final MapperJsonObject mapperJsonObject;
 
-    public TaskMessageSender(RabbitTemplate rabbitTemplate, TaskProducerQueueConfig config) {
+    public TaskMessageSender(RabbitTemplate rabbitTemplate,
+                                   TaskQueueConfig taskQueueConfig,
+                                   MapperJsonObject mapperJsonObject) {
         this.rabbitTemplate = rabbitTemplate;
-        this.config = config;
+        this.taskQueueConfig = taskQueueConfig;
+        this.mapperJsonObject = mapperJsonObject;
     }
 
     @Override
-    public void execute(Object message, String routingKey) { }
-
-    public void sendCreate(Object message) {
-        send(message, config.getExchangeName(), config.getRoutingKeyCreate());
+    public void execute(Object message, String routingKey) {
+        mapperJsonObject.execute(message).ifPresent(json -> {
+            MessageProperties props = new MessageProperties();
+            props.setContentType(MessageProperties.CONTENT_TYPE_JSON);
+            Message amqpMessage = new Message(json.getBytes(), props);
+            rabbitTemplate.send(taskQueueConfig.getExchangeName(), routingKey, amqpMessage);
+        });
     }
 
-    public void sendUpdate(Object message) {
-        send(message, config.getExchangeName(), config.getRoutingKeyUpdate());
+    public void sendTaskCreated(Tasks task) {
+        execute(task, taskQueueConfig.getRoutingKeyCreate());
     }
 
-    public void sendDelete(Object message) {
-        send(message, config.getExchangeName(), config.getRoutingKeyDelete());
+    public void sendTaskUpdated(Tasks task) {
+        execute(task, taskQueueConfig.getRoutingKeyUpdate());
     }
 
-    private void send(Object message, String exchange, String routingKey) {
-        String jsonMessage = gson.toJson(message);
-        MessageProperties props = new MessageProperties();
-        props.setContentType(MessageProperties.CONTENT_TYPE_JSON);
-        Message amqpMessage = new Message(jsonMessage.getBytes(), props);
-        rabbitTemplate.send(exchange, routingKey, amqpMessage);
-        System.out.println("📤 Mensaje enviado a RabbitMQ → " + exchange + " | " + routingKey);
+    public void sendTaskDeleted(Map<String, String> data) {
+        execute(data, taskQueueConfig.getRoutingKeyDelete());
     }
 }

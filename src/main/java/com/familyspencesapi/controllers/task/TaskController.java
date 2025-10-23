@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -14,80 +15,95 @@ import java.util.UUID;
 public class TaskController {
 
     private final TaskService taskService;
-    private final TaskMessageSender taskMessagePublisher;
+    private final TaskMessageSender taskMessageSender;
 
-    public TaskController(TaskService taskService, TaskMessageSender taskMessagePublisher) {
+    public TaskController(TaskService taskService, TaskMessageSender taskMessageSender) {
         this.taskService = taskService;
-        this.taskMessagePublisher = taskMessagePublisher;
+        this.taskMessageSender = taskMessageSender;
     }
 
-    // ============= QUERIES (Síncronas) =============
 
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<List<Tasks>> getAllTasks(@RequestParam UUID familyId) {
-        List<Tasks> listOfTasks = taskService.getAllTasks(familyId);
-        return ResponseEntity.ok(listOfTasks);
+        List<Tasks> tasks = taskService.getAllTasks(familyId);
+        return ResponseEntity.ok(tasks);
     }
 
     @GetMapping("/{taskId}")
-    public ResponseEntity<Tasks> getTask(@RequestParam UUID familyId, @PathVariable UUID taskId) {
+    public ResponseEntity<Tasks> getTask(
+            @RequestParam UUID familyId,
+            @PathVariable UUID taskId
+    ) {
         Tasks task = taskService.getTask(familyId, taskId);
         return ResponseEntity.ok(task);
     }
 
-    // ============= COMMANDS (Síncronos + Evento asíncrono) =============
 
     @PostMapping
-    public ResponseEntity<Tasks> createTask(@RequestParam UUID familyId, @RequestBody Tasks task) {
+    public ResponseEntity<?> createTask(
+            @RequestParam UUID familyId,
+            @RequestBody Tasks task
+    ) {
         try {
             task.setFamilyId(familyId);
 
-            // 1. Validar y persistir en BD (síncrono)
+            // 1️⃣ Crear la tarea en la BD (proceso síncrono)
             Tasks createdTask = taskService.createTask(task);
 
-            // 2. Publicar evento para que el procesador lo maneje (asíncrono)
-            taskMessagePublisher.publishTaskCreated(createdTask);
+            // 2️⃣ Enviar evento a RabbitMQ (proceso asíncrono)
+            taskMessageSender.sendTaskCreated(createdTask);
 
             return ResponseEntity.ok(createdTask);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Unexpected error"));
         }
     }
 
+
     @PutMapping("/{taskId}")
-    public ResponseEntity<Tasks> updateTask(
+    public ResponseEntity<?> updateTask(
             @RequestParam UUID familyId,
             @PathVariable UUID taskId,
-            @RequestBody Tasks task) {
+            @RequestBody Tasks task
+    ) {
         try {
             task.setFamilyId(familyId);
 
-            // 1. Validar y actualizar en BD (síncrono)
+            // 1️⃣ Actualizar en la BD
             Tasks updatedTask = taskService.updateTask(taskId, task);
 
-            // 2. Publicar evento para que el procesador lo maneje (asíncrono)
-            taskMessagePublisher.publishTaskUpdated(updatedTask);
+            // 2️⃣ Enviar evento
+            taskMessageSender.sendTaskUpdated(updatedTask);
 
             return ResponseEntity.ok(updatedTask);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Unexpected error"));
         }
     }
 
     @DeleteMapping("/{taskId}")
-    public ResponseEntity<String> deleteTask(@RequestParam UUID familyId, @PathVariable UUID taskId) {
+    public ResponseEntity<?> deleteTask(
+            @RequestParam UUID familyId,
+            @PathVariable UUID taskId
+    ) {
         try {
-            // 1. Validar y eliminar de BD (síncrono)
+            // 1️⃣ Eliminar en la BD
             taskService.deleteTask(familyId, taskId);
 
-            // 2. Publicar evento para que el procesador lo maneje (asíncrono)
-            taskMessagePublisher.publishTaskDeleted(
-                    java.util.Map.of("familyId", familyId.toString(), "taskId", taskId.toString())
+            // 2️⃣ Publicar evento al Consumer
+            taskMessageSender.sendTaskDeleted(
+                    Map.of("familyId", familyId.toString(), "taskId", taskId.toString())
             );
 
-            return ResponseEntity.ok("Task deleted successfully");
+            return ResponseEntity.ok(Map.of("message", "Task deleted successfully"));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Unexpected error"));
         }
     }
 }
