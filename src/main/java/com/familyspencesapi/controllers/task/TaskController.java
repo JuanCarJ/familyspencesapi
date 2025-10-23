@@ -16,6 +16,8 @@ public class TaskController {
 
     private final TaskService taskService;
     private final TaskMessageSender taskMessageSender;
+    private static final String UNEXPECTED_ERROR = "Unexpected error";
+    private static final String ERROR_KEY = "error";
 
     public TaskController(TaskService taskService, TaskMessageSender taskMessageSender) {
         this.taskService = taskService;
@@ -40,30 +42,28 @@ public class TaskController {
 
 
     @PostMapping
-    public ResponseEntity<?> createTask(
+    public ResponseEntity<Object> createTask(
             @RequestParam UUID familyId,
             @RequestBody Tasks task
     ) {
         try {
             task.setFamilyId(familyId);
 
-            // 1️⃣ Crear la tarea en la BD (proceso síncrono)
             Tasks createdTask = taskService.createTask(task);
 
-            // 2️⃣ Enviar evento a RabbitMQ (proceso asíncrono)
             taskMessageSender.sendTaskCreated(createdTask);
 
             return ResponseEntity.ok(createdTask);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Unexpected error"));
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
         }
     }
 
 
     @PutMapping("/{taskId}")
-    public ResponseEntity<?> updateTask(
+    public ResponseEntity<Object> updateTask(
             @RequestParam UUID familyId,
             @PathVariable UUID taskId,
             @RequestBody Tasks task
@@ -71,39 +71,35 @@ public class TaskController {
         try {
             task.setFamilyId(familyId);
 
-            // 1️⃣ Actualizar en la BD
             Tasks updatedTask = taskService.updateTask(taskId, task);
 
-            // 2️⃣ Enviar evento
             taskMessageSender.sendTaskUpdated(updatedTask);
 
             return ResponseEntity.ok(updatedTask);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Unexpected error"));
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
         }
     }
 
     @DeleteMapping("/{taskId}")
-    public ResponseEntity<?> deleteTask(
+    public ResponseEntity<Object> deleteTask(
             @RequestParam UUID familyId,
             @PathVariable UUID taskId
     ) {
         try {
-            // 1️⃣ Eliminar en la BD
             taskService.deleteTask(familyId, taskId);
 
-            // 2️⃣ Publicar evento al Consumer
             taskMessageSender.sendTaskDeleted(
                     Map.of("familyId", familyId.toString(), "taskId", taskId.toString())
             );
 
             return ResponseEntity.ok(Map.of("message", "Task deleted successfully"));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Unexpected error"));
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
         }
     }
 }

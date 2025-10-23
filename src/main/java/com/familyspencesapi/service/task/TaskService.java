@@ -5,6 +5,8 @@ import com.familyspencesapi.repositories.expense.ExpenseRepository;
 import com.familyspencesapi.repositories.task.ITaskRepository;
 import com.familyspencesapi.repositories.users.FamilyRepository;
 import com.familyspencesapi.repositories.vacation.VacationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,11 @@ public class TaskService {
     private final FamilyRepository familyRepository;
     private final ExpenseRepository expenseRepository;
     private final VacationRepository vacationRepository;
+    private static final Logger log = LoggerFactory.getLogger(TaskService.class);
+    private static final String TASK_NOT_FOUND = "Task not found";
+    private static final String FAMILY_NOT_FOUND = "Family not found";
+
+
 
     public TaskService(ITaskRepository iTaskRepository, FamilyRepository familyRepository,
                        ExpenseRepository expenseRepository, VacationRepository vacationRepository) {
@@ -27,7 +34,6 @@ public class TaskService {
         this.vacationRepository = vacationRepository;
     }
 
-    // ============= QUERIES =============
 
     public List<Tasks> getAllTasks(final UUID familyId) {
         List<Tasks> tasksList = iTaskRepository.findByFamilyId(familyId);
@@ -41,70 +47,59 @@ public class TaskService {
 
     public Tasks getTask(final UUID familyId, final UUID taskId) {
         if (familyRepository.findById(familyId).isEmpty()) {
-            throw new IllegalArgumentException("Family not found");
+            throw new IllegalArgumentException(FAMILY_NOT_FOUND);
         }
 
         return iTaskRepository.findById(taskId)
-                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+                .orElseThrow(() -> new IllegalArgumentException(TASK_NOT_FOUND));
     }
-
-    // ============= COMMANDS =============
 
     @Transactional
     public Tasks createTask(final Tasks task) {
-        System.out.println("🔧 Validando y creando task...");
+        log.info(" Validando y creando task...");
 
-        // Validación: No puede tener vacation y expense al mismo tiempo
         if (task.getIdVacations() != null && task.getIdExpenseve() != null) {
             throw new IllegalArgumentException("A task cannot have both Vacation and Expense");
         }
 
-        // Validar que la familia existe
         if (familyRepository.findById(task.getFamilyId()).isEmpty()) {
-            throw new IllegalArgumentException("Family not found");
+            throw new IllegalArgumentException(FAMILY_NOT_FOUND);
         }
 
-        // Validar expense si existe
         if (task.getIdExpenseve() != null) {
             expenseRepository.findById(task.getIdExpenseve().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Expense not found"));
         }
 
-        // Validar vacation si existe
         if (task.getIdVacations() != null) {
             vacationRepository.findById(task.getIdVacations().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Vacation not found"));
         }
 
         Tasks savedTask = iTaskRepository.save(task);
-        System.out.println("✅ Task creada: " + savedTask.getId());
+        log.info(" Task creada: {}", savedTask.getId());
         return savedTask;
     }
 
     @Transactional
     public Tasks updateTask(final UUID taskId, final Tasks task) {
-        System.out.println("🔧 Validando y actualizando task: " + taskId);
+        log.info(" Validando y actualizando task: {}", taskId);
 
-        // Validar que la familia existe
         if (familyRepository.findById(task.getFamilyId()).isEmpty()) {
-            throw new IllegalArgumentException("Family not found");
+            throw new IllegalArgumentException(FAMILY_NOT_FOUND);
         }
 
-        // Buscar la task existente
         Tasks taskUpdate = iTaskRepository.findById(taskId)
-                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+                .orElseThrow(() -> new IllegalArgumentException(TASK_NOT_FOUND));
 
-        // Actualizar campos básicos
         taskUpdate.setName(task.getName());
         taskUpdate.setDescription(task.getDescription());
         taskUpdate.setStatus(task.isStatus());
 
-        // Validación: No puede tener vacation y expense al mismo tiempo
         if (task.getIdVacations() != null && task.getIdExpenseve() != null) {
             throw new IllegalArgumentException("A task cannot have both Vacation and Expense");
         }
 
-        // Actualizar vacation
         if (task.getIdVacations() != null) {
             taskUpdate.setIdVacations(
                     vacationRepository.findById(task.getIdVacations().getId())
@@ -113,7 +108,6 @@ public class TaskService {
             taskUpdate.setIdExpenseve(null);
         }
 
-        // Actualizar expense
         if (task.getIdExpenseve() != null) {
             taskUpdate.setIdExpenseve(
                     expenseRepository.findById(task.getIdExpenseve().getId())
@@ -123,24 +117,22 @@ public class TaskService {
         }
 
         Tasks updatedTask = iTaskRepository.save(taskUpdate);
-        System.out.println("✅ Task actualizada: " + updatedTask.getId());
+        log.info(" Task actualizada: {}", updatedTask.getId());
         return updatedTask;
     }
 
     @Transactional
     public void deleteTask(final UUID familyId, final UUID taskId) {
-        System.out.println("🔧 Validando y eliminando task: " + taskId);
+        log.info(" Validando y eliminando task: {}", taskId);
 
-        // Validar que la familia existe
         if (familyRepository.findById(familyId).isEmpty()) {
-            throw new IllegalArgumentException("Family not found");
+            throw new IllegalArgumentException(FAMILY_NOT_FOUND);
         }
-
-        // Validar que la task existe
-        Tasks tasksExist = iTaskRepository.findById(taskId)
-                .orElseThrow(() -> new IllegalArgumentException("Task not found"));
+        iTaskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException(TASK_NOT_FOUND));
 
         iTaskRepository.deleteById(taskId);
-        System.out.println("✅ Task eliminada: " + taskId);
+        log.info(" Task eliminada: {}", taskId);
+
     }
 }
