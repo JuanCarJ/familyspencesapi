@@ -2,53 +2,95 @@ package com.familyspencesapi.domain.ranking;
 
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.income.Income;
+import com.familyspencesapi.domain.users.RegisterUser;
+import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+@Entity
+@Table(name="ranking")
+public class  Ranking {
 
-public class Ranking {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-    private UUID idFamily;
-    private List<String> nameFamilyMembers;
-    private Expense expense;
-    private Income income;
+    @Column(nullable = false)
+    private UUID familyId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private RegisterUser user;
 
-    public Ranking(final UUID idFamily,final List<String> nameFamilyMembers,final Expense expense) {
-        this.idFamily = idFamily;
-        this.nameFamilyMembers = nameFamilyMembers;
-        this.expense = expense;
+    @Column(nullable = false, length = 7)
+    private String period;
+
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal totalExpenses;
+
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal totalIncome;
+
+    public Ranking() {
     }
 
-    public UUID getIdFamily() {
-        return idFamily;
+
+    public Ranking(UUID familyId, RegisterUser user, String period, BigDecimal totalExpenses, BigDecimal totalIncome) {
+        this.id = id;
+        this.familyId = familyId;
+        this.user = user;
+        this.period = period;
+        this.totalExpenses = totalExpenses;
+        this.totalIncome = totalIncome;
     }
 
-    public void setIdFamily(final UUID idFamily) {
-        this.idFamily = idFamily;
+    public UUID getId() {
+        return id;
     }
 
-    public List<String> getNameFamilyMembers() {
-        return nameFamilyMembers;
+    public void setId(UUID id) {
+        this.id = id;
     }
 
-    public void setNameFamilyMembers(List<String> nameFamilyMembers) {
-        this.nameFamilyMembers = nameFamilyMembers;
+    public UUID getFamilyId() {
+        return familyId;
     }
 
-    public Expense getExpense() {
-        return expense;
+    public void setFamilyId(UUID familyId) {
+        this.familyId = familyId;
     }
 
-    public void setExpense(Expense expense) {
-        this.expense = expense;
+    public RegisterUser getUser() {
+        return user;
     }
 
-    public Income getIncome() {
-        return income;
+    public void setUser(RegisterUser user) {
+        this.user = user;
     }
 
-    public void setIncome(Income income) {
-        this.income = income;
+    public String getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(String period) {
+        this.period = period;
+    }
+
+    public BigDecimal getTotalIncome() {
+        return totalIncome;
+    }
+
+    public void setTotalIncome(BigDecimal totalIncome) {
+        this.totalIncome = totalIncome;
+    }
+
+    public BigDecimal getTotalExpenses() {
+        return totalExpenses;
+    }
+
+    public void setTotalExpenses(BigDecimal totalExpenses) {
+        this.totalExpenses = totalExpenses;
     }
 }
+

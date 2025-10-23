@@ -1,11 +1,16 @@
 package com.familyspencesapi.service.ranking;
 
 import com.familyspencesapi.domain.expense.Expense;
+import com.familyspencesapi.domain.income.Income;
+import com.familyspencesapi.domain.ranking.Ranking;
 import com.familyspencesapi.domain.users.Family;
 import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
+import com.familyspencesapi.repositories.income.RepositoryIncome;
+import com.familyspencesapi.repositories.ranking.RankingRepository;
 import com.familyspencesapi.repositories.users.FamilyRepository;
 import com.familyspencesapi.utils.RankingException;
+import jakarta.transaction.Transactional;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -15,6 +20,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class RankingService {
@@ -23,9 +29,14 @@ public class RankingService {
     private final FamilyRepository familyRepository;
     private final ExpenseRepository expenseRepository;
 
-    public RankingService(FamilyRepository familyRepository, ExpenseRepository expenseRepository) {
+    private final RankingRepository rankingRepository;
+    private final RepositoryIncome incomeRepository;
+
+    public RankingService(FamilyRepository familyRepository, ExpenseRepository expenseRepository, RankingRepository rankingRepository, RepositoryIncome incomeRepository) {
         this.familyRepository = familyRepository;
         this.expenseRepository = expenseRepository;
+        this.rankingRepository = rankingRepository;
+        this.incomeRepository = incomeRepository;
     }
 
     public byte[] generateRankingExcel(UUID familyId, Map<String, Double> expenses, Map<String, Double> earnings) {
@@ -194,34 +205,30 @@ public class RankingService {
         if (cell != null) cell.setCellStyle(style);
     }
 
-    public Map<String, Double> generateRankingExpenses(UUID familyId) {
-        Map<String, Double> expenses = new HashMap<>();
+    public Map<String, Double> generateRankingExpenses(UUID familyId, String period) {
+        List<Ranking> rankings = rankingRepository.findByFamilyIdAndPeriodOrderByTotalExpenses(familyId, period);
 
-        Family family = familyRepository.findById(familyId)
-                .orElseThrow(() -> new RankingException("No se encontró la familia con id: " + familyId));
-
-        List<RegisterUser> users = family.getUsers();
-
-        for (RegisterUser user : users) {
-            List<Expense> expensesList = expenseRepository.findByResponsible(user.getEmail());
-
-            BigDecimal total = expensesList.stream()
-                    .map(Expense::getValue)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            expenses.put(user.getfullName(), total.doubleValue());
-        }
-
-        return expenses;
+        // 2. Transforma la lista de Entidades al Map<String, Double> que espera tu Controller
+        return rankings.stream()
+                .collect(Collectors.toMap(
+                        r -> r.getUser().getfullName(), // Key: Nombre del usuario
+                        r -> r.getTotalExpenses().doubleValue(), // Value: Total de gastos
+                        (oldValue, newValue) -> oldValue, // En caso de duplicados (no debería pasar)
+                        LinkedHashMap::new // Usamos LinkedHashMap para mantener el orden de la consulta
+                ));
     }
 
-    public Map<String, Double> generateRankingIncome(UUID familyId) {
-        Map<String, Double> earnings = new HashMap<>();
-        earnings.put("David Lopera", 0.25);
-        earnings.put("Farid Sanchez", 0.50);
-        earnings.put("Jeronimoq18", 2500.25);
-        earnings.put("Juan Pablo Aristizabal", 300000.00);
-        return sortDescending(earnings);
+    public Map<String, Double> generateRankingIncome(UUID familyId, String period) {
+        List<Ranking> rankings = rankingRepository.findByFamilyIdAndPeriodOrderByTotalIncome(familyId, period);
+
+        // 2. Transforma la lista al Map
+        return rankings.stream()
+                .collect(Collectors.toMap(
+                        r -> r.getUser().getfullName(),
+                        r -> r.getTotalIncome().doubleValue(),
+                        (oldValue, newValue) -> oldValue,
+                        LinkedHashMap::new
+                ));
     }
 
     private Map<String, Double> sortDescending(Map<String, Double> data) {
@@ -234,4 +241,49 @@ public class RankingService {
                         LinkedHashMap::putAll
                 );
     }
+    @Transactional
+    public void calculateAndStoreMonthlyRanking(UUID familyId, String period) {
+        Family family = familyRepository.findById(familyId)
+                .orElseThrow(() -> new RankingException("No se encontró la familia con id: " + familyId));
+
+        // 1. Evita recalcular si ya existe
+        if (rankingRepository.existsByFamilyIdAndPeriod(familyId, period)) {
+            logger.warning("El ranking para el periodo " + period + " y familia " + familyId + " ya fue calculado.");
+            // Opcional: podrías borrar y recalcular si quisieras, pero por ahora evitamos duplicados.
+            return;
+        }
+
+        List<RegisterUser> users = family.getUsers();
+        if (users == null || users.isEmpty()) {
+            logger.warning("No se encontraron usuarios para la familia: " + familyId);
+            return;
+        }
+        for (RegisterUser user : users) {
+            // 2. Calcular Gastos (usando el nuevo método del repo)
+            List<Expense> expensesList = expenseRepository.findByResponsibleAndPeriod(user.getEmail(), period);
+            BigDecimal totalExpenses = expensesList.stream()
+                    .map(Expense::getValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // 3. Calcular Ingresos (usando el nuevo método del repo)
+            List<Income> incomeList = incomeRepository.findByResponsibleIdAndPeriod(user.getId(), period);
+            BigDecimal totalIncome = incomeList.stream()
+                    .map(Income::getTotal) // Income usa Double
+                    .map(BigDecimal::valueOf) // Convertimos a BigDecimal
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // 4. Crear y Guardar el registro de ranking
+            Ranking rankingData = new Ranking(
+                    familyId,
+                    user,
+                    period,
+                    totalExpenses,
+                    totalIncome
+            );
+            rankingRepository.save(rankingData);
+        }
+        logger.info("Ranking para el periodo " + period + " y familia " + familyId + " guardado exitosamente.");
+    }
+
 }
+
