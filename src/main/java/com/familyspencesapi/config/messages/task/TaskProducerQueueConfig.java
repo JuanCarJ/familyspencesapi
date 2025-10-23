@@ -1,4 +1,4 @@
-package com.familyspencesapi.config.messages.task;
+package com.familyspencesapi.config.messages.tasks;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -10,39 +10,19 @@ import org.springframework.context.annotation.PropertySource;
 public class TaskProducerQueueConfig {
 
     private String exchangeName;
-    private String createRoutingKey;
-    private String updateRoutingKey;
-    private String deleteRoutingKey;
+    private String routingKeyCreate;
+    private String routingKeyUpdate;
+    private String routingKeyDelete;
 
-    public String getExchangeName() {
-        return exchangeName;
-    }
+    public String getExchangeName() { return exchangeName; }
+    public void setExchangeName(String exchangeName) { this.exchangeName = exchangeName; }
 
-    public void setExchangeName(String exchangeName) {
-        this.exchangeName = exchangeName;
-    }
+    public String getRoutingKeyCreate() { return routingKeyCreate; }
+    public void setRoutingKeyCreate(String routingKeyCreate) { this.routingKeyCreate = routingKeyCreate; }
 
-    public String getCreateRoutingKey() {
-        return createRoutingKey;
-    }
+    public String getRoutingKeyUpdate() { return routingKeyUpdate; }
+    public void setRoutingKeyUpdate(String routingKeyUpdate) { this.routingKeyUpdate = routingKeyUpdate; }
 
-    public void setCreateRoutingKey(String createRoutingKey) {
-        this.createRoutingKey = createRoutingKey;
-    }
-
-    public String getUpdateRoutingKey() {
-        return updateRoutingKey;
-    }
-
-    public void setUpdateRoutingKey(String updateRoutingKey) {
-        this.updateRoutingKey = updateRoutingKey;
-    }
-
-    public String getDeleteRoutingKey() {
-        return deleteRoutingKey;
-    }
-
-    public void setDeleteRoutingKey(String deleteRoutingKey) {
-        this.deleteRoutingKey = deleteRoutingKey;
-    }
+    public String getRoutingKeyDelete() { return routingKeyDelete; }
+    public void setRoutingKeyDelete(String routingKeyDelete) { this.routingKeyDelete = routingKeyDelete; }
 }
