@@ -24,28 +24,44 @@ public class CategoryService {
         this.categoryRepository = categoryRepository;
     }
 
-    // POST - Crear Categoria
+    // ========== MÉTODOS CRUD ==========
+
+    // POST - Crear Categoria (soporta global y familiar)
     public Category createCategory(Category category) {
         validateCategory(category);
-
         return categoryRepository.save(category);
     }
 
-    // GET ALL - Consulta todas las categorias
+    // GET ALL - Consulta todas las categorias (sin filtro de familia)
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();
     }
 
+    // ⭐ NUEVO - Obtener categorías GLOBALES
+    public List<Category> getGlobalCategories() {
+        return categoryRepository.findByFamilyIdIsNull();
+    }
+
+    // ⭐ NUEVO - Obtener categorías de una FAMILIA específica
+    public List<Category> getFamilyCategories(UUID familyId) {
+        return categoryRepository.findByFamilyId(familyId);
+    }
+
+    // ⭐ NUEVO - Obtener categorías HÍBRIDAS (globales + familia)
+    public List<Category> getCategoriesForFamily(UUID familyId) {
+        return categoryRepository.findGlobalAndFamilyCategories(familyId);
+    }
+
     // GET BY ID - Retrieve a category by its ID
     public Category getCategoryById(UUID id) {
-        return categoryRepository.findById(id).
-                orElseThrow(() -> new CategoryException("Categoría no encontrada"));
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new CategoryException("Categoría no encontrada"));
     }
 
     // PUT - Actualiza una categoria existente
     public Category updateCategory(UUID id, Category updates) {
-        Category existing = categoryRepository.findById(id).
-                orElseThrow(() -> new CategoryException("Categoría no encontrada"));
+        Category existing = categoryRepository.findById(id)
+                .orElseThrow(() -> new CategoryException("Categoría no encontrada"));
 
         validateCategoryUpdate(updates, existing);
 
@@ -64,28 +80,52 @@ public class CategoryService {
         if (updates.getBudgetPeriod() != null) {
             existing.setBudgetPeriod(updates.getBudgetPeriod());
         }
+        // ⭐ Permitir actualizar familyId si viene en updates
+        if (updates.getFamilyId() != null) {
+            existing.setFamilyId(updates.getFamilyId());
+        }
 
         return categoryRepository.save(existing);
     }
 
     // DELETE - Elimina una categoria existente
     public void deleteCategory(UUID id) {
-        Category existing = categoryRepository.findById(id).
-                orElseThrow(() -> new CategoryException("Categoria no encntrada"));// lanza excepción si no existe
-
+        Category existing = categoryRepository.findById(id)
+                .orElseThrow(() -> new CategoryException("Categoría no encontrada"));
         categoryRepository.delete(existing);
     }
 
-    // Filtra las categorias por el tipo
+    // ========== MÉTODOS DE FILTRADO ==========
+
+    // Filtra las categorias por el tipo (backward compatible)
     public List<Category> getCategoriesByType(CategoryType type) {
         return categoryRepository.findByCategoryType(type);
     }
 
-    // Filtra las categorias por el periodo de presupuesto
+    // Filtra las categorias por el periodo de presupuesto (backward compatible)
     public List<Category> getCategoriesByPeriod(BudgetPeriod period) {
         return categoryRepository.findByBudgetPeriod(period);
     }
 
+    // Método de filtrado genérico (backward compatible)
+    public List<Category> getFiltered(CategoryType type, BudgetPeriod period) {
+        if (type != null && period != null) {
+            return categoryRepository.findByCategoryTypeAndBudgetPeriod(type, period);
+        } else if (type != null) {
+            return categoryRepository.findByCategoryType(type);
+        } else if (period != null) {
+            return categoryRepository.findByBudgetPeriod(period);
+        } else {
+            return categoryRepository.findAll();
+        }
+    }
+
+    // ⭐ NUEVO - Filtrado con contexto de familia (híbrido) - UN SOLO MÉTODO
+    public List<Category> getFilteredForFamily(UUID familyId, CategoryType type, BudgetPeriod period) {
+        return categoryRepository.findFilteredForFamily(familyId, type, period);
+    }
+
+    // ========== VALIDACIONES ==========
 
     private void validateCategory(Category category) {
         validateName(category.getName());
@@ -94,8 +134,25 @@ public class CategoryService {
         validateBudget(category.getAllocatedBudget());
         validatePeriod(category.getBudgetPeriod());
 
-        if (categoryRepository.existsByNameIgnoreCase(category.getName())){
-            throw new CategoryException("Ya existe una categoria con el nombre " + category.getName());
+        // ⭐ Validación de duplicados según contexto (global o familiar)
+        validateUniqueName(category.getName(), category.getFamilyId());
+    }
+
+    // ⭐ NUEVA - Validación de nombre único según contexto
+    private void validateUniqueName(String name, UUID familyId) {
+        if (familyId == null) {
+            // Categoría GLOBAL - validar que no exista otra global con el mismo nombre
+            if (categoryRepository.existsByNameIgnoreCaseAndFamilyIdIsNull(name)) {
+                throw new CategoryException("Ya existe una categoría global con el nombre " + name);
+            }
+        } else {
+            // Categoría FAMILIAR - validar en contexto híbrido (global + familia)
+            if (categoryRepository.existsByNameInContext(name, familyId)) {
+                throw new CategoryException(
+                        "Ya existe una categoría con el nombre " + name +
+                                " (global o de esta familia)"
+                );
+            }
         }
     }
 
@@ -151,7 +208,7 @@ public class CategoryService {
 
     private void validateUpdateName(String newName, String existingName) {
         if (newName != null) {
-            validateName(newName); // reutilizamos la validación normal
+            validateName(newName);
         } else if (existingName == null) {
             throw new CategoryException("El nombre de la categoría es obligatorio");
         }
@@ -164,12 +221,12 @@ public class CategoryService {
     }
 
     private void validateUpdateDescription(String description) {
-        validateDescription(description); // ya cubre la longitud
+        validateDescription(description);
     }
 
     private void validateUpdateBudget(BigDecimal newBudget, BigDecimal existingBudget) {
         if (newBudget != null) {
-            validateBudget(newBudget); // reutilizamos validación normal
+            validateBudget(newBudget);
         } else if (existingBudget == null) {
             throw new CategoryException("El presupuesto destinado es obligatorio");
         }
@@ -180,20 +237,4 @@ public class CategoryService {
             throw new CategoryException("El período del presupuesto es obligatorio");
         }
     }
-
-
-    public List<Category> getFiltered(CategoryType type, BudgetPeriod period){
-        if (type != null && period != null) {
-            return categoryRepository.findByCategoryTypeAndBudgetPeriod(type, period);
-        } else if (type != null) {
-            return categoryRepository.findByCategoryType(type);
-        } else if (period != null) {
-            return categoryRepository.findByBudgetPeriod(period);
-        } else {
-            return categoryRepository.findAll();
-        }
-    }
 }
-
-
-

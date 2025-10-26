@@ -8,6 +8,7 @@ import com.familyspencesapi.repositories.users.DocumentTypeRepository;
 import com.familyspencesapi.repositories.users.FamilyRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
 import com.familyspencesapi.repositories.users.RelationshipRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,15 +25,18 @@ public class FamilyMemberService {
     private final FamilyRepository familyRepository;
     private final DocumentTypeRepository documentTypeRepository;
     private final RelationshipRepository relationshipRepository;
+    private PasswordEncoder passwordEncoder;
 
     public FamilyMemberService(RelationshipRepository relationshipRepository,
                                            RegisterUserRepository userRepository,
                                            FamilyRepository familyRepository,
-                                           DocumentTypeRepository documentTypeRepository) {
+                                           DocumentTypeRepository documentTypeRepository,
+                               PasswordEncoder passwordEncoder) {
         this.relationshipRepository = relationshipRepository;
         this.userRepository = userRepository;
         this.familyRepository = familyRepository;
         this.documentTypeRepository = documentTypeRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     private static final Pattern NAME_PATTERN =
@@ -50,6 +54,7 @@ public class FamilyMemberService {
     @Transactional
     public RegisterUser createUser(RegisterUser user, String familyId) {
         validate(user);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         validateUniqueFields(user);
         UUID familyUUID = convertStringToUUID(familyId);
         Family existingFamily = validateAndGetFamily(familyUUID);
@@ -190,19 +195,6 @@ public class FamilyMemberService {
                     "La contraseña debe tener mínimo 8 caracteres, con minúscula, mayúscula, número y símbolo"
             );
         }
-    }
-
-    public RegisterUser findById(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-    }
-
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    public boolean existsByDocument(String document) {
-        return userRepository.existsByDocument(document);
     }
 
     public java.util.List<RegisterUser> getFamilyMembers(UUID familyId) {
