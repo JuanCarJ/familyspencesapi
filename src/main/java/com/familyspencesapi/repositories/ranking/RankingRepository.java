@@ -3,7 +3,6 @@ package com.familyspencesapi.repositories.ranking;
 import com.familyspencesapi.domain.ranking.Ranking;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.Period;
 import java.util.List;
 import java.util.UUID;
 

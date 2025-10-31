@@ -1,10 +1,12 @@
 package com.familyspencesapi.service.ranking;
 
+import com.familyspencesapi.config.messages.budgetprocessor.ranking.RankingProcessQueueConfig;
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.income.Income;
 import com.familyspencesapi.domain.ranking.Ranking;
 import com.familyspencesapi.domain.users.Family;
 import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.messages.ranking.MessageSenderBrokerRanking;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
 import com.familyspencesapi.repositories.income.RepositoryIncome;
 import com.familyspencesapi.repositories.ranking.RankingRepository;
@@ -25,6 +27,9 @@ import java.util.stream.Collectors;
 @Service
 public class RankingService {
 
+    private final MessageSenderBrokerRanking messageSenderBrokerRanking;
+    private final RankingProcessQueueConfig  rankingProcessQueueConfig;
+
     private static final Logger logger = Logger.getLogger(RankingService.class.getName());
     private final FamilyRepository familyRepository;
     private final ExpenseRepository expenseRepository;
@@ -32,7 +37,9 @@ public class RankingService {
     private final RankingRepository rankingRepository;
     private final RepositoryIncome incomeRepository;
 
-    public RankingService(FamilyRepository familyRepository, ExpenseRepository expenseRepository, RankingRepository rankingRepository, RepositoryIncome incomeRepository) {
+    public RankingService(MessageSenderBrokerRanking messageSenderBrokerRanking, RankingProcessQueueConfig rankingProcessQueueConfig, FamilyRepository familyRepository, ExpenseRepository expenseRepository, RankingRepository rankingRepository, RepositoryIncome incomeRepository) {
+        this.messageSenderBrokerRanking = messageSenderBrokerRanking;
+        this.rankingProcessQueueConfig = rankingProcessQueueConfig;
         this.familyRepository = familyRepository;
         this.expenseRepository = expenseRepository;
         this.rankingRepository = rankingRepository;
@@ -246,10 +253,9 @@ public class RankingService {
         Family family = familyRepository.findById(familyId)
                 .orElseThrow(() -> new RankingException("No se encontró la familia con id: " + familyId));
 
-        // 1. Evita recalcular si ya existe
+
         if (rankingRepository.existsByFamilyIdAndPeriod(familyId, period)) {
             logger.warning("El ranking para el periodo " + period + " y familia " + familyId + " ya fue calculado.");
-            // Opcional: podrías borrar y recalcular si quisieras, pero por ahora evitamos duplicados.
             return;
         }
 
@@ -259,20 +265,20 @@ public class RankingService {
             return;
         }
         for (RegisterUser user : users) {
-            // 2. Calcular Gastos (usando el nuevo método del repo)
+
             List<Expense> expensesList = expenseRepository.findByResponsibleAndPeriod(user.getEmail(), period);
             BigDecimal totalExpenses = expensesList.stream()
                     .map(Expense::getValue)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            // 3. Calcular Ingresos (usando el nuevo método del repo)
+
             List<Income> incomeList = incomeRepository.findByResponsibleIdAndPeriod(user.getId(), period);
             BigDecimal totalIncome = incomeList.stream()
-                    .map(Income::getTotal) // Income usa Double
-                    .map(BigDecimal::valueOf) // Convertimos a BigDecimal
+                    .map(Income::getTotal)
+                    .map(BigDecimal::valueOf)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            // 4. Crear y Guardar el registro de ranking
+
             Ranking rankingData = new Ranking(
                     familyId,
                     user,
@@ -280,7 +286,8 @@ public class RankingService {
                     totalExpenses,
                     totalIncome
             );
-            rankingRepository.save(rankingData);
+            messageSenderBrokerRanking.execute(rankingData,rankingProcessQueueConfig.getRoutingKeyCreate());
+
         }
         logger.info("Ranking para el periodo " + period + " y familia " + familyId + " guardado exitosamente.");
     }

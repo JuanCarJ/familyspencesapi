@@ -1,12 +1,9 @@
 package com.familyspencesapi.domain.ranking;
 
-import com.familyspencesapi.domain.expense.Expense;
-import com.familyspencesapi.domain.income.Income;
 import com.familyspencesapi.domain.users.RegisterUser;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 @Entity
 @Table(name="ranking")
