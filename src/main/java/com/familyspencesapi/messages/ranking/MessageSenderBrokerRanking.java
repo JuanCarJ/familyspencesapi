@@ -1,9 +1,7 @@
 package com.familyspencesapi.messages.ranking;
 
-import com.familyspencesapi.config.messages.budgetprocessor.expense.BudgetExpenseProcessQueueConfig;
 import com.familyspencesapi.config.messages.budgetprocessor.ranking.RankingProcessQueueConfig;
 import com.familyspencesapi.domain.ranking.Ranking;
-import com.familyspencesapi.messages.expense.MessageSenderBrokerExpense;
 import com.familyspencesapi.utils.MessageSender;
 import com.familyspencesapi.utils.gson.MapperJsonObject;
 import org.slf4j.Logger;
@@ -55,8 +53,9 @@ public class MessageSenderBrokerRanking implements MessageSender<Ranking> {
         if (messageBody.isPresent()) {
 
             rabbitTemplate.convertAndSend(queueConfig.getExchangeName(),routingKey, messageBody.get());
+
         }else {
-            log.warn("No se pudo serializar el mensaje Expense: {}", message);}
+            log.warn("No se pudo serializar el mensaje Ranking: {}", message);}
 
     }
 }

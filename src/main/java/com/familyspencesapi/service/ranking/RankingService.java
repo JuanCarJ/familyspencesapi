@@ -215,23 +215,22 @@ public class RankingService {
     public Map<String, Double> generateRankingExpenses(UUID familyId, String period) {
         List<Ranking> rankings = rankingRepository.findByFamilyIdAndPeriodOrderByTotalExpenses(familyId, period);
 
-        // 2. Transforma la lista de Entidades al Map<String, Double> que espera tu Controller
+
         return rankings.stream()
                 .collect(Collectors.toMap(
-                        r -> r.getUser().getfullName(), // Key: Nombre del usuario
-                        r -> r.getTotalExpenses().doubleValue(), // Value: Total de gastos
-                        (oldValue, newValue) -> oldValue, // En caso de duplicados (no debería pasar)
-                        LinkedHashMap::new // Usamos LinkedHashMap para mantener el orden de la consulta
+                        Ranking::getFullName,
+                        r -> r.getTotalExpenses().doubleValue(),
+                        (oldValue, newValue) -> oldValue,
+                        LinkedHashMap::new
                 ));
     }
 
     public Map<String, Double> generateRankingIncome(UUID familyId, String period) {
         List<Ranking> rankings = rankingRepository.findByFamilyIdAndPeriodOrderByTotalIncome(familyId, period);
 
-        // 2. Transforma la lista al Map
         return rankings.stream()
                 .collect(Collectors.toMap(
-                        r -> r.getUser().getfullName(),
+                        Ranking::getFullName,
                         r -> r.getTotalIncome().doubleValue(),
                         (oldValue, newValue) -> oldValue,
                         LinkedHashMap::new
@@ -278,18 +277,19 @@ public class RankingService {
                     .map(BigDecimal::valueOf)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-
             Ranking rankingData = new Ranking(
                     familyId,
-                    user,
+                    user.getId(),
+                    user.getfullName(),
                     period,
                     totalExpenses,
                     totalIncome
             );
+
             messageSenderBrokerRanking.execute(rankingData,rankingProcessQueueConfig.getRoutingKeyCreate());
 
         }
-        logger.info("Ranking para el periodo " + period + " y familia " + familyId + " guardado exitosamente.");
+        logger.info("Solicitudes de guardado de Ranking para el periodo " + period + " enviadas a RabbitMQ.");
     }
 
 }

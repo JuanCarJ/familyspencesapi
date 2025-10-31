@@ -1,6 +1,5 @@
 package com.familyspencesapi.domain.ranking;
 
-import com.familyspencesapi.domain.users.RegisterUser;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -16,9 +15,11 @@ public class  Ranking {
     @Column(nullable = false)
     private UUID familyId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private RegisterUser user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
+
+    @Column(name = "user_full_name", nullable = false)
+    private String fullName;
 
     @Column(nullable = false, length = 7)
     private String period;
@@ -29,17 +30,19 @@ public class  Ranking {
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal totalIncome;
 
-    public Ranking() {
-    }
 
 
-    public Ranking(UUID familyId, RegisterUser user, String period, BigDecimal totalExpenses, BigDecimal totalIncome) {
-        this.id = id;
+    public Ranking( UUID familyId, UUID userId, String fullName, String period, BigDecimal totalExpenses, BigDecimal totalIncome) {
         this.familyId = familyId;
-        this.user = user;
+        this.userId = userId;
+        this.fullName = fullName;
         this.period = period;
         this.totalExpenses = totalExpenses;
         this.totalIncome = totalIncome;
+    }
+
+    public Ranking() {
+
     }
 
     public UUID getId() {
@@ -58,12 +61,20 @@ public class  Ranking {
         this.familyId = familyId;
     }
 
-    public RegisterUser getUser() {
-        return user;
+    public UUID getUserId() {
+        return userId;
     }
 
-    public void setUser(RegisterUser user) {
-        this.user = user;
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     public String getPeriod() {
@@ -74,20 +85,20 @@ public class  Ranking {
         this.period = period;
     }
 
-    public BigDecimal getTotalIncome() {
-        return totalIncome;
-    }
-
-    public void setTotalIncome(BigDecimal totalIncome) {
-        this.totalIncome = totalIncome;
-    }
-
     public BigDecimal getTotalExpenses() {
         return totalExpenses;
     }
 
     public void setTotalExpenses(BigDecimal totalExpenses) {
         this.totalExpenses = totalExpenses;
+    }
+
+    public BigDecimal getTotalIncome() {
+        return totalIncome;
+    }
+
+    public void setTotalIncome(BigDecimal totalIncome) {
+        this.totalIncome = totalIncome;
     }
 }
 
