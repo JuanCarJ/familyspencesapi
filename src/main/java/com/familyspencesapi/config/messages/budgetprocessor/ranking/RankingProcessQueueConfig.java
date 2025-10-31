@@ -16,7 +16,7 @@ import org.springframework.context.annotation.PropertySource;
 public class RankingProcessQueueConfig {
 
     public static  final String RANKING_EXCHANGE_NAME = "x.ranking.exchange";
-    public static  final String RANKING_QUEUE_NAME = "x.ranking.calculate";
+    public static  final String RANKING_QUEUE_NAME = "q.ranking.calculate";
 
     private String exchangeName;
     private String routingKeyCreate;
