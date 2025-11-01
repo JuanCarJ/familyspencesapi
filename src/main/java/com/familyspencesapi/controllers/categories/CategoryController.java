@@ -107,6 +107,7 @@ public class CategoryController {
         return ResponseEntity.ok(categories);
     }
 
+
     @PutMapping("/{id}")
     public ResponseEntity<Object> updateCategory(
             @PathVariable UUID id,
@@ -128,6 +129,7 @@ public class CategoryController {
                     .body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
         }
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteCategory(@PathVariable UUID id) {
