@@ -1,5 +1,6 @@
 package com.familyspencesapi.controllers.product;
 
+import com.familyspencesapi.messages.users.MessageSenderBroker;
 import com.familyspencesapi.service.product.ProductService;
 import com.familyspencesapi.domain.product.ProductDomain;
 import org.springframework.http.HttpStatus;
@@ -12,9 +13,11 @@ import java.util.*;
 public class ProductController {
 
     private final ProductService productService;
+    private final MessageSenderBroker messageSenderBroker;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, MessageSenderBroker messageSenderBroker) {
         this.productService = productService;
+        this.messageSenderBroker = messageSenderBroker;
     }
 
     private static final String MENSAJE = "mensaje";
@@ -47,13 +50,18 @@ public class ProductController {
         Map<String, Object> respuesta = new HashMap<>();
 
         try {
-            ProductDomain savedProduct = productService.addProduct(producto);
+            messageSenderBroker.send(producto, "product.exchange", "product.create");
+
+            respuesta.put(MENSAJE, "Solicitud de creación enviada a processor");
+            respuesta.put("producto", producto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
+            /*ProductDomain savedProduct = productService.addProduct(producto);
 
             respuesta.put(MENSAJE, "Producto agregado exitosamente");
             respuesta.put(ID_KEY, savedProduct.getId().toString());
             respuesta.put(PRODUCTO_KEY, savedProduct);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
+            return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);*/
 
         } catch (IllegalArgumentException e) {
             respuesta.put(MENSAJE, e.getMessage());
