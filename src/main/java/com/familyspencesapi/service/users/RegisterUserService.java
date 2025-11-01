@@ -1,9 +1,8 @@
 package com.familyspencesapi.service.users;
 
-import com.familyspencesapi.domain.users.DocumentType;
-import com.familyspencesapi.domain.users.Family;
-import com.familyspencesapi.domain.users.RegisterUser;
-import com.familyspencesapi.domain.users.Relationship;
+import com.familyspencesapi.config.messages.userprocessor.registeruser.UserRegisterProcessQueueConfig;
+import com.familyspencesapi.domain.users.*;
+import com.familyspencesapi.messages.users.MessageSenderBrokerUser;
 import com.familyspencesapi.repositories.users.DocumentTypeRepository;
 import com.familyspencesapi.repositories.users.FamilyRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
@@ -28,15 +27,23 @@ public class RegisterUserService {
     private final DocumentTypeRepository documentTypeRepository;
     private final RelationshipRepository relationshipRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MessageSenderBrokerUser messageSenderBrokerUser;
+    private final UserRegisterProcessQueueConfig queueConfig;
 
-    public RegisterUserService(RelationshipRepository relationshipRepository, RegisterUserRepository userRepository,
+    public RegisterUserService(RelationshipRepository relationshipRepository,
+                               RegisterUserRepository userRepository,
                                FamilyRepository familyRepository,
-                               DocumentTypeRepository documentTypeRepository, PasswordEncoder passwordEncoder) {
+                               DocumentTypeRepository documentTypeRepository,
+                               PasswordEncoder passwordEncoder,
+                               MessageSenderBrokerUser messageSenderBrokerUser,
+                               UserRegisterProcessQueueConfig queueConfig) {
         this.relationshipRepository = relationshipRepository;
         this.userRepository = userRepository;
         this.familyRepository = familyRepository;
         this.documentTypeRepository = documentTypeRepository;
         this.passwordEncoder = passwordEncoder;
+        this.messageSenderBrokerUser = messageSenderBrokerUser;
+        this.queueConfig = queueConfig;
     }
 
     private static final Pattern NAME_PATTERN =
@@ -86,7 +93,27 @@ public class RegisterUserService {
         Family family = createOrFindFamily(user);
         user.setFamily(family);
 
-        return userRepository.save(user);
+        RegisterUser savedUser = userRepository.save(user);
+
+        RegisterUserMessage userData = new RegisterUserMessage(
+                savedUser.getId(),
+                savedUser.getFirstName(),
+                savedUser.getLastName(),
+                savedUser.getbirthDate(),
+                savedUser.getdocumentType().getId(),
+                savedUser.getdocument(),
+                savedUser.getEmail(),
+                savedUser.getRelationship().getId(),
+                savedUser.getcreditCard(),
+                savedUser.getphone(),
+                savedUser.getAddress(),
+                savedUser.getPassword(),
+                savedUser.getFamily().getId()
+        );
+
+        messageSenderBrokerUser.execute(userData, queueConfig.getRoutingKeyUserCreate());
+
+        return savedUser;
     }
 
     private Family createOrFindFamily(RegisterUser user) {
