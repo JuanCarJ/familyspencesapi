@@ -13,6 +13,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/family")
 public class FamilyMemberController {
+    private static final String ERROR_KEY = "error";
+    private static final String INTERNAL_SERVER_ERROR_MESSAGE = "Error interno del servidor";
 
     private final FamilyMemberService familyMemberService;
 
@@ -27,7 +29,7 @@ public class FamilyMemberController {
             RegisterUser createdUser = familyMemberService.createUser(newUser, familyId);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
         } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = Map.of("error", e.getMessage());
+            Map<String, String> errorResponse = Map.of(ERROR_KEY, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
@@ -39,10 +41,10 @@ public class FamilyMemberController {
             );
             return ResponseEntity.ok(familyMembers);
         } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = Map.of("error", e.getMessage());
+            Map<String, String> errorResponse = Map.of(ERROR_KEY, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         } catch (Exception e) {
-            Map<String, String> errorResponse = Map.of("error", "Error interno del servidor");
+            Map<String, String> errorResponse = Map.of(ERROR_KEY, INTERNAL_SERVER_ERROR_MESSAGE);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }

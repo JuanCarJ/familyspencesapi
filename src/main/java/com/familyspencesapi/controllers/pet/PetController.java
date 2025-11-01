@@ -1,6 +1,7 @@
 package com.familyspencesapi.controllers.pet;
 
 import com.familyspencesapi.domain.pet.Pet;
+import com.familyspencesapi.messages.pets.PetsMessageSender;
 import com.familyspencesapi.service.pet.PetService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +17,13 @@ import java.util.UUID;
 public class PetController {
 
     private final PetService petService;
+    private final PetsMessageSender petsMessageSender;
+    private static final String UNEXPECTED_ERROR = "Unexpected error";
+    private static final String ERROR_KEY = "error";
 
-    public PetController(PetService petService) {
+    public PetController(PetService petService, PetsMessageSender petsMessageSender) {
         this.petService = petService;
+        this.petsMessageSender = petsMessageSender;
     }
 
     // Obtener todas las mascotas
@@ -40,11 +45,9 @@ public class PetController {
             List<Pet> familyPets = petService.getPetsByFamily(UUID.fromString(familyId));
             return ResponseEntity.ok(familyPets);
         } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = Map.of("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(ERROR_KEY, e.getMessage()));
         } catch (Exception e) {
-            Map<String, String> errorResponse = Map.of("error", "Error interno del servidor");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
         }
     }
 
@@ -54,17 +57,40 @@ public class PetController {
                                             @RequestParam String familyId) {
         try {
             Pet createdPet = petService.createPet(pet, familyId);
+
+            // Enviar mensaje a RabbitMQ
+            petsMessageSender.sendPetCreated(createdPet);
+
             return ResponseEntity.status(HttpStatus.CREATED).body(createdPet);
         } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = Map.of("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
         }
     }
 
     // Eliminar mascota
     @DeleteMapping("/pets/{id}")
-    public boolean deletePet(@PathVariable UUID id) {
-        return petService.deletePet(id);
+    public ResponseEntity<Object> deletePet(@PathVariable UUID id,
+                                            @RequestParam String familyId) {
+        try {
+            boolean deleted = petService.deletePet(id);
+
+            if (deleted) {
+                // Enviar mensaje a RabbitMQ
+                petsMessageSender.sendPetDeleted(
+                        Map.of("familyId", familyId, "petId", id.toString())
+                );
+
+                return ResponseEntity.ok(Map.of("message", "Pet deleted successfully"));
+            }
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(ERROR_KEY, "Mascota no encontrada"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
+        }
     }
 
     // Actualizar mascota
@@ -74,14 +100,19 @@ public class PetController {
                                             @RequestParam String familyId) {
         try {
             Pet updatedPet = petService.updatePet(id, pet, familyId);
+
             if (updatedPet != null) {
+                // Enviar mensaje a RabbitMQ
+                petsMessageSender.sendPetUpdated(updatedPet);
+
                 return ResponseEntity.ok(updatedPet);
             }
-            Map<String, String> errorResponse = Map.of("error", "Mascota no encontrada");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(ERROR_KEY, "Mascota no encontrada"));
         } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = Map.of("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
         }
     }
 }
