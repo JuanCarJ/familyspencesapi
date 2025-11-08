@@ -51,36 +51,25 @@ public class ExpenseController {
     @GetMapping("")
     public ResponseEntity<List<Expense>> getAll() {
         try {
-            System.out.println("=== INICIO getAll() ===");
 
-            System.out.println("Llamando a expenseService.findAll()...");
             List<Expense> expenses = expenseService.findAll();
-
-            System.out.println("Número de gastos encontrados: " + expenses.size());
 
             // Verificar cada expense individualmente
             for (int i = 0; i < expenses.size(); i++) {
                 Expense expense = expenses.get(i);
                 try {
-                    System.out.println("Procesando expense " + i + " - ID: " + expense.getId());
-                    System.out.println("Responsible ID: " + expense.getResponsible().getId());
-                    System.out.println("Responsible Name: " + expense.getResponsible().getfullName());
+                    expense.getResponsible().getId();
+                    expense.getResponsible().getfullName();
                 } catch (Exception e) {
-                    System.out.println("ERROR en expense " + i + ": " + e.getMessage());
-                    e.printStackTrace();
                     // Remover el expense problemático de la lista
                     expenses.remove(i);
                     i--; // Ajustar el índice
                 }
             }
 
-            System.out.println("=== FIN getAll() - SUCCESS ===");
             return ResponseEntity.ok(expenses);
 
         } catch (Exception e) {
-            System.out.println("=== ERROR GENERAL en getAll() ===");
-            System.out.println("Error: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
