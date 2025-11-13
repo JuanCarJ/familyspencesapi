@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +28,7 @@ public class ExpenseService {
     private final MessageSenderBrokerExpense messageSenderBrokerExpense;
     private final BudgetExpenseProcessQueueConfig processQueueConfig;
 
-    // Constructor injection
+
     public ExpenseService(ExpenseRepository expenseRepository, RegisterUserRepository registerUserRepository, MessageSenderBrokerExpense messageSenderBrokerExpense, BudgetExpenseProcessQueueConfig processQueueConfig) {
         this.expenseRepository = expenseRepository;
         this.registerUserRepository = registerUserRepository;
@@ -86,7 +85,8 @@ public class ExpenseService {
      */
     public boolean deleteById(UUID id) {
         if (expenseRepository.existsById(id)) {
-            expenseRepository.deleteById(id);
+            Expense expense = new Expense(id);
+            messageSenderBrokerExpense.execute(expense, processQueueConfig.getRoutingKeyExpenseDelete());
             return true;
         }
         return false;
@@ -125,27 +125,11 @@ public class ExpenseService {
     }
 
     /**
-     * Encontrar gastos caros
-     */
-    @Transactional(readOnly = true)
-    public List<Expense> findExpensiveExpenses() {
-        return expenseRepository.findExpensiveExpenses();
-    }
-
-    /**
      * Calcular total de gastos por período
      */
     @Transactional(readOnly = true)
     public BigDecimal calculateTotalByPeriod(String period) {
         return expenseRepository.calculateTotalByPeriod(period);
-    }
-
-    /**
-     * Calcular total de gastos por categoría
-     */
-    @Transactional(readOnly = true)
-    public BigDecimal calculateTotalByCategory(ExpenseCategory category) {
-        return expenseRepository.calculateTotalByCategory(category);
     }
 
     /**
@@ -157,28 +141,9 @@ public class ExpenseService {
     }
 
     /**
-     * Obtener estadísticas generales de gastos
-     */
-    @Transactional(readOnly = true)
-    public ExpenseStatistics getExpenseStatistics() {
-        Object[] basicStats = expenseRepository.getBasicStatistics();
-
-        // Encontrar la categoría más cara
-        List<Object[]> categoryTotals = expenseRepository.findCategoryTotals();
-        String mostExpensiveCategoryName = "N/A";
-
-        if (!categoryTotals.isEmpty()) {
-            ExpenseCategory topCategory = (ExpenseCategory) categoryTotals.getFirst()[0];
-            mostExpensiveCategoryName = topCategory.getDisplayName();
-        }
-
-        return new ExpenseStatistics(basicStats, mostExpensiveCategoryName);
-    }
-
-    /**
      * Actualizar un gasto existente
      */
-    public Expense updateExpense(ExpenseRequest request,String responsiblemail, UUID expenseId) {
+    public String updateExpense(ExpenseRequest request,String responsiblemail, UUID expenseId) {
 
         // Verificar que el gasto existe
         Optional<Expense> expenseOpt = expenseRepository.findById(expenseId);
@@ -204,18 +169,8 @@ public class ExpenseService {
             throw new IllegalArgumentException("Período inválido: " + expense.getPeriod());
         }
 
-        return expenseRepository.save(expense);
-    }
-
-    /**
-     * Eliminar un gasto
-     */
-    public boolean deleteExpense(UUID expenseId) {
-        if (expenseRepository.existsById(expenseId)) {
-            expenseRepository.deleteById(expenseId);
-            return true;
-        }
-        return false;
+        messageSenderBrokerExpense.execute(expense, processQueueConfig.getRoutingKeyExpenseUpdate());
+        return "The message was sent successfully.";
     }
 
     /**
@@ -245,74 +200,5 @@ public class ExpenseService {
         ).getContent();
     }
 
-    /**
-     * Verificar si un usuario tiene gastos asociados
-     */
 
-    /**
-     * Obtener gastos por rango de fechas
-     */
-    @Transactional(readOnly = true)
-    public List<Expense> getExpensesByDateRange(LocalDateTime start, LocalDateTime end) {
-        return expenseRepository.findByCreatedAtBetween(start, end);
-    }
-
-    /**
-     * Calcular promedio de gastos por categoría
-     */
-    @Transactional(readOnly = true)
-    public BigDecimal calculateAverageByCategory(ExpenseCategory category) {
-        List<Expense> expenses = expenseRepository.findByCategory(category);
-        if (expenses.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-
-        BigDecimal total = expenses.stream()
-                .map(Expense::getValue)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return total.divide(BigDecimal.valueOf(expenses.size()), 2, RoundingMode.HALF_UP);
-    }
-
-    /**
-     * Obtener conteo de gastos por categoría
-     */
-    @Transactional(readOnly = true)
-    public List<Object[]> getExpenseCountByCategory() {
-        return expenseRepository.countExpensesByCategory();
-    }
-
-    /**
-     * Clase interna para estadísticas de gastos
-     */
-    public static class ExpenseStatistics {
-        private final long totalExpenses;
-        private final BigDecimal totalAmount;
-        private final BigDecimal averageAmount;
-        private final String mostExpensiveCategory;
-
-        public ExpenseStatistics(Object[] basicStats, String mostExpensiveCategory) {
-            this.totalExpenses = ((Number) basicStats[0]).longValue();
-            this.totalAmount = basicStats[1] != null ? (BigDecimal) basicStats[1] : BigDecimal.ZERO;
-            this.averageAmount = basicStats[2] != null ?
-                    ((BigDecimal) basicStats[2]).setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
-            this.mostExpensiveCategory = mostExpensiveCategory;
-        }
-
-        public long getTotalExpenses() {
-            return totalExpenses;
-        }
-
-        public BigDecimal getTotalAmount() {
-            return totalAmount;
-        }
-
-        public BigDecimal getAverageAmount() {
-            return averageAmount;
-        }
-
-        public String getMostExpensiveCategory() {
-            return mostExpensiveCategory;
-        }
-    }
 }

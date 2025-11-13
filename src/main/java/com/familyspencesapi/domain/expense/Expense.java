@@ -92,6 +92,10 @@ public class Expense {
     public Expense() {
     }
 
+    public Expense(UUID id) {
+        this.id = id;
+    }
+
     // Constructor completo para datos existentes
     public Expense(UUID id, String title, String description, String period,
                    String responsible, BigDecimal value, ExpenseCategory category) {
