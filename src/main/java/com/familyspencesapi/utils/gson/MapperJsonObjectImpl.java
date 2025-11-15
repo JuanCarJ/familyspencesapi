@@ -13,9 +13,10 @@ public class MapperJsonObjectImpl implements MapperJsonObject {
     public Optional<String> execute(Object object) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-
+            objectMapper.findAndRegisterModules();
             return Optional.ofNullable(objectMapper.writeValueAsString(object));
         } catch (JsonProcessingException e) {
+            e.printStackTrace();
             return Optional.empty();
         }
     }

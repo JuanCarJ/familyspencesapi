@@ -1,6 +1,6 @@
 package com.familyspencesapi.config.messages.task;
 
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.DirectExchange;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,9 +21,10 @@ public class TaskQueueConfig {
     private String routingKeyDelete;
 
     @Bean
-    public TopicExchange taskExchange() {
-        return new TopicExchange(exchangeName);
+    public DirectExchange taskExchange() {
+        return new DirectExchange(exchangeName);
     }
+
 
     public String getExchangeName() { return exchangeName; }
     public String getRoutingKeyCreate() { return routingKeyCreate; }
