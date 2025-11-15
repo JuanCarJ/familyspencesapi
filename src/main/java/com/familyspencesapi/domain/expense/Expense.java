@@ -48,9 +48,8 @@ public class Expense {
     private BigDecimal value;
 
     @NotNull(message = "La categoría es obligatoria")
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ExpenseCategory category;
+    private String category;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @CreationTimestamp
@@ -65,29 +64,6 @@ public class Expense {
     @Column(nullable = false)
     private UUID familyId;
 
-    // Enum para categorías
-    public enum ExpenseCategory {
-        ALIMENTACION("Alimentación"),
-        TRANSPORTE("Transporte"),
-        SERVICIOS("Servicios Públicos"),
-        ENTRETENIMIENTO("Entretenimiento"),
-        SALUD("Salud y Medicina"),
-        EDUCACION("Educación"),
-        ROPA("Ropa y Calzado"),
-        HOGAR("Hogar y Mantenimiento"),
-        OTROS("Otros");
-
-        private final String displayName;
-
-        ExpenseCategory(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
-
     // Constructor vacío (requerido por JPA)
     public Expense() {
     }
@@ -98,7 +74,7 @@ public class Expense {
 
     // Constructor completo para datos existentes
     public Expense(UUID id, String title, String description, String period,
-                   String responsible, BigDecimal value, ExpenseCategory category) {
+                   String responsible, BigDecimal value, String category) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -110,7 +86,7 @@ public class Expense {
 
     // Constructor para nuevos gastos (sin ID)
     public Expense(String title, String description, String period,
-                   String responsible, BigDecimal value, ExpenseCategory category, UUID familyId) {
+                   String responsible, BigDecimal value, String category, UUID familyId) {
         this.title = title;
         this.description = description;
         this.period = period;
@@ -124,7 +100,7 @@ public class Expense {
 
     // Constructor mínimo para gastos básicos
     public Expense(String title, String period, String responsible,
-                   BigDecimal value, ExpenseCategory category) {
+                   BigDecimal value, String category) {
         this.title = title;
         this.period = period;
         this.responsible = responsible;
@@ -181,11 +157,11 @@ public class Expense {
         this.value = value;
     }
 
-    public ExpenseCategory getCategory() {
+    public String getCategory() {
         return category;
     }
 
-    public void setCategory(ExpenseCategory category) {
+    public void setCategory(String category) {
         this.category = category;
     }
 
@@ -195,24 +171,6 @@ public class Expense {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
-    }
-
-    // Métodos de utilidad
-    public boolean isExpensive() {
-        return value != null && value.compareTo(new BigDecimal("1000.00")) > 0;
-    }
-
-    public String getFormattedValue() {
-        return value != null ? String.format("$%.2f", value) : "$0.00";
-    }
-
-    public boolean isSamePeriod(String otherPeriod) {
-        return period != null && period.equalsIgnoreCase(otherPeriod);
-    }
-
-    // Método para actualizar timestamp manualmente si es necesario
-    public void updateTimestamp() {
-        this.updatedAt = LocalDateTime.now();
     }
 
     public UUID getFamilyId() {

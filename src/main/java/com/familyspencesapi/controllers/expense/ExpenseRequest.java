@@ -1,6 +1,5 @@
 package com.familyspencesapi.controllers.expense;
 
-import com.familyspencesapi.domain.expense.Expense;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
@@ -25,18 +24,13 @@ public class ExpenseRequest {
     private BigDecimal value;
 
     @NotNull(message = "La categoría es obligatoria")
-    private Expense.ExpenseCategory category;
+    private String category;
+
+    @NotNull(message = "El responsable es obligatorio")
+    private String responsible;
 
     public ExpenseRequest() {}
 
-    public ExpenseRequest(String title, String description, String period
-            , BigDecimal value, Expense.ExpenseCategory category) {
-        this.title = title;
-        this.description = description;
-        this.period = period;
-        this.value = value;
-        this.category = category;
-    }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -50,7 +44,14 @@ public class ExpenseRequest {
     public BigDecimal getValue() { return value; }
     public void setValue(BigDecimal value) { this.value = value; }
 
-    public Expense.ExpenseCategory getCategory() { return category; }
-    public void setCategory(Expense.ExpenseCategory category) { this.category = category; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
+    public String getResponsible() {
+        return responsible;
+    }
+
+    public void setResponsible(String responsible) {
+        this.responsible = responsible;
+    }
 }

@@ -1,7 +1,6 @@
 package com.familyspencesapi.controllers.expense;
 
 import com.familyspencesapi.domain.expense.Expense;
-import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
 import com.familyspencesapi.service.expense.ExpenseService;
 
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -46,16 +45,6 @@ public class ExpenseController {
             } else {
                 return ResponseEntity.status(HttpStatus.OK).body(expense);
             }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @GetMapping("/by-category/{category}")
-    public ResponseEntity<List<Expense>> getByCategory(@PathVariable ExpenseCategory category) {
-        try {
-            List<Expense> expenses = expenseService.findByCategory(category);
-            return ResponseEntity.ok(expenses);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

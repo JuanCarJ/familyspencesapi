@@ -3,7 +3,6 @@ package com.familyspencesapi.service.expense;
 import com.familyspencesapi.config.messages.budgetprocessor.expense.BudgetExpenseProcessQueueConfig;
 import com.familyspencesapi.controllers.expense.ExpenseRequest;
 import com.familyspencesapi.domain.expense.Expense;
-import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
 import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.messages.expense.MessageSenderBrokerExpense;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
@@ -65,7 +64,7 @@ public class ExpenseService {
                 request.getTitle().trim(),
                 request.getDescription() != null ? request.getDescription().trim() : "",
                 request.getPeriod().trim(),
-                userMail,
+                request.getResponsible(),
                 request.getValue(),
                 request.getCategory(),
                 familyId
@@ -74,7 +73,7 @@ public class ExpenseService {
         if (!expense.isValidPeriod()) {
             throw new IllegalArgumentException("Invalid period");
         }
-
+        System.out.println("CATEGORY ENVIADA = " + request.getCategory());
         messageSenderBrokerExpense.execute(expense, processQueueConfig.getRoutingKeyExpenseCreate());
 
         return "The message was sent successfully.";
@@ -90,14 +89,6 @@ public class ExpenseService {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Encontrar gastos por categoría
-     */
-    @Transactional(readOnly = true)
-    public List<Expense> findByCategory(ExpenseCategory category) {
-        return expenseRepository.findByCategory(category);
     }
 
     /**
