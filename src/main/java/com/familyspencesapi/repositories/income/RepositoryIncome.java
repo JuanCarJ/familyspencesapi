@@ -20,6 +20,8 @@ public interface RepositoryIncome extends JpaRepository<Income, UUID> {
     // Buscar ingresos por periodo
     List<Income> findByPeriod(String period);
 
+    List<Income> findByResponsibleIdAndPeriod(UUID responsibleId, String period);
+
     @Query("SELECT SUM(i.total) FROM Income i WHERE i.family = :familyId")
     Double sumTotalByFamilyId(UUID familyId);
 }

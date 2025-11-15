@@ -1,12 +1,11 @@
 package com.familyspencesapi.domain.goals;
 
-import com.familyspencesapi.domain.categories.Category;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -31,10 +30,9 @@ public class Goal {
     @Size(max = 500, message = "La descripción no puede superar los 500 caracteres")
     private String description;
 
-
-     @ManyToOne
-     @JoinColumn(name = "id_category", referencedColumnName = "id", nullable = false)
-     private Category category;
+    @Column(name = "id_category", nullable = false)
+    @NotNull(message = "La categoría no puede estar vacía")
+    private UUID categoryId;
 
     @Column(name = "tope_goal", nullable = false)
     @Positive(message = "El tope debe ser mayor que 0")
@@ -51,18 +49,16 @@ public class Goal {
 
     public Goal() {}
 
-
-    public Goal(UUID id, String name, String description, Category category, double savingsCap, LocalDateTime deadline, double dailyGoal) {
+    public Goal(UUID id, String name, String description, UUID categoryId, double savingsCap, LocalDateTime deadline, double dailyGoal) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.category = category;
+        this.categoryId = categoryId;
         this.savingsCap = savingsCap;
         this.deadline = deadline;
         this.dailyGoal = dailyGoal;
     }
 
-    // Getters y Setters
     public UUID getId() {
         return id;
     }
@@ -87,14 +83,13 @@ public class Goal {
         this.description = description;
     }
 
-     public Category getCategory() {
-         return category;
-     }
+    public UUID getCategoryId() {
+        return categoryId;
+    }
 
-     public void setCategory(Category category) {
-         this.category = category;
-     }
-
+    public void setCategoryId(UUID categoryId) {
+        this.categoryId = categoryId;
+    }
 
     public double getSavingsCap() {
         return savingsCap;

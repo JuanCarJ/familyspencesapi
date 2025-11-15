@@ -25,6 +25,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
 
     List<Expense> findByResponsible(String responsible);
 
+    List<Expense> findByResponsibleAndPeriod(String responsible, String period);
+
     // Buscar todos los gastos por familia
     @Query("SELECT e FROM Expense e WHERE e.familyId = :familyId")
     List<Expense> findByResponsibleFamilyId(@Param("familyId") UUID familyId);
