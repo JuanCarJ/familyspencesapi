@@ -2,6 +2,7 @@
 package com.familyspencesapi.service.product;
 
 import com.familyspencesapi.domain.product.ProductDomain;
+import com.familyspencesapi.messages.users.MessageSenderBroker;
 import com.familyspencesapi.repositories.product.ProductRepository;
 import org.springframework.stereotype.Service;
 import java.util.*;
@@ -10,9 +11,17 @@ import java.util.*;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final MessageSenderBroker messageSenderBroker;
 
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductRepository productRepository,
+                          MessageSenderBroker messageSenderBroker) {
         this.productRepository = productRepository;
+        this.messageSenderBroker = messageSenderBroker;
+    }
+
+    public void sendCreateProductToBroker(Map<String, Object> productData) {
+        validateProductData(productData);
+        messageSenderBroker.send(productData, "product.exchange", "product.create");
     }
 
     public List<ProductDomain> searchProductsByName(String name) {
@@ -22,7 +31,7 @@ public class ProductService {
         return productRepository.findByProductContainingIgnoreCase(name.trim());
     }
 
-    public ProductDomain addProduct(Map<String, Object> productData) {
+    public ProductDomain saveProduct(Map<String, Object> productData) {
         validateProductData(productData);
 
         String productName = (String) productData.get("producto");
@@ -35,6 +44,7 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    // VALIDACIONES (se mantienen iguales)
     private void validateProductData(Map<String, Object> productData) {
         if (productData == null || productData.isEmpty()) {
             throw new IllegalArgumentException("El cuerpo de la petición está vacío o es inválido");
@@ -70,11 +80,11 @@ public class ProductService {
         }
     }
 
-    private int convertPriceToInt(Object priceObj) throws NumberFormatException {
+    private int convertPriceToInt(Object priceObj) {
         return switch (priceObj) {
             case Integer integer -> integer;
             case String priceStr -> Integer.parseInt(priceStr);
-            default -> throw new NumberFormatException("Tipo de precio no válido: " + priceObj.getClass().getSimpleName());
+            default -> throw new NumberFormatException("Tipo de precio no válido");
         };
     }
 }
