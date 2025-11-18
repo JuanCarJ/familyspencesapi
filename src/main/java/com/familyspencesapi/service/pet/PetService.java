@@ -4,6 +4,8 @@ import com.familyspencesapi.domain.pet.Pet;
 import com.familyspencesapi.domain.users.Family;
 import com.familyspencesapi.repositories.pet.IRepositoryPet;
 import com.familyspencesapi.repositories.users.FamilyRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -17,6 +19,9 @@ public class PetService {
 
     private final IRepositoryPet petRepository;
     private final FamilyRepository familyRepository;
+    private static final Logger log = LoggerFactory.getLogger(PetService.class);
+    private static final String PET_NOT_FOUND = "Pet not found";
+    private static final String FAMILY_NOT_FOUND = "Family not found";
 
     public PetService(IRepositoryPet petRepository, FamilyRepository familyRepository) {
         this.petRepository = petRepository;
@@ -42,37 +47,57 @@ public class PetService {
     // Crear nueva mascota
     @Transactional
     public Pet createPet(Pet pet, String familyId) {
+        log.info("Validando y creando pet...");
+
         validatePet(pet);
         UUID familyUUID = convertStringToUUID(familyId);
-        Family existingFamily = validateAndGetFamily(familyUUID);
+        validateAndGetFamily(familyUUID);
 
         // Asignar el familyId a la mascota
         pet.setFamilyId(familyUUID);
 
-        return petRepository.save(pet);
+        Pet savedPet = petRepository.save(pet);
+        log.info("Pet creada: {}", savedPet.getId());
+
+        return savedPet;
     }
 
     // Eliminar mascota
+    @Transactional
     public boolean deletePet(UUID id) {
-        if (petRepository.existsById(id)) {
-            petRepository.deleteById(id);
-            return true;
-        }
-        return false;
+        log.info("Validando y eliminando pet: {}", id);
+
+        petRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(PET_NOT_FOUND));
+
+        petRepository.deleteById(id);
+        log.info("Pet eliminada: {}", id);
+
+        return true;
     }
 
     // Actualizar mascota
     @Transactional
     public Pet updatePet(UUID id, Pet updatedPet, String familyId) {
+        log.info("Validando y actualizando pet: {}", id);
+
         validatePet(updatedPet);
         UUID familyUUID = convertStringToUUID(familyId);
         validateAndGetFamily(familyUUID);
 
-        return petRepository.findById(id).map(existingPet -> {
-            updatedPet.setId(id);
-            updatedPet.setFamilyId(familyUUID);
-            return petRepository.save(updatedPet);
-        }).orElse(null);
+        Pet petToUpdate = petRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(PET_NOT_FOUND));
+
+        petToUpdate.setFullName(updatedPet.getFullName());
+        petToUpdate.setPetType(updatedPet.getPetType());
+        petToUpdate.setBreed(updatedPet.getBreed());
+        petToUpdate.setBirthDate(updatedPet.getBirthDate());
+        petToUpdate.setFamilyId(familyUUID);
+
+        Pet savedPet = petRepository.save(petToUpdate);
+        log.info("Pet actualizada: {}", savedPet.getId());
+
+        return savedPet;
     }
 
     // Métodos de validación
@@ -94,7 +119,7 @@ public class PetService {
         }
 
         return familyRepository.findById(familyId)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró la familia con ID: " + familyId));
+                .orElseThrow(() -> new IllegalArgumentException(FAMILY_NOT_FOUND));
     }
 
     private void validatePet(Pet pet) {
