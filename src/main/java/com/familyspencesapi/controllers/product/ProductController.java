@@ -1,8 +1,10 @@
 package com.familyspencesapi.controllers.product;
 
+import com.familyspencesapi.messages.users.MessageSenderBroker;
 import com.familyspencesapi.service.product.ProductService;
 import com.familyspencesapi.domain.product.ProductDomain;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
@@ -10,60 +12,60 @@ import java.util.*;
 @RequestMapping("/api/product")
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
+    private final MessageSenderBroker messageSenderBroker;
+
+    public ProductController(ProductService productService, MessageSenderBroker messageSenderBroker) {
+        this.productService = productService;
+        this.messageSenderBroker = messageSenderBroker;
+    }
+
+    private static final String MENSAJE = "mensaje";
+    private static final String PRODUCTO_KEY = "producto";
+    private static final String PRECIO_KEY = "precio";
+    private static final String NEGOCIO_KEY = "negocio";
+    private static final String ID_KEY = "id";
 
     @GetMapping()
-    public List<Map<String, Object>> searchProducts(@RequestBody Map<String, String> request) {
-        String name = request.get("nombre");
-        List<Map<String, Object>> resultados = new ArrayList<>();
+    public ResponseEntity<List<Map<String, Object>>> searchProducts(
+            @RequestParam(required = false) String nombre) {
 
-        List<ProductDomain> products = productService.searchProductsByName(name);
+        List<Map<String, Object>> resultados = new ArrayList<>();
+        List<ProductDomain> products = productService.searchProductsByName(nombre);
 
         for (ProductDomain product : products) {
             Map<String, Object> productMap = new HashMap<>();
-            productMap.put("producto", product.getProduct());
-            productMap.put("precio", product.getPrice());
-            productMap.put("negocio", product.getStore());
+            productMap.put(PRODUCTO_KEY, product.getProduct());
+            productMap.put(PRECIO_KEY, product.getPrice());
+            productMap.put(NEGOCIO_KEY, product.getStore());
+            productMap.put(ID_KEY, product.getId());
             resultados.add(productMap);
         }
 
-        return resultados;
+        return ResponseEntity.ok(resultados);
     }
 
     @PostMapping("/product")
-    public Map<String, Object> addProduct(@RequestBody Map<String, Object> producto) {
+    public ResponseEntity<Map<String, Object>> addProduct(@RequestBody Map<String, Object> producto) {
+
         Map<String, Object> respuesta = new HashMap<>();
 
         try {
-            // Extraer datos del Map
-            String productName = (String) producto.get("producto");
-            Object priceObj = producto.get("precio");
-            String store = (String) producto.get("negocio");
+            productService.sendCreateProductToBroker(producto);
 
-            // Convertir precio a int
-            int price;
-            if (priceObj instanceof Integer) {
-                price = (Integer) priceObj;
-            } else if (priceObj instanceof String) {
-                price = Integer.parseInt((String) priceObj);
-            } else {
-                respuesta.put("mensaje", "Precio inválido");
-                return respuesta;
-            }
+            respuesta.put("mensaje", "Solicitud de creación enviada a processor");
+            respuesta.put("producto", producto);
 
-            // Usar el service para agregar producto
-            ProductDomain savedProduct = productService.addProduct(productName, price, store);
+            return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
 
-            respuesta.put("mensaje", "Producto agregado exitosamente");
-            respuesta.put("id", savedProduct.getId().toString());
+        } catch (IllegalArgumentException e) {
+            respuesta.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(respuesta);
 
         } catch (Exception e) {
-            respuesta.put("mensaje", "Error al agregar producto");
+            respuesta.put("mensaje", "Error interno del servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
         }
-
-        return respuesta;
     }
+
 }
-
-

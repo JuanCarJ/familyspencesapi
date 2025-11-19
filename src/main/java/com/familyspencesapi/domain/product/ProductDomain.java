@@ -26,7 +26,6 @@ public class ProductDomain {
     }
 
     public ProductDomain(String product, int price, String store) {
-        //this.id = UUID.randomUUID();
         this.product = product;
         this.price = price;
         this.store = store;

@@ -1,6 +1,6 @@
 package com.familyspencesapi.domain.users;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -8,40 +8,56 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class RegisterUser {
     @Id
     @GeneratedValue(strategy =  GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
+
     @Column(name = "first_name", nullable = false)
     private String firstName;
+
     @Column(name = "last_name", nullable = false)
     private String lastName;
+
     @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_type_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private DocumentType documentType;
+
     @Column(name = "document", nullable = false, unique = true)
     private String document;
+
     @Column(name = "email", nullable = false, unique = true)
     private String email;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "relationship_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Relationship relationship;
+
     @Column(name = "credit_card", nullable = false)
     private String creditCard;
+
     @Column(name = "phone", nullable = false)
     private String phone;
+
     @Column(name = "address", nullable = false)
     private String address;
+
     @Column(name = "password", nullable = false)
     private String password;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Family family;
 
-
+    // ... todos tus getters y setters existentes permanecen igual ...
 
     public UUID getId() {
         return id;
@@ -146,9 +162,11 @@ public class RegisterUser {
     public void setFamily(Family family) {
         this.family = family;
     }
+
     public Family getFamily() {
         return family;
     }
+
     public UUID getFamilyId() {
         return family != null ? family.getId() : null;
     }

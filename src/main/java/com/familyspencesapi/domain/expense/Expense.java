@@ -1,7 +1,7 @@
 package com.familyspencesapi.domain.expense;
 
-import com.familyspencesapi.domain.family.FamilyMember;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -35,10 +35,10 @@ public class Expense {
     @Column(nullable = false, length = 50)
     private String period;
 
-    @NotNull(message = "El responsable es obligatorio")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "responsible_id", nullable = false)
-    private FamilyMember responsible;
+    // CAMBIO: Ahora usa RegisterUser en lugar de FamilyMemberDomain
+    @Column(nullable = false, length = 50)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private String responsible;
 
     @NotNull(message = "El valor es obligatorio")
     @DecimalMin(value = "0.01", message = "El valor debe ser mayor que 0")
@@ -48,9 +48,8 @@ public class Expense {
     private BigDecimal value;
 
     @NotNull(message = "La categoría es obligatoria")
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ExpenseCategory category;
+    private String category;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @CreationTimestamp
@@ -62,36 +61,20 @@ public class Expense {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    // Enum para categorías
-    public enum ExpenseCategory {
-        ALIMENTACION("Alimentación"),
-        TRANSPORTE("Transporte"),
-        SERVICIOS("Servicios Públicos"),
-        ENTRETENIMIENTO("Entretenimiento"),
-        SALUD("Salud y Medicina"),
-        EDUCACION("Educación"),
-        ROPA("Ropa y Calzado"),
-        HOGAR("Hogar y Mantenimiento"),
-        OTROS("Otros");
-
-        private final String displayName;
-
-        ExpenseCategory(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
+    @Column(nullable = false)
+    private UUID familyId;
 
     // Constructor vacío (requerido por JPA)
     public Expense() {
     }
 
+    public Expense(UUID id) {
+        this.id = id;
+    }
+
     // Constructor completo para datos existentes
     public Expense(UUID id, String title, String description, String period,
-                   FamilyMember responsible, BigDecimal value, ExpenseCategory category) {
+                   String responsible, BigDecimal value, String category) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -103,18 +86,21 @@ public class Expense {
 
     // Constructor para nuevos gastos (sin ID)
     public Expense(String title, String description, String period,
-                   FamilyMember responsible, BigDecimal value, ExpenseCategory category) {
+                   String responsible, BigDecimal value, String category, UUID familyId) {
         this.title = title;
         this.description = description;
         this.period = period;
         this.responsible = responsible;
         this.value = value;
         this.category = category;
+        this.familyId = familyId;
     }
 
+
+
     // Constructor mínimo para gastos básicos
-    public Expense(String title, String period, FamilyMember responsible,
-                   BigDecimal value, ExpenseCategory category) {
+    public Expense(String title, String period, String responsible,
+                   BigDecimal value, String category) {
         this.title = title;
         this.period = period;
         this.responsible = responsible;
@@ -155,11 +141,11 @@ public class Expense {
         this.period = period;
     }
 
-    public FamilyMember getResponsible() {
+    public String getResponsible() {
         return responsible;
     }
 
-    public void setResponsible(FamilyMember responsible) {
+    public void setResponsible(String responsible) {
         this.responsible = responsible;
     }
 
@@ -171,11 +157,11 @@ public class Expense {
         this.value = value;
     }
 
-    public ExpenseCategory getCategory() {
+    public String getCategory() {
         return category;
     }
 
-    public void setCategory(ExpenseCategory category) {
+    public void setCategory(String category) {
         this.category = category;
     }
 
@@ -187,22 +173,12 @@ public class Expense {
         return updatedAt;
     }
 
-    // Métodos de utilidad
-    public boolean isExpensive() {
-        return value != null && value.compareTo(new BigDecimal("1000.00")) > 0;
+    public UUID getFamilyId() {
+        return familyId;
     }
 
-    public String getFormattedValue() {
-        return value != null ? String.format("$%.2f", value) : "$0.00";
-    }
-
-    public boolean isSamePeriod(String otherPeriod) {
-        return period != null && period.equalsIgnoreCase(otherPeriod);
-    }
-
-    // Método para actualizar timestamp manualmente si es necesario
-    public void updateTimestamp() {
-        this.updatedAt = LocalDateTime.now();
+    public void setFamilyId(UUID familyId) {
+        this.familyId = familyId;
     }
 
     // Validación personalizada para el período
@@ -245,17 +221,4 @@ public class Expense {
         return Objects.hash(id);
     }
 
-    @Override
-    public String toString() {
-        return "Expense{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", period='" + period + '\'' +
-                ", responsible=" + (responsible != null ? responsible.getName() : "null") +
-                ", value=" + getFormattedValue() +
-                ", category=" + (category != null ? category.getDisplayName() : "null") +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
-    }
 }

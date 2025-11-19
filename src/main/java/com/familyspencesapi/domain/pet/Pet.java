@@ -1,42 +1,38 @@
 package com.familyspencesapi.domain.pet;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
 import java.util.UUID;
-
 
 @Entity
 @Table(name = "pets")
 public class Pet {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", columnDefinition = "UUID")
+    @Column(name = "id")
     private UUID id;
 
-
-    @Column(name = "full name", nullable = false, length = 100)
+    @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
-
-    @Column(name = "pet type", nullable = false, length = 100)
+    @Column(name = "pet_type", nullable = false, length = 100)
     private String petType;
-
 
     @Column(name = "breed", nullable = false, length = 100)
     private String breed;
 
-
-    @Column(name = "birth date", nullable = false, length = 100)
+    @Column(name = "birth_date", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonDeserialize(using = LocalDateDeserializer.class)
     private LocalDate birthDate;
 
-
-    @Column(name = "familyId", nullable = false, length = 100)
+    @Column(name = "family_id", nullable = false)
     private UUID familyId;
-
-
 
     // Constructor vacío
     public Pet() {
@@ -97,11 +93,12 @@ public class Pet {
         return familyId;
     }
 
+    // ✅ JsonIgnore en el SETTER para que no se pueda enviar en el request body
+    @JsonIgnore
     public void setFamilyId(UUID familyId) {
         this.familyId = familyId;
     }
 
-    // toString
     @Override
     public String toString() {
         return "Pet{" +
@@ -114,4 +111,3 @@ public class Pet {
                 '}';
     }
 }
-

@@ -1,38 +1,67 @@
 package com.familyspencesapi.service.family;
 
-import com.familyspencesapi.domain.family.FamilyMemberDomain;
+import com.familyspencesapi.domain.users.Family;
+import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.messages.familymember.MessageSenderBrokerFamilyMember;
+import com.familyspencesapi.repositories.users.FamilyRepository;
+import com.familyspencesapi.repositories.users.RegisterUserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+
+import java.util.UUID;
+import java.util.logging.Logger;
+
 
 @Service
 public class FamilyMemberService {
 
-    private final Map<UUID, FamilyMemberDomain> familyMembers = new HashMap<>();
+    private static final Logger logger = Logger.getLogger(FamilyMemberService.class.getName());
+    private final RegisterUserRepository userRepository;
+    private final FamilyRepository familyRepository;
+    private final MessageSenderBrokerFamilyMember messageSender;
 
-    public List<FamilyMemberDomain> getAllFamilyMembers() {
-        return new ArrayList<>(familyMembers.values());
+    public FamilyMemberService(RegisterUserRepository userRepository, FamilyRepository familyRepository, MessageSenderBrokerFamilyMember messageSender) {
+        this.userRepository = userRepository;
+        this.familyRepository = familyRepository;
+        this.messageSender = messageSender;
     }
 
-    public Optional<FamilyMemberDomain> getFamilyMemberById(UUID id) {
-        return Optional.ofNullable(familyMembers.get(id));
-    }
 
-    public FamilyMemberDomain createFamilyMember(FamilyMemberDomain member) {
-        familyMembers.put(member.getId(), member);
-        return member;
-    }
+    @Transactional
+    public RegisterUser createUser(RegisterUser user, String familyId) {
 
-    public boolean deleteFamilyMember(UUID id) {
-        return familyMembers.remove(id) != null;
-    }
+        UUID familyIdAsUUID=UUID.fromString(familyId);
 
-    public FamilyMemberDomain updateFamilyMember(UUID id, FamilyMemberDomain member) {
-        if (familyMembers.containsKey(id)) {
-            member.setId(id);
-            familyMembers.put(id, member);
-            return member;
+        Family family = familyRepository.findById(familyIdAsUUID)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró la familia con ID: " + familyId));
+
+
+        user.setFamily(family);
+
+        RegisterUser savedUser = userRepository.save(user);
+
+        try {
+            messageSender.execute(savedUser, "family.member.created");
+            logger.info("Mensaje enviado a RabbitMQ: " + savedUser.getEmail());
+        } catch (Exception e) {
+            logger.info("Error enviando mensaje a RabbitMQ: " + e.getMessage());
         }
-        return null;
+
+        return savedUser;
     }
+
+    public java.util.List<RegisterUser> getFamilyMembers(UUID familyId) {
+        validateAndGetFamily(familyId);
+        return userRepository.findByFamily_Id(familyId);
+    }
+    private void validateAndGetFamily(UUID familyId) {
+        if (familyId == null) {
+            throw new IllegalArgumentException("El ID de la familia no puede ser nulo");
+        }
+
+        familyRepository.findById(familyId)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró la familia con ID: " + familyId));
+    }
+
 }

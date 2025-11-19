@@ -1,45 +1,104 @@
 package com.familyspencesapi.domain.ranking;
 
-import com.familyspencesapi.domain.expense.Expense;
+import jakarta.persistence.*;
 
-import java.util.List;
+import java.math.BigDecimal;
 import java.util.UUID;
+@Entity
+@Table(name="ranking")
+public class  Ranking {
 
-public class Ranking {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-    private UUID idFamily;
-    private List<String> nameFamilyMembers;
-    private Expense expense;
-    //private Income income;
+    @Column(nullable = false)
+    private UUID familyId;
+
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
+
+    @Column(name = "user_full_name", nullable = false)
+    private String fullName;
+
+    @Column(nullable = false, length = 7)
+    private String period;
+
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal totalExpenses;
+
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal totalIncome;
 
 
-    public Ranking(UUID idFamily, List<String> nameFamilyMembers, Expense expense) {
-        this.idFamily = idFamily;
-        this.nameFamilyMembers = nameFamilyMembers;
-        this.expense = expense;
+
+    public Ranking( UUID familyId, UUID userId, String fullName, String period, BigDecimal totalExpenses, BigDecimal totalIncome) {
+        this.familyId = familyId;
+        this.userId = userId;
+        this.fullName = fullName;
+        this.period = period;
+        this.totalExpenses = totalExpenses;
+        this.totalIncome = totalIncome;
     }
 
-    public UUID getIdFamily() {
-        return idFamily;
+    public Ranking() {
+
     }
 
-    public void setIdFamily(final UUID idFamily) {
-        this.idFamily = idFamily;
+    public UUID getId() {
+        return id;
     }
 
-    public List<String> getNameFamilyMembers() {
-        return nameFamilyMembers;
+    public void setId(UUID id) {
+        this.id = id;
     }
 
-    public void setNameFamilyMembers(List<String> nameFamilyMembers) {
-        this.nameFamilyMembers = nameFamilyMembers;
+    public UUID getFamilyId() {
+        return familyId;
     }
 
-    public Expense getExpense() {
-        return expense;
+    public void setFamilyId(UUID familyId) {
+        this.familyId = familyId;
     }
 
-    public void setExpense(Expense expense) {
-        this.expense = expense;
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(String period) {
+        this.period = period;
+    }
+
+    public BigDecimal getTotalExpenses() {
+        return totalExpenses;
+    }
+
+    public void setTotalExpenses(BigDecimal totalExpenses) {
+        this.totalExpenses = totalExpenses;
+    }
+
+    public BigDecimal getTotalIncome() {
+        return totalIncome;
+    }
+
+    public void setTotalIncome(BigDecimal totalIncome) {
+        this.totalIncome = totalIncome;
     }
 }
+

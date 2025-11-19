@@ -6,6 +6,7 @@ import com.familyspencesapi.service.budget.CreateBudgetRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,4 +32,9 @@ public class BudgetController {
     public Map<String, Object> getBudgetDetails(@PathVariable UUID budgetId) {
         return budgetService.getBudgetDetails(budgetId);
     }
+    @GetMapping("/families/{familyId}/budgets")
+    public List<Map<String, Object>> getAllBudgets(@PathVariable UUID familyId) {
+        return budgetService.getAllBudgetsForFamily(familyId);
+    }
+
 }

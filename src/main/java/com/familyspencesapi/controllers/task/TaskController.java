@@ -1,54 +1,105 @@
 package com.familyspencesapi.controllers.task;
 
 import com.familyspencesapi.domain.tasks.Tasks;
+import com.familyspencesapi.messages.task.TaskMessageSender;
 import com.familyspencesapi.service.task.TaskService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/tasks")
 public class TaskController {
 
-    @Autowired
-    private TaskService taskService;
+    private final TaskService taskService;
+    private final TaskMessageSender taskMessageSender;
+    private static final String UNEXPECTED_ERROR = "Unexpected error";
+    private static final String ERROR_KEY = "error";
 
-    @GetMapping("/all")
-    public ResponseEntity<List<Tasks>> getAllTasks(@RequestParam(required = true) UUID familyId){
-        List<Tasks> listOfTasks = taskService.getAllTasks(familyId);
-
-        return ResponseEntity.ok(listOfTasks);
+    public TaskController(TaskService taskService, TaskMessageSender taskMessageSender) {
+        this.taskService = taskService;
+        this.taskMessageSender = taskMessageSender;
     }
+
+
     @GetMapping
-    public ResponseEntity<Tasks> getTask(@RequestParam(required = true) UUID familyId, @RequestParam(required = true) UUID taskId){
-        Tasks tasks = taskService.getTask(familyId,taskId);
+    public ResponseEntity<List<Tasks>> getAllTasks(@RequestParam UUID familyId) {
+        List<Tasks> tasks = taskService.getAllTasks(familyId);
         return ResponseEntity.ok(tasks);
     }
 
+    @GetMapping("/{taskId}")
+    public ResponseEntity<Tasks> getTask(
+            @RequestParam UUID familyId,
+            @PathVariable UUID taskId
+    ) {
+        Tasks task = taskService.getTask(familyId, taskId);
+        return ResponseEntity.ok(task);
+    }
+
+
     @PostMapping
-    public ResponseEntity<String> postTask(@RequestParam(required = true) UUID familyId ,@RequestBody Tasks task){
+    public ResponseEntity<Object> createTask(
+            @RequestParam UUID familyId,
+            @RequestBody Tasks task
+    ) {
+        try {
+            task.setFamilyId(familyId);
 
-        String responseTask = taskService.saveTask(familyId,task);
+            Tasks createdTask = taskService.createTask(task);
 
-        return ResponseEntity.ok(responseTask);
+            taskMessageSender.sendTaskCreated(createdTask);
+
+            return ResponseEntity.ok(createdTask);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
+        }
     }
 
-    @PutMapping
-    public ResponseEntity<String> putTask(@RequestParam(required = true) UUID familyId ,@RequestParam(required = true) UUID taskId,@RequestBody Tasks task){
 
-        String responseTask = taskService.updateTask(familyId,taskId,task);
+    @PutMapping("/{taskId}")
+    public ResponseEntity<Object> updateTask(
+            @RequestParam UUID familyId,
+            @PathVariable UUID taskId,
+            @RequestBody Tasks task
+    ) {
+        try {
+            task.setFamilyId(familyId);
 
-        return ResponseEntity.ok(responseTask);
+            Tasks updatedTask = taskService.updateTask(taskId, task);
+
+            taskMessageSender.sendTaskUpdated(updatedTask);
+
+            return ResponseEntity.ok(updatedTask);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
+        }
     }
 
-    @DeleteMapping
-    public ResponseEntity<String> deleteTask(@RequestParam(required = true) UUID familyId ,@RequestParam(required = true) UUID taskId){
-        String responseTask = taskService.deleteTask(familyId,taskId);
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<Object> deleteTask(
+            @RequestParam UUID familyId,
+            @PathVariable UUID taskId
+    ) {
+        try {
+            taskService.deleteTask(familyId, taskId);
 
-        return ResponseEntity.ok(responseTask);
+            taskMessageSender.sendTaskDeleted(
+                    Map.of("familyId", familyId.toString(), "taskId", taskId.toString())
+            );
+
+            return ResponseEntity.ok(Map.of("message", "Task deleted successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(ERROR_KEY, UNEXPECTED_ERROR));
+        }
     }
-
 }

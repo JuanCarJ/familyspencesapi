@@ -13,6 +13,9 @@ public class Category {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
+    @Column(name = "family_id")
+    private UUID familyId;
+
     @Column(name = "name", nullable = false, length = 50)
     private String name;
 
@@ -37,9 +40,10 @@ public class Category {
         this.id = id;
     }
 
-    public Category(UUID id, String name, CategoryType categoryType, String description,
+    public Category(UUID id, UUID familyId, String name, CategoryType categoryType, String description,
                     BigDecimal allocatedBudget, BudgetPeriod budgetPeriod) {
         this.id = id;
+        this.familyId = familyId;
         this.name = name;
         this.categoryType = categoryType;
         this.description = description;
@@ -47,12 +51,29 @@ public class Category {
         this.budgetPeriod = budgetPeriod;
     }
 
+    public boolean isGlobal() {
+        return this.familyId == null;
+    }
+
+    public boolean belongsToFamily(UUID familyId) {
+        return this.familyId != null && this.familyId.equals(familyId);
+    }
+
+
     public UUID getId() {
         return id;
     }
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public UUID getFamilyId() {
+        return familyId;
+    }
+
+    public void setFamilyId(UUID familyId) {
+        this.familyId = familyId;
     }
 
     public String getName() {
@@ -99,6 +120,7 @@ public class Category {
     public String toString() {
         return "Category{" +
                 "id=" + id +
+                ", familyId=" + familyId +
                 ", name='" + name + '\'' +
                 ", categoryType=" + categoryType +
                 ", description='" + description + '\'' +
