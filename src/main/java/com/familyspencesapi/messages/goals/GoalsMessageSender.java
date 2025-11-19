@@ -1,7 +1,6 @@
 package com.familyspencesapi.messages.goals;
 
 import com.familyspencesapi.config.messages.goals.GoalsQueueConfig;
-import com.familyspencesapi.config.messages.goals.dto.GoalDTO;
 import com.familyspencesapi.domain.goals.Goal;
 import com.familyspencesapi.utils.MessageSender;
 import com.familyspencesapi.utils.gson.MapperJsonObject;
@@ -11,10 +10,9 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
-import java.util.UUID;
 
 @Component
-public class GoalsMessageSender implements MessageSender<Goal> {
+public class GoalsMessageSender implements MessageSender<Object> {
 
     private final RabbitTemplate rabbitTemplate;
     private final GoalsQueueConfig goalsQueueConfig;
@@ -29,10 +27,8 @@ public class GoalsMessageSender implements MessageSender<Goal> {
     }
 
     @Override
-    public void execute(Goal message, String routingKey) {
-        GoalDTO dto = new GoalDTO(message);
-
-        mapperJsonObject.execute(dto).ifPresent(json -> {
+    public void execute(Object message, String routingKey) {
+        mapperJsonObject.execute(message).ifPresent(json -> {
             MessageProperties props = new MessageProperties();
             props.setContentType(MessageProperties.CONTENT_TYPE_JSON);
             Message amqpMessage = new Message(json.getBytes(), props);
@@ -49,13 +45,6 @@ public class GoalsMessageSender implements MessageSender<Goal> {
     }
 
     public void sendGoalDeleted(Map<String, String> data) {
-        mapperJsonObject.execute(data).ifPresent(json -> {
-            MessageProperties props = new MessageProperties();
-            props.setContentType(MessageProperties.CONTENT_TYPE_JSON);
-            Message amqpMessage = new Message(json.getBytes(), props);
-            rabbitTemplate.send(goalsQueueConfig.getExchangeName(),
-                    goalsQueueConfig.getRoutingKeyDelete(),
-                    amqpMessage);
-        });
+        execute(data, goalsQueueConfig.getRoutingKeyDelete());
     }
 }
