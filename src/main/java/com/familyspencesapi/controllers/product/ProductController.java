@@ -46,29 +46,26 @@ public class ProductController {
     }
 
     @PostMapping("/product")
-    public ResponseEntity<Map<String, Object>> addProduct(@RequestBody(required = false) Map<String, Object> producto) {
+    public ResponseEntity<Map<String, Object>> addProduct(@RequestBody Map<String, Object> producto) {
+
         Map<String, Object> respuesta = new HashMap<>();
 
         try {
-            messageSenderBroker.send(producto, "product.exchange", "product.create");
+            productService.sendCreateProductToBroker(producto);
 
-            respuesta.put(MENSAJE, "Solicitud de creación enviada a processor");
+            respuesta.put("mensaje", "Solicitud de creación enviada a processor");
             respuesta.put("producto", producto);
+
             return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
-            /*ProductDomain savedProduct = productService.addProduct(producto);
-
-            respuesta.put(MENSAJE, "Producto agregado exitosamente");
-            respuesta.put(ID_KEY, savedProduct.getId().toString());
-            respuesta.put(PRODUCTO_KEY, savedProduct);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);*/
 
         } catch (IllegalArgumentException e) {
-            respuesta.put(MENSAJE, e.getMessage());
+            respuesta.put("mensaje", e.getMessage());
             return ResponseEntity.badRequest().body(respuesta);
+
         } catch (Exception e) {
-            respuesta.put(MENSAJE, "Error interno del servidor al agregar producto");
+            respuesta.put("mensaje", "Error interno del servidor");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
         }
     }
+
 }
