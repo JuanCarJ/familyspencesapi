@@ -1,8 +1,6 @@
 package com.familyspencesapi.repositories.expense;
 
 import com.familyspencesapi.domain.expense.Expense;
-import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
-import com.familyspencesapi.domain.users.RegisterUser;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,8 +16,6 @@ import java.util.UUID;
 
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
-
-    List<Expense> findByCategory(ExpenseCategory category);
 
     List<Expense> findByPeriodIgnoreCase(String period);
 
@@ -39,10 +35,6 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     // Calcular total por período
     @Query("SELECT COALESCE(SUM(e.value), 0) FROM Expense e WHERE LOWER(e.period) = LOWER(:period)")
     BigDecimal calculateTotalByPeriod(@Param("period") String period);
-
-    // Calcular total por categoría
-    @Query("SELECT COALESCE(SUM(e.value), 0) FROM Expense e WHERE e.category = :category")
-    BigDecimal calculateTotalByCategory(@Param("category") ExpenseCategory category);
 
     // Calcular total por responsable
     @Query("SELECT COALESCE(SUM(e.value), 0) FROM Expense e WHERE e.responsible = :responsible")
