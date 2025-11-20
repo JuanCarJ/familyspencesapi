@@ -21,7 +21,7 @@ public class Notification {
     @Column(name = "user_id", nullable = false, columnDefinition = "UUID")
     private UUID userId;
 
-    @Column(name = "message", nullable = false, length = 1000)
+    @Column(name = "message", nullable = false, length = 5000)
     private String message;
 
     @Enumerated(EnumType.STRING)

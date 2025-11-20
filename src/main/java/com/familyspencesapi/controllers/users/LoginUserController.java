@@ -23,6 +23,7 @@ public class LoginUserController {
     public ResponseEntity<Object> login(@RequestBody LoginUser loginRequest) {
         try {
             String token = loginService.authenticate(loginRequest);
+            System.out.println(token);
             return ResponseEntity.ok(new AuthResponse(token));
 
         } catch (LoginUserException e) {
