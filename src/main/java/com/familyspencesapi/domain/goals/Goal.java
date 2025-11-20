@@ -1,11 +1,7 @@
 package com.familyspencesapi.domain.goals;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -19,6 +15,10 @@ public class Goal {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_goal", updatable = false, nullable = false, unique = true)
     private UUID id;
+
+    @Column(name = "family_id",nullable = false)
+    @NotNull(message = "La familia no puede estar vacia")
+    private UUID familyId;
 
     @Column(name = "name_goal", nullable = false, length = 150)
     @NotBlank(message = "El nombre no puede estar vacío")
@@ -38,8 +38,8 @@ public class Goal {
     @Positive(message = "El tope debe ser mayor que 0")
     private double savingsCap;
 
+    @FutureOrPresent(message = "La fecha límite debe ser igual o superior a la actual")
     @Column(name = "fecha_limite_goal", nullable = false)
-    @Future(message = "La fecha límite debe ser superior a la actual")
     private LocalDateTime deadline;
 
     @Column(name = "meta_diaria_goal", nullable = false)
@@ -49,8 +49,9 @@ public class Goal {
 
     public Goal() {}
 
-    public Goal(UUID id, String name, String description, UUID categoryId, double savingsCap, LocalDateTime deadline, double dailyGoal) {
+    public Goal(UUID id,UUID familyId, String name, String description, UUID categoryId, double savingsCap, LocalDateTime deadline, double dailyGoal) {
         this.id = id;
+        this.familyId = familyId;
         this.name = name;
         this.description = description;
         this.categoryId = categoryId;
@@ -66,6 +67,10 @@ public class Goal {
     public void setId(UUID id) {
         this.id = id;
     }
+
+    public UUID getFamilyId() {return familyId;}
+
+    public void setFamilyId(UUID familyId) {this.familyId = familyId;}
 
     public String getName() {
         return name;
