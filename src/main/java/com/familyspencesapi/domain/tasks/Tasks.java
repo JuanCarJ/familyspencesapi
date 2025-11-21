@@ -2,6 +2,7 @@ package com.familyspencesapi.domain.tasks;
 
 import com.familyspencesapi.domain.expense.Expense;
 import com.familyspencesapi.domain.vacation.Vacation;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
@@ -29,6 +30,7 @@ public class Tasks {
     @Column(nullable = false)
     private boolean status;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(nullable = false)
     private LocalDate creationDate;
 

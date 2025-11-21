@@ -13,7 +13,6 @@ public class MapperJsonObjectImpl implements MapperJsonObject {
     public Optional<String> execute(Object object) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-
             return Optional.ofNullable(objectMapper.writeValueAsString(object));
         } catch (JsonProcessingException e) {
             return Optional.empty();
