@@ -16,7 +16,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/rest/expenses")
-@CrossOrigin(origins = "*")
+
 public class ExpenseController {
 
     private final ExpenseService expenseService;

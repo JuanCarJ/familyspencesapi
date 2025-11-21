@@ -1,6 +1,7 @@
 package com.familyspencesapi.config.messages.goals;
 
 import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,8 +22,8 @@ public class GoalsQueueConfig {
     private String routingKeyDelete;
 
     @Bean
-    public DirectExchange goalExchange() {
-        return new DirectExchange(exchangeName);
+    public TopicExchange goalExchange() {
+        return new TopicExchange(exchangeName);
     }
 
     public String getExchangeName() {
