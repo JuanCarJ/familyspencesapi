@@ -1,6 +1,7 @@
 package com.familyspencesapi.messages.pets;
 
 import com.familyspencesapi.config.messages.pets.PetsQueueConfig;
+import com.familyspencesapi.config.messages.pets.dto.petsDTO;
 import com.familyspencesapi.domain.pet.Pet;
 import com.familyspencesapi.utils.MessageSender;
 import com.familyspencesapi.utils.gson.MapperJsonObject;
@@ -36,12 +37,18 @@ public class PetsMessageSender implements MessageSender<Object> {
         });
     }
 
+    // ==========================
+    // MÉTODOS DE ENVÍO
+    // ==========================
+
     public void sendPetCreated(Pet pet) {
-        execute(pet, petsQueueConfig.getRoutingKeyCreate());
+        petsDTO petDTO = new petsDTO(pet);
+        execute(petDTO, petsQueueConfig.getRoutingKeyCreate());
     }
 
     public void sendPetUpdated(Pet pet) {
-        execute(pet, petsQueueConfig.getRoutingKeyUpdate());
+        petsDTO petDTO = new petsDTO(pet);
+        execute(petDTO, petsQueueConfig.getRoutingKeyUpdate());
     }
 
     public void sendPetDeleted(Map<String, String> data) {
