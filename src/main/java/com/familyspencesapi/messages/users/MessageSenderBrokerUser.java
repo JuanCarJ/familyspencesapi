@@ -39,10 +39,10 @@ public class MessageSenderBrokerUser implements MessageSender<RegisterUserMessag
 
         if (messageText.isPresent()) {
             // Enviamos el JSON directamente al exchange con la routing key
-            rabbitTemplate.convertAndSend(queueConfig.getExchangeName(), routingKey, messageText.get());
+            rabbitTemplate.convertAndSend(queueConfig.getExchangeName(), routingKey, message);
 
-            log.info("Mensaje enviado correctamente a RabbitMQ -> Exchange: {}, RoutingKey: {}, Email: {}, Documento: {}",
-                    queueConfig.getExchangeName(), routingKey, message.email(), message.document());
+            log.info("Mensaje enviado correctamente a RabbitMQ -> Exchange: {}, RoutingKey: {},Nombre: {}, Email: {}, Documento: {}",
+                    queueConfig.getExchangeName(), routingKey, message.firstName(), message.email(), message.document());
         } else {
             log.warn("⚠️ No se pudo serializar el mensaje RegisterUser: {}", message);
         }

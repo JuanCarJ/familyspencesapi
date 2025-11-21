@@ -42,7 +42,6 @@ public class Notification {
     @Column(name = "read_at")
     private LocalDateTime readAtInternal;
 
-    // Constructor completo (mantiene compatibilidad con código existente)
     public Notification(UUID id, UUID userId, String message, NotificationType type,
                         NotificationPriority priority, boolean read,
                         Date createdAt, Date readAt) {
@@ -56,38 +55,31 @@ public class Notification {
         this.readAtInternal = dateToLocalDateTime(readAt);
     }
 
-    // Constructor simplificado para crear nuevas notificaciones
     public Notification(UUID userId, String message, NotificationType type, NotificationPriority priority) {
         this.userId = userId;
         this.message = message;
         this.type = type;
         this.priority = priority;
         this.read = false;
-        // createdAtInternal se establece automáticamente por @CreationTimestamp
         this.readAtInternal = null;
     }
 
-    // Constructor mínimo
     public Notification(UUID userId, String message) {
         this(userId, message, NotificationType.INFO, NotificationPriority.NORMAL);
     }
 
-    // Constructor vacío para JPA
     public Notification() {}
 
-    // Método para marcar como leída
     public void markAsRead() {
         this.read = true;
         this.readAtInternal = LocalDateTime.now();
     }
 
-    // Método para verificar si la notificación es reciente (menos de 24 horas)
     public boolean isRecent() {
         if (createdAtInternal == null) return false;
         return createdAtInternal.isAfter(LocalDateTime.now().minusHours(24));
     }
 
-    // Getters y Setters (mantenemos compatibilidad con Date para la API externa)
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -111,7 +103,6 @@ public class Notification {
         }
     }
 
-    // Métodos para mantener compatibilidad con Date en la API
     public Date getCreatedAt() {
         return localDateTimeToDate(createdAtInternal);
     }
@@ -128,14 +119,12 @@ public class Notification {
         this.readAtInternal = dateToLocalDateTime(readAt);
     }
 
-    // Métodos internos para JPA (LocalDateTime)
     public LocalDateTime getCreatedAtInternal() { return createdAtInternal; }
     public void setCreatedAtInternal(LocalDateTime createdAtInternal) { this.createdAtInternal = createdAtInternal; }
 
     public LocalDateTime getReadAtInternal() { return readAtInternal; }
     public void setReadAtInternal(LocalDateTime readAtInternal) { this.readAtInternal = readAtInternal; }
 
-    // Métodos de conversión entre Date y LocalDateTime
     private Date localDateTimeToDate(LocalDateTime localDateTime) {
         if (localDateTime == null) return null;
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
@@ -146,7 +135,6 @@ public class Notification {
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 
-    // equals y hashCode
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -160,7 +148,6 @@ public class Notification {
         return Objects.hash(id);
     }
 
-    // toString
     @Override
     public String toString() {
         return "Notification{" +
@@ -175,7 +162,6 @@ public class Notification {
                 '}';
     }
 
-    // Enums para tipo y prioridad
     public enum NotificationType {
         INFO, WARNING, ERROR, SUCCESS, EXPENSE_ADDED, BUDGET_EXCEEDED, PAYMENT_DUE
     }
