@@ -1,4 +1,4 @@
-package com.familyspencesapi.config.messages.task.dto;
+package com.familyspencesapi.messages.task.dto;
 
 import com.familyspencesapi.domain.tasks.Tasks;
 

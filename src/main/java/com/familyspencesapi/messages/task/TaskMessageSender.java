@@ -1,7 +1,7 @@
 package com.familyspencesapi.messages.task;
 
 import com.familyspencesapi.config.messages.task.TaskQueueConfig;
-import com.familyspencesapi.config.messages.task.dto.TaskDTO;
+import com.familyspencesapi.messages.task.dto.TaskDTO;
 import com.familyspencesapi.domain.tasks.Tasks;
 import com.familyspencesapi.utils.MessageSender;
 import com.familyspencesapi.utils.gson.MapperJsonObject;
