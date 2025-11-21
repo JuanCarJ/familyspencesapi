@@ -15,6 +15,7 @@ public class FamilyUserController {
         this.userService = userService;
     }
 
+    @CrossOrigin(origins = "http://localhost:4200")
     @GetMapping(value = "/users/profile", produces = "application/json")
     public ResponseEntity<?> getUser(@RequestParam String email) {
         RegisterUser myUser = userService.getUserByEmail(email);
