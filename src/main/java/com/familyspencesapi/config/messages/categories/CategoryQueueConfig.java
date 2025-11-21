@@ -1,6 +1,6 @@
 package com.familyspencesapi.config.messages.categories;
 
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.DirectExchange;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,8 +21,8 @@ public class CategoryQueueConfig {
     private String routingKeyDelete;
 
     @Bean
-    public TopicExchange categoryExchange() {
-        return new TopicExchange(exchangeName);
+    public DirectExchange categoryExchange() {
+        return new DirectExchange(exchangeName);
     }
 
     public String getExchangeName() {
