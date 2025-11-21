@@ -1,6 +1,7 @@
 package com.familyspencesapi.messages.task;
 
 import com.familyspencesapi.config.messages.task.TaskQueueConfig;
+import com.familyspencesapi.config.messages.task.dto.TaskDTO;
 import com.familyspencesapi.domain.tasks.Tasks;
 import com.familyspencesapi.utils.MessageSender;
 import com.familyspencesapi.utils.gson.MapperJsonObject;
@@ -37,11 +38,13 @@ public class TaskMessageSender implements MessageSender<Object> {
     }
 
     public void sendTaskCreated(Tasks task) {
-        execute(task, taskQueueConfig.getRoutingKeyCreate());
+        TaskDTO taskDTO = new TaskDTO(task);
+        execute(taskDTO, taskQueueConfig.getRoutingKeyCreate());
     }
 
     public void sendTaskUpdated(Tasks task) {
-        execute(task, taskQueueConfig.getRoutingKeyUpdate());
+        TaskDTO taskDTO = new TaskDTO(task);
+        execute(taskDTO, taskQueueConfig.getRoutingKeyUpdate());
     }
 
     public void sendTaskDeleted(Map<String, String> data) {
