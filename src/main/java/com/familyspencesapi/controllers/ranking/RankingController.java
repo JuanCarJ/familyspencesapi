@@ -82,6 +82,14 @@ public class RankingController {
             return ResponseEntity.status(500).body(Map.of("error", "Error al calcular el ranking: " + e.getMessage()));
         }
     }
+    @DeleteMapping("/ranking/delete/{familyId}/{period}")
+    public ResponseEntity<Map<String, String>> deleteRanking(
+            @PathVariable UUID familyId,
+            @PathVariable String period) {
+
+        rankingService.deleteRanking(familyId, period);
+        return ResponseEntity.ok(Map.of("message", "Ranking eliminado exitosamente."));
+    }
 
 }
 

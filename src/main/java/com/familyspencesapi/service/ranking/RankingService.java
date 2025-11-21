@@ -291,6 +291,10 @@ public class RankingService {
         }
         logger.info("Solicitudes de guardado de Ranking para el periodo " + period + " enviadas a RabbitMQ.");
     }
+    @Transactional
+    public void deleteRanking(UUID familyId, String period) {
+        rankingRepository.deleteByFamilyIdAndPeriod(familyId, period);
+    }
 
 }
 
