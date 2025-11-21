@@ -1,7 +1,6 @@
 package com.familyspencesapi.controllers.expense;
 
 import com.familyspencesapi.domain.expense.Expense;
-import com.familyspencesapi.domain.expense.Expense.ExpenseCategory;
 import com.familyspencesapi.service.expense.ExpenseService;
 
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -42,20 +41,10 @@ public class ExpenseController {
         try {
             Expense expense = expenseService.findById(id);
             if (expense == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();// 404 explícito
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             } else {
-                return ResponseEntity.status(HttpStatus.OK).body(expense); // 200 explícito
+                return ResponseEntity.status(HttpStatus.OK).body(expense);
             }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 500 explícito
-        }
-    }
-
-    @GetMapping("/by-category/{category}")
-    public ResponseEntity<List<Expense>> getByCategory(@PathVariable ExpenseCategory category) {
-        try {
-            List<Expense> expenses = expenseService.findByCategory(category);
-            return ResponseEntity.ok(expenses);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -85,16 +74,6 @@ public class ExpenseController {
     public ResponseEntity<List<Expense>> getByUser(@PathVariable String userMail) {
         try {
             List<Expense> expenses = expenseService.findByResponsibleId(userMail);
-            return ResponseEntity.ok(expenses);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @GetMapping("/expensive")
-    public ResponseEntity<List<Expense>> getExpensiveExpenses() {
-        try {
-            List<Expense> expenses = expenseService.findExpensiveExpenses();
             return ResponseEntity.ok(expenses);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -158,9 +137,9 @@ public class ExpenseController {
                         .body(new ApiResponse(Messages.ERROR_VALIDATION_MESSAGE + String.join(", ", errors)));
             }
 
-            expenseService.updateExpense(request,mail,idExpense);
+            var message = expenseService.updateExpense(request,mail,idExpense);
 
-            return ResponseEntity.ok(new ApiResponse(Messages.SUCCESS_EXPENSE_UPDATED, idExpense.toString()));
+            return ResponseEntity.ok(new ApiResponse(message, idExpense.toString()));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
