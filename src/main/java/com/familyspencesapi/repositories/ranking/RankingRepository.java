@@ -13,5 +13,7 @@ public interface RankingRepository extends JpaRepository<Ranking, UUID> {
     List<Ranking> findByFamilyIdAndPeriodOrderByTotalIncome(UUID familyId,String period);
 
     boolean existsByFamilyIdAndPeriod(UUID familyId, String period);
+
+    void deleteByFamilyIdAndPeriod(UUID familyId, String period);
 }
 
