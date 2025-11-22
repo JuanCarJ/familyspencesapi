@@ -60,13 +60,11 @@ public class BalanceService {
         LocalDate startOfMonth = targetMonth.atDay(1);
         LocalDate endOfMonth = targetMonth.atEndOfMonth();
 
-        // 1. Verificar si ya existe un cierre para este mes
         boolean exists = closingRepository.existsByFamilyIdAndClosingDateBetween(familyId, startOfMonth, endOfMonth);
         if (exists) {
             throw new IllegalStateException("A monthly closing already exists for month " + targetMonth);
         }
 
-        // 2. Calcular gastos del mes actual
         BigDecimal totalExpenses = closingRepository.calculateMonthlyExpenses(
                 familyId,
                 startOfMonth.atStartOfDay(),
@@ -74,16 +72,14 @@ public class BalanceService {
         );
         if (totalExpenses == null) totalExpenses = BigDecimal.ZERO;
 
-        // 3. Calcular ingresos del mes actual (formato YYYY-MM)
         String period = targetMonth.toString();
         Double totalIncomeDouble = closingRepository.calculateMonthlyIncome(familyId, period);
         BigDecimal totalIncome = BigDecimal.valueOf(totalIncomeDouble != null ? totalIncomeDouble : 0.0);
 
-        // 4. Calcular balance
         BigDecimal balance = totalIncome.subtract(totalExpenses);
         GeneralBalance currentBalance = new GeneralBalance(totalIncome, totalExpenses, balance);
 
-        // Usamos el último día del mes como fecha de cierre para consistencia
+
         MonthlyClosing closingData = new MonthlyClosing(
                 familyId,
                 currentBalance,
