@@ -1,3 +1,4 @@
+
 package com.familyspencesapi.controllers.income;
 
 import com.familyspencesapi.domain.income.Income;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/income")
 public class IncomeController {
@@ -40,7 +42,23 @@ public class IncomeController {
 
     @PostMapping
     public ResponseEntity<Income> createIncome(@RequestBody Income income) {
-        return ResponseEntity.ok(incomeService.createIncome(income));
+        Income created = incomeService.createIncome(income);
+        return ResponseEntity.ok(created);
+    }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Income> updateIncome(
+            @PathVariable UUID id,
+            @RequestBody Income income) {
+
+        Income updatedIncome = incomeService.updateIncome(id, income);
+
+        if (updatedIncome == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(updatedIncome);
     }
 
     @DeleteMapping("/{id}")
