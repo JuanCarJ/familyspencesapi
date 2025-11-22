@@ -11,13 +11,13 @@ import java.util.UUID;
 @Repository
 public interface RepositoryIncome extends JpaRepository<Income, UUID> {
 
-    // Buscar ingresos por el ID de la familia
+
     List<Income> findByFamily(UUID family);
 
-    // Buscar ingresos por el ID del responsable
+
     List<Income> findByResponsible_Id(UUID responsibleId);
 
-    // Buscar ingresos por periodo
+
     List<Income> findByPeriod(String period);
 
     List<Income> findByResponsibleIdAndPeriod(UUID responsibleId, String period);

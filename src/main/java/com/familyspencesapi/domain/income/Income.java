@@ -1,3 +1,4 @@
+
 package com.familyspencesapi.domain.income;
 
 import com.familyspencesapi.domain.users.RegisterUser;
