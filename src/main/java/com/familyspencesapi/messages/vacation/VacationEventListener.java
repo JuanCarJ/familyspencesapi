@@ -30,7 +30,7 @@ public class VacationEventListener {
             processMessage(messageJson);
         } catch (Exception e) {
             logger.error("Error procesando mensaje de vacación", e);
-            throw e; // Re-lanzar para DLQ o reintento
+            // NO re-lanzar para evitar reintentos infinitos
         }
     }
 
@@ -43,14 +43,14 @@ public class VacationEventListener {
                 vacation.getId());
 
         try {
-            // Lógica de negocio
+            // Lógica de negocio - NO GUARDAR DE NUEVO
             sendNotification(vacation, "Nueva vacación creada");
             validateBudget(vacation);
 
             logger.info("Vacación creada procesada exitosamente: {}", vacation.getId());
         } catch (Exception e) {
             logger.error("Error procesando creación de vacación: {}", vacation.getId(), e);
-            throw e;
+            // NO re-lanzar para evitar reintentos
         }
     }
 
@@ -61,13 +61,14 @@ public class VacationEventListener {
                 vacation.getId());
 
         try {
+            // Lógica de negocio - NO GUARDAR DE NUEVO
             sendNotification(vacation, "Vacación actualizada");
             validateBudget(vacation);
 
             logger.info("Vacación actualizada procesada exitosamente: {}", vacation.getId());
         } catch (Exception e) {
             logger.error("Error procesando actualización de vacación: {}", vacation.getId(), e);
-            throw e;
+            // NO re-lanzar para evitar reintentos
         }
     }
 
@@ -77,14 +78,14 @@ public class VacationEventListener {
         logger.info("Vacación ELIMINADA: ID {}", vacationId);
 
         try {
-            // Lógica de limpieza
+            // Lógica de limpieza - NO ELIMINAR DE NUEVO
             sendDeletionNotification(data);
             archiveVacationData(vacationId);
 
             logger.info("Vacación eliminada procesada exitosamente: {}", vacationId);
         } catch (Exception e) {
             logger.error("Error procesando eliminación de vacación: {}", vacationId, e);
-            throw e;
+            // NO re-lanzar para evitar reintentos
         }
     }
 
