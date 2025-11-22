@@ -1,7 +1,9 @@
 package com.familyspencesapi.service.family;
 
 import com.familyspencesapi.domain.users.Family;
+import com.familyspencesapi.domain.users.FamilyMember;
 import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.domain.users.RegisterUserMessage;
 import com.familyspencesapi.messages.familymember.MessageSenderBrokerFamilyMember;
 import com.familyspencesapi.repositories.users.FamilyRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
@@ -31,7 +33,7 @@ public class FamilyMemberService {
     @Transactional
     public String createUser(RegisterUser user, String familyId) {
 
-        UUID familyIdAsUUID=UUID.fromString(familyId);
+        UUID familyIdAsUUID = UUID.fromString(familyId);
 
         Family family = familyRepository.findById(familyIdAsUUID)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró la familia con ID: " + familyId));
@@ -39,10 +41,27 @@ public class FamilyMemberService {
         user.setFamily(family);
 
         try {
-            // Solo enviar el mensaje, NO hacer save
-            messageSender.execute(user, "family.member.created");
+            RegisterUserMessage message = new RegisterUserMessage(
+                    user.getId(),
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getbirthDate(),
+                    user.getdocumentType().getId(),
+                    user.getdocument(),
+                    user.getEmail(),
+                    user.getRelationship().getId(),
+                    user.getcreditCard(),
+                    user.getphone(),
+                    user.getAddress(),
+                    user.getPassword(),
+                    user.getFamily().getId()
+            );
+
+            messageSender.execute(message, "user.add.member");
+
             logger.info("Mensaje enviado a RabbitMQ para usuario: " + user.getEmail());
             return "El mensaje se envio de forma exitosa";
+
         } catch (Exception e) {
             logger.severe("Error enviando mensaje a RabbitMQ: " + e.getMessage());
             throw new RuntimeException("Error sending message to RabbitMQ", e);

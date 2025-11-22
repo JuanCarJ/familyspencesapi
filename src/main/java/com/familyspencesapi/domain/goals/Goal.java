@@ -6,6 +6,7 @@ import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+//Domain Goal
 
 @Entity
 @Table(name = "goal")

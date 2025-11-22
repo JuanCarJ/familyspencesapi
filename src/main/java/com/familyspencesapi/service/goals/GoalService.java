@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -61,7 +60,7 @@ public class GoalService {
 
     @Transactional
     public Goal updateGoal(UUID familyId,UUID goalId, Goal goalDetails, UUID categoryId) {
-        Goal existing = repository.findByFamilyIdAndCategoryIdAndId(familyId, categoryId, goalId)
+        Goal existing = repository.findByFamilyIdAndId(familyId, goalId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Goal not found for family: " + familyId +
                                 ", category: " + categoryId +
@@ -73,7 +72,7 @@ public class GoalService {
         existing.setSavingsCap(goalDetails.getSavingsCap());
         existing.setDeadline(goalDetails.getDeadline());
         existing.setDailyGoal(goalDetails.getDailyGoal());
-        existing.setCategoryId(categoryId);
+        existing.setCategoryId(goalDetails.getCategoryId());
         existing.setFamilyId(familyId);
 
         Goal updated = repository.save(existing);
