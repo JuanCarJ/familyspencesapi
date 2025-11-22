@@ -1,11 +1,8 @@
-
 package com.familyspencesapi.controllers.income;
-
 import com.familyspencesapi.domain.income.Income;
 import com.familyspencesapi.service.income.IncomeService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -46,18 +43,12 @@ public class IncomeController {
         return ResponseEntity.ok(created);
     }
 
-
     @PutMapping("/{id}")
-    public ResponseEntity<Income> updateIncome(
-            @PathVariable UUID id,
-            @RequestBody Income income) {
-
+    public ResponseEntity<Income> updateIncome(@PathVariable UUID id, @RequestBody Income income) {
         Income updatedIncome = incomeService.updateIncome(id, income);
-
         if (updatedIncome == null) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.ok(updatedIncome);
     }
 
