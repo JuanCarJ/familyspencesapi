@@ -152,7 +152,7 @@ public class ExpenseService {
         expense.setTitle(request.getTitle().trim());
         expense.setDescription(request.getDescription() != null ? request.getDescription().trim() : "");
         expense.setPeriod(request.getPeriod().trim());
-        expense.setResponsible(responsiblemail);
+        expense.setResponsible(request.getResponsible());
         expense.setValue(request.getValue());
         expense.setCategory(request.getCategory());
 

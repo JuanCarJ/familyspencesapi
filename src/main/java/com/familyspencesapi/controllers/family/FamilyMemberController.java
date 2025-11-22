@@ -26,11 +26,23 @@ public class FamilyMemberController {
     public ResponseEntity<Object> createFamilyMember(@RequestBody RegisterUser newUser,
                                                      @RequestParam String familyId) {
         try {
-            RegisterUser createdUser = familyMemberService.createUser(newUser, familyId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+
+            String result = familyMemberService.createUser(newUser, familyId);
+
+
+            Map<String, String> successResponse = Map.of(
+                    "message", result,
+                    "status", "PENDING"
+            );
+
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(successResponse);
+
         } catch (IllegalArgumentException e) {
             Map<String, String> errorResponse = Map.of(ERROR_KEY, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (RuntimeException e) {
+            Map<String, String> errorResponse = Map.of(ERROR_KEY, "Error processing request: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
     @GetMapping("/members")

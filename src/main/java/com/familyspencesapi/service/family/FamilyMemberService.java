@@ -29,26 +29,24 @@ public class FamilyMemberService {
 
 
     @Transactional
-    public RegisterUser createUser(RegisterUser user, String familyId) {
+    public String createUser(RegisterUser user, String familyId) {
 
         UUID familyIdAsUUID=UUID.fromString(familyId);
 
         Family family = familyRepository.findById(familyIdAsUUID)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró la familia con ID: " + familyId));
 
-
         user.setFamily(family);
 
-        RegisterUser savedUser = userRepository.save(user);
-
         try {
-            messageSender.execute(savedUser, "family.member.created");
-            logger.info("Mensaje enviado a RabbitMQ: " + savedUser.getEmail());
+            // Solo enviar el mensaje, NO hacer save
+            messageSender.execute(user, "family.member.created");
+            logger.info("Mensaje enviado a RabbitMQ para usuario: " + user.getEmail());
+            return "El mensaje se envio de forma exitosa";
         } catch (Exception e) {
-            logger.info("Error enviando mensaje a RabbitMQ: " + e.getMessage());
+            logger.severe("Error enviando mensaje a RabbitMQ: " + e.getMessage());
+            throw new RuntimeException("Error sending message to RabbitMQ", e);
         }
-
-        return savedUser;
     }
 
     public java.util.List<RegisterUser> getFamilyMembers(UUID familyId) {
