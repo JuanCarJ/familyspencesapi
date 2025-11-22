@@ -2,6 +2,7 @@ package com.familyspencesapi.messages.familymember;
 
 import com.familyspencesapi.config.messages.userprocessor.user.FamilyMemberUserProcessQueueConfig;
 import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.domain.users.RegisterUserMessage;
 import com.familyspencesapi.utils.MessageSender;
 import com.familyspencesapi.utils.gson.MapperJsonObject;
 import org.slf4j.Logger;
@@ -15,41 +16,38 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 @Component
-public class MessageSenderBrokerFamilyMember implements MessageSender<RegisterUser> {
-
+public class MessageSenderBrokerFamilyMember implements MessageSender<RegisterUserMessage> {
     private final RabbitTemplate rabbitTemplate;
     private final MapperJsonObject mapperJson;
     private final FamilyMemberUserProcessQueueConfig queueConfig;
-    private static final Logger log = LoggerFactory.getLogger(MessageSenderBrokerFamilyMember.class);
+    private static final Logger logger = LoggerFactory.getLogger(MessageSenderBrokerFamilyMember.class);
 
-    public MessageSenderBrokerFamilyMember(RabbitTemplate rabbitTemplate, MapperJsonObject mapperJson, FamilyMemberUserProcessQueueConfig queueConfig) {
+    public MessageSenderBrokerFamilyMember(RabbitTemplate rabbitTemplate,
+                                           MapperJsonObject mapperJson,
+                                           FamilyMemberUserProcessQueueConfig queueConfig) {
         this.rabbitTemplate = rabbitTemplate;
         this.mapperJson = mapperJson;
         this.queueConfig = queueConfig;
     }
 
-
     @Override
-    public void execute(RegisterUser message, String routingKey) {
+    public void execute(RegisterUserMessage message, String routingKey) {
         MessageProperties messageProperties = getMessageProperties(routingKey);
-
         Optional<Message> messageBody = getMessageBody(message, messageProperties);
         if (messageBody.isPresent()) {
-
             rabbitTemplate.convertAndSend(queueConfig.getExchangeName(),routingKey, messageBody.get());
         }else {
-            log.warn("No se pudo serializar el mensaje FamilyMember: {}", message);}
+            logger.warn("No se pudo serializar el mensaje Family Member: {}", message);}
     }
 
-
-    public org.springframework.amqp.core.MessageProperties getMessageProperties(String idMessageSender) {
+    public MessageProperties getMessageProperties(String idMessageSender) {
         return MessagePropertiesBuilder.newInstance()
-                .setContentType(org.springframework.amqp.core.MessageProperties.CONTENT_TYPE_JSON)
+                .setContentType(MessageProperties.CONTENT_TYPE_JSON)
                 .setHeader("idMessage",idMessageSender)
                 .build();
     }
 
-    public Optional<org.springframework.amqp.core.Message> getMessageBody(Object message, org.springframework.amqp.core.MessageProperties messageProperties) {
+    public Optional<Message> getMessageBody(Object message, MessageProperties messageProperties) {
 
         Optional<String> messageText = mapperJson.execute(message);
         return messageText.map(msg -> MessageBuilder

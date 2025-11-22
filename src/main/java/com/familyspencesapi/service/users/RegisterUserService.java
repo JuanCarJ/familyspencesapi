@@ -90,6 +90,7 @@ public class RegisterUserService {
         validate(user);
         validateUniqueFields(user);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setcreditCard(passwordEncoder.encode(user.getcreditCard()));
         Family family = createOrFindFamily(user);
         user.setFamily(family);
 
