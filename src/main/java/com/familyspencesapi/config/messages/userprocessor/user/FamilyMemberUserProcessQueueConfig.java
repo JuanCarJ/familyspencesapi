@@ -10,8 +10,8 @@ import org.springframework.context.annotation.PropertySource;
 public class FamilyMemberUserProcessQueueConfig {
 
     private String exchangeName;
-
-    private String routingKeyUserCreate;
+    private String routingKeyAddMember;
+    private String queueUserAdd;
 
     public String getExchangeName() {
         return exchangeName;
@@ -21,11 +21,19 @@ public class FamilyMemberUserProcessQueueConfig {
         this.exchangeName = exchangeName;
     }
 
-    public String getRoutingKeyUserCreate() {
-        return routingKeyUserCreate;
+    public String getRoutingKeyAddMember() {
+        return routingKeyAddMember;
     }
 
-    public void setRoutingKeyUserCreate(String routingKeyUserCreate) {
-        this.routingKeyUserCreate = routingKeyUserCreate;
+    public void setRoutingKeyAddMember(String routingKeyAddMember) {
+        this.routingKeyAddMember = routingKeyAddMember;
+    }
+
+    public String getQueueUserAdd() {
+        return queueUserAdd;
+    }
+
+    public void setQueueUserAdd(String queueUserAdd) {
+        this.queueUserAdd = queueUserAdd;
     }
 }
