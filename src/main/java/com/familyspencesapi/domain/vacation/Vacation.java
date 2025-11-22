@@ -1,6 +1,7 @@
 package com.familyspencesapi.domain.vacation;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,26 +12,26 @@ import java.util.UUID;
 public class Vacation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "idVacation", updatable = false, nullable = false)
+    @UuidGenerator
+    @Column(name = "id_vacation", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "tituloVacation", nullable = false)
+    @Column(name = "titulo_vacation", nullable = false)
     private String titulo;
 
-    @Column(name = "descripcionVacation", nullable = false, length = 2000)
+    @Column(name = "descripcion_vacation", nullable = false, length = 2000)
     private String descripcion;
 
-    @Column(name = "fechaInicioVacation", nullable = false)
+    @Column(name = "fecha_inicio_vacation", nullable = false)
     private LocalDate fechaInicio;
 
-    @Column(name = "fechaFinVacation", nullable = false)
+    @Column(name = "fecha_fin_vacation", nullable = false)
     private LocalDate fechaFin;
 
-    @Column(name = "lugarVacation", nullable = false)
+    @Column(name = "lugar_vacation", nullable = false)
     private String lugar;
 
-    @Column(name = "presupuestoVacation", nullable = false, precision = 15, scale = 2)
+    @Column(name = "presupuesto_vacation", nullable = false, precision = 15, scale = 2)
     private BigDecimal presupuesto;
 
     public Vacation() {}

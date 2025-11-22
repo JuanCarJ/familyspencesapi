@@ -24,6 +24,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/register", "/api/relationships","/api/document-types","/api/users/login").permitAll()
+                        .requestMatchers("/api/vacations/**").permitAll() // ✅ PERMITIR SIN AUTENTICACION TEMPORALMENTE
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
