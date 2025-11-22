@@ -34,12 +34,25 @@ public class BalanceController {
     }
 
     @PutMapping("/balances/monthlyclosings/{familyId}")
-    public ResponseEntity<Map<String, String>> triggerMonthlyClosing(@PathVariable UUID familyId) {
+    public ResponseEntity<Map<String, String>> MonthlyClosing(
+            @PathVariable UUID familyId,
+            @RequestParam(required = false) String month) {
         try {
-            balanceService.initiateMonthlyClosing(familyId);
+            java.time.YearMonth targetMonth;
+            if (month != null && !month.isEmpty()) {
+                targetMonth = java.time.YearMonth.parse(month);
+            } else {
+                targetMonth = java.time.YearMonth.now();
+            }
+
+            balanceService.initiateMonthlyClosing(familyId, targetMonth);
             return ResponseEntity
                     .accepted()
-                    .body(Map.of("message", "Monthly closing process initiated for family " + familyId));
+                    .body(Map.of("message", "Monthly closing process initiated for family " + familyId + " for month " + targetMonth));
+        } catch (java.time.format.DateTimeParseException e) {
+             return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("error", "Invalid month format. Use YYYY-MM."));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -47,7 +60,7 @@ public class BalanceController {
         }
     }
 
-    @GetMapping("/balances/monthlyclosings/{familyId}")
+    @GetMapping("/balances/monthlyclosings/history/{familyId}")
     public ResponseEntity<List<Closings>> getClosingHistory(@PathVariable UUID familyId) {
         List<Closings> history = balanceService.getClosingHistoryForFamily(familyId);
         return ResponseEntity.ok(history);
