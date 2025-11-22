@@ -13,6 +13,9 @@ public class MapperJsonObjectImpl implements MapperJsonObject {
     public Optional<String> execute(Object object) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
+
+            objectMapper.findAndRegisterModules();
+
             return Optional.ofNullable(objectMapper.writeValueAsString(object));
         } catch (JsonProcessingException e) {
             return Optional.empty();
@@ -23,11 +26,11 @@ public class MapperJsonObjectImpl implements MapperJsonObject {
     public <T> Optional<T> execute(String json, Class<T> claseDestino) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.findAndRegisterModules();
 
             return Optional.ofNullable(objectMapper.readValue(json, claseDestino));
         } catch (Exception e) {
             return Optional.empty();
         }
     }
-
 }

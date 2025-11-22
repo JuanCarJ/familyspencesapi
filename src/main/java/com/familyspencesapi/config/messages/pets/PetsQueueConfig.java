@@ -20,13 +20,26 @@ public class PetsQueueConfig {
     @Value("${pet.routing.key.delete:pet.delete}")
     private String routingKeyDelete;
 
+    // EXCHANGE - Solo esto necesitas declarar en el producer
     @Bean
     public TopicExchange petExchange() {
         return new TopicExchange(exchangeName);
     }
 
-    public String getExchangeName() { return exchangeName; }
-    public String getRoutingKeyCreate() { return routingKeyCreate; }
-    public String getRoutingKeyUpdate() { return routingKeyUpdate; }
-    public String getRoutingKeyDelete() { return routingKeyDelete; }
+    // GETTERS - Para usar en PetsMessageSender
+    public String getExchangeName() {
+        return exchangeName;
+    }
+
+    public String getRoutingKeyCreate() {
+        return routingKeyCreate;
+    }
+
+    public String getRoutingKeyUpdate() {
+        return routingKeyUpdate;
+    }
+
+    public String getRoutingKeyDelete() {
+        return routingKeyDelete;
+    }
 }
