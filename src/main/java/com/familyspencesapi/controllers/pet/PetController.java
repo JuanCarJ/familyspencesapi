@@ -12,8 +12,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping("/api/v1/rest")
+@RequestMapping("/api/pets")
 public class PetController {
 
     private final PetService petService;
@@ -26,20 +27,21 @@ public class PetController {
         this.petsMessageSender = petsMessageSender;
     }
 
-    // Obtener todas las mascotas
-    @GetMapping("/pets")
-    public List<Pet> getAllPets() {
-        return petService.getAllPets();
+
+    @GetMapping
+    public ResponseEntity<List<Pet>> getAllPets() {
+        List<Pet> pets = petService.getAllPets();
+        return ResponseEntity.ok(pets);
     }
 
-    // Obtener mascota por id
-    @GetMapping("/pets/{id}")
-    public Optional<Pet> getPetById(@PathVariable UUID id) {
-        return petService.getPetById(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<Pet> getPetById(@PathVariable UUID id) {
+        Optional<Pet> pet = petService.getPetById(id);
+        return pet.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // Obtener mascotas por familia
-    @GetMapping("/pets/family")
+    @GetMapping("/family")
     public ResponseEntity<Object> getPetsByFamily(@RequestParam String familyId) {
         try {
             List<Pet> familyPets = petService.getPetsByFamily(UUID.fromString(familyId));
@@ -51,16 +53,12 @@ public class PetController {
         }
     }
 
-    // Crear mascota
-    @PostMapping("/pets")
+    @PostMapping
     public ResponseEntity<Object> createPet(@RequestBody Pet pet,
                                             @RequestParam String familyId) {
         try {
             Pet createdPet = petService.createPet(pet, familyId);
-
-            // Enviar mensaje a RabbitMQ
             petsMessageSender.sendPetCreated(createdPet);
-
             return ResponseEntity.status(HttpStatus.CREATED).body(createdPet);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
@@ -69,19 +67,16 @@ public class PetController {
         }
     }
 
-    // Eliminar mascota
-    @DeleteMapping("/pets/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Object> deletePet(@PathVariable UUID id,
                                             @RequestParam String familyId) {
         try {
             boolean deleted = petService.deletePet(id);
 
             if (deleted) {
-                // Enviar mensaje a RabbitMQ
                 petsMessageSender.sendPetDeleted(
                         Map.of("familyId", familyId, "petId", id.toString())
                 );
-
                 return ResponseEntity.ok(Map.of("message", "Pet deleted successfully"));
             }
 
@@ -93,8 +88,7 @@ public class PetController {
         }
     }
 
-    // Actualizar mascota
-    @PutMapping("/pets/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Object> updatePet(@PathVariable UUID id,
                                             @RequestBody Pet pet,
                                             @RequestParam String familyId) {
@@ -102,9 +96,7 @@ public class PetController {
             Pet updatedPet = petService.updatePet(id, pet, familyId);
 
             if (updatedPet != null) {
-                // Enviar mensaje a RabbitMQ
                 petsMessageSender.sendPetUpdated(updatedPet);
-
                 return ResponseEntity.ok(updatedPet);
             }
 
