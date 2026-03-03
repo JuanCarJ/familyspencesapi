@@ -38,6 +38,14 @@ public class FamilyMemberService {
         Family family = familyRepository.findById(familyIdAsUUID)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró la familia con ID: " + familyId));
 
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new IllegalArgumentException("Ya existe un usuario con este email");
+        }
+
+        if (userRepository.existsByDocument(user.getdocument())) {
+            throw new IllegalArgumentException("Ya existe un usuario con este documento");
+        }
+
         user.setFamily(family);
 
         try {
