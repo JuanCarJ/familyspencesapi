@@ -13,8 +13,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/family")
 public class FamilyMemberController {
-    private static final String ERROR_KEY = "error";
-    private static final String INTERNAL_SERVER_ERROR_MESSAGE = "Error interno del servidor";
 
     private final FamilyMemberService familyMemberService;
 
@@ -28,8 +26,6 @@ public class FamilyMemberController {
         try {
 
             String result = familyMemberService.createUser(newUser, familyId);
-
-
             Map<String, String> successResponse = Map.of(
                     "message", result,
                     "status", "PENDING"
@@ -38,11 +34,8 @@ public class FamilyMemberController {
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(successResponse);
 
         } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = Map.of(ERROR_KEY, e.getMessage());
+            Map<String, String> errorResponse = Map.of("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        } catch (RuntimeException e) {
-            Map<String, String> errorResponse = Map.of(ERROR_KEY, "Error processing request: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
     @GetMapping("/members")
@@ -53,11 +46,8 @@ public class FamilyMemberController {
             );
             return ResponseEntity.ok(familyMembers);
         } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = Map.of(ERROR_KEY, e.getMessage());
+            Map<String, String> errorResponse = Map.of("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-        } catch (Exception e) {
-            Map<String, String> errorResponse = Map.of(ERROR_KEY, INTERNAL_SERVER_ERROR_MESSAGE);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 }
