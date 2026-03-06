@@ -11,7 +11,7 @@ public class FamilyMemberUserProcessQueueConfig {
 
     private String exchangeName;
     private String routingKeyAddMember;
-    private String queueUserAdd;
+    private String queueAddMember;
 
     public String getExchangeName() {
         return exchangeName;
@@ -29,11 +29,11 @@ public class FamilyMemberUserProcessQueueConfig {
         this.routingKeyAddMember = routingKeyAddMember;
     }
 
-    public String getQueueUserAdd() {
-        return queueUserAdd;
+    public String getQueueAddMember() {
+        return queueAddMember;
     }
 
-    public void setQueueUserAdd(String queueUserAdd) {
-        this.queueUserAdd = queueUserAdd;
+    public void setQueueAddMember(String queueAddMember) {
+        this.queueAddMember = queueAddMember;
     }
 }
