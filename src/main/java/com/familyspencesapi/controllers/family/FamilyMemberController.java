@@ -36,6 +36,9 @@ public class FamilyMemberController {
         } catch (IllegalArgumentException e) {
             Map<String, String> errorResponse = Map.of("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (RuntimeException e) {
+            Map<String, String> errorResponse = Map.of("error", "Error al conectar con el servidor de mensajería. Intenta nuevamente.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
     @GetMapping("/members")
