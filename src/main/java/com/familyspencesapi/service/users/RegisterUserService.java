@@ -30,6 +30,9 @@ public class RegisterUserService {
     private final MessageSenderBrokerUser messageSenderBrokerUser;
     private final UserRegisterProcessQueueConfig queueConfig;
 
+    private static final String DELETED_FIRST_NAME = "cuenta";
+    private static final String DELETED_LAST_NAME = "eliminada";
+
     public RegisterUserService(RelationshipRepository relationshipRepository,
                                RegisterUserRepository userRepository,
                                FamilyRepository familyRepository,
@@ -47,15 +50,15 @@ public class RegisterUserService {
     }
 
     private static final Pattern NAME_PATTERN =
-            Pattern.compile("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{2,50}$");
+            Pattern.compile("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]++(?:\\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]++)*+$");
     private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+            Pattern.compile("^[\\w.+\\-]+@[\\w.\\-]+\\.[a-zA-Z]{2,}$");
     private static final Pattern PHONE_PATTERN =
             Pattern.compile("^3\\d{9}$");
     private static final Pattern CREDIT_CARD_PATTERN =
             Pattern.compile("^\\d{13,19}$");
     private static final Pattern PASSWORD_PATTERN =
-            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-]).{8,}$");
+            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!#%*¿?&._-]).{8,}$");
 
     // ===== MÉTODOS NUEVOS PARA EL EXPENSE CONTROLLER =====
 
@@ -75,20 +78,39 @@ public class RegisterUserService {
         return userRepository.findById(id);
     }
 
-    /**
-     * Obtener usuarios por familia
-     */
-    @Transactional(readOnly = true)
-    public List<RegisterUser> findByFamilyId(UUID familyId) {
-        return userRepository.findByFamily_Id(familyId);
-    }
-
     // ===== MÉTODOS EXISTENTES =====
 
     @Transactional
     public RegisterUser createUser(RegisterUser user) {
         validate(user);
         validateUniqueFields(user);
+
+        // Validación de tipo de documento según edad
+        if (user.getdocumentType().getType().equalsIgnoreCase("tarjeta de identidad") && isAdult(user.getbirthDate())) {
+            throw new IllegalArgumentException("Una persona mayor de edad no puede tener Tarjeta de identidad");
+        }
+
+        if (user.getdocumentType().getType().equalsIgnoreCase("cédula de ciudadanía") && !isAdult(user.getbirthDate())) {
+            throw new IllegalArgumentException("Una persona menor de edad no puede tener Cédula de ciudadanía");
+        }
+
+        // Validación de nombres prohibidos
+        if (isNameForbidden(user.getFirstName().trim(), user.getLastName().trim())) {
+            throw new IllegalArgumentException("El nombre del usuario no es válido");
+        }
+
+        if (user.getFirstName().trim().toLowerCase().contains("cuenta eliminada") ||
+                user.getLastName().trim().toLowerCase().contains("cuenta eliminada")) {
+            throw new IllegalArgumentException("El nombre del usuario no es válido");
+        }
+
+        if (user.getFirstName().trim().toLowerCase().contains(DELETED_FIRST_NAME) ||
+                user.getFirstName().trim().toLowerCase().contains(DELETED_LAST_NAME) ||
+                user.getLastName().trim().toLowerCase().contains(DELETED_FIRST_NAME) ||
+                user.getLastName().trim().toLowerCase().contains(DELETED_LAST_NAME)) {
+            throw new IllegalArgumentException("El nombre del usuario no es válido");
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setcreditCard(passwordEncoder.encode(user.getcreditCard()));
         Family family = createOrFindFamily(user);
@@ -125,7 +147,7 @@ public class RegisterUserService {
 
     private void validateUniqueFields(RegisterUser user) {
         if (userRepository.existsByEmail(user.getEmail())) {
-            throw new IllegalArgumentException("Ya existe un usuario con este email");
+            throw new IllegalArgumentException("El correo ya esta en uso");
         }
 
         if (userRepository.existsByDocument(user.getdocument())) {
@@ -141,10 +163,10 @@ public class RegisterUserService {
         validateFirstName(user.getFirstName());
         validateLastName(user.getLastName());
         validateBirthDate(user.getbirthDate());
-        validateDocumentType(user.getdocumentType());
-        validateDocument(user.getdocument());
+        validateDocumentType(user);
+        validateDocument(user.getdocument(), user.getdocumentType().getType());
         validateEmail(user.getEmail());
-        validateRelationship(user.getRelationship());
+        validateRelationship(user);
         validateCreditCard(user.getcreditCard());
         validatePhone(user.getphone());
         validateAddress(user.getAddress());
@@ -152,17 +174,19 @@ public class RegisterUserService {
     }
 
     private void validateFirstName(String firstName) {
-        if (!StringUtils.hasText(firstName) || !NAME_PATTERN.matcher(firstName).matches()) {
+        if (!StringUtils.hasText(firstName) || !NAME_PATTERN.matcher(firstName).matches() ||
+                firstName.length() < 3 || firstName.length() > 50) {
             throw new IllegalArgumentException(
-                    "El nombre debe tener entre 2 y 50 letras y espacios, sin números ni símbolos"
+                    "El nombre debe tener entre 3 y 50 letras y espacios, sin números ni símbolos"
             );
         }
     }
 
     private void validateLastName(String lastName) {
-        if (!StringUtils.hasText(lastName) || !NAME_PATTERN.matcher(lastName).matches()) {
+        if (!StringUtils.hasText(lastName) || !NAME_PATTERN.matcher(lastName).matches() ||
+                lastName.length() < 3 || lastName.length() > 50) {
             throw new IllegalArgumentException(
-                    "El apellido debe tener entre 2 y 50 letras y espacios, sin números ni símbolos"
+                    "El apellido debe tener entre 3 y 50 letras y espacios, sin números ni símbolos"
             );
         }
     }
@@ -178,20 +202,57 @@ public class RegisterUserService {
         }
     }
 
-    private void validateDocumentType(DocumentType type) {
+    private void validateDocumentType(RegisterUser user) {
+        DocumentType type = user.getdocumentType();
         if (type == null || type.getId() == null) {
             throw new IllegalArgumentException("Tipo de documento inválido");
         }
-        documentTypeRepository.findById(type.getId())
+        DocumentType fullType = documentTypeRepository.findById(type.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Tipo de documento no encontrado"));
+        user.setdocumentType(fullType);
     }
 
-    private void validateDocument(String document) {
+    private void validateDocument(String document, String documentType) {
         if (!StringUtils.hasText(document)) {
             throw new IllegalArgumentException("El documento no puede estar vacío");
         }
+        // Validación básica: 6-15 dígitos
         if (!document.matches("\\d{6,15}")) {
             throw new IllegalArgumentException("El documento debe tener entre 6 y 15 dígitos");
+        }
+        // Validación específica por tipo de documento
+        validateDocumentByType(documentType, document);
+    }
+
+    private void validateDocumentByType(String documentType, String document) {
+        switch (documentType.toLowerCase()) {
+            case "cédula de ciudadanía", "cédula de extranjería":
+                if (!document.matches("\\d{6,10}")) {
+                    throw new IllegalArgumentException("La cédula debe tener entre 6 y 10 dígitos numéricos");
+                }
+                break;
+            case "tarjeta de identidad", "registro civil":
+                if (!document.matches("\\d{10,11}")) {
+                    throw new IllegalArgumentException("El documento debe tener entre 10 y 11 dígitos numéricos");
+                }
+                break;
+            case "pasaporte":
+                if (!document.matches("[a-zA-Z0-9]{5,9}")) {
+                    throw new IllegalArgumentException("El pasaporte debe tener entre 5 y 9 caracteres alfanuméricos");
+                }
+                break;
+            case "número de identificación tributaria":
+                if (!document.matches("\\d{9,10}")) {
+                    throw new IllegalArgumentException("El NIT debe tener entre 9 y 10 dígitos numéricos");
+                }
+                break;
+            case "permiso especial de permanencia":
+                if (!document.matches("[a-zA-Z0-9]{4,16}")) {
+                    throw new IllegalArgumentException("El PEP debe tener entre 4 y 16 caracteres alfanuméricos");
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Tipo de documento no reconocido");
         }
     }
 
@@ -201,12 +262,14 @@ public class RegisterUserService {
         }
     }
 
-    private void validateRelationship(Relationship relationship) {
-        if (relationship == null || relationship.getId() == null) {
+    private void validateRelationship(RegisterUser user) {
+        Relationship rel = user.getRelationship();
+        if (rel == null || rel.getId() == null) {
             throw new IllegalArgumentException("Parentesco inválido");
         }
-        relationshipRepository.findById(relationship.getId())
+        Relationship fullRel = relationshipRepository.findById(rel.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Parentesco no encontrado"));
+        user.setRelationship(fullRel);
     }
 
     private void validateCreditCard(String creditCard) {
@@ -236,11 +299,17 @@ public class RegisterUserService {
         }
     }
 
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
+
+    private boolean isNameForbidden(String firstName, String lastName) {
+        return firstName.equalsIgnoreCase(DELETED_FIRST_NAME) &&
+                lastName.equalsIgnoreCase(DELETED_LAST_NAME);
     }
 
-    public boolean existsByDocument(String document) {
-        return userRepository.existsByDocument(document);
+    private boolean isAdult(LocalDate birthDate) {
+        if (birthDate == null) {
+            return false;
+        }
+        LocalDate today = LocalDate.now();
+        return Period.between(birthDate, today).getYears() >= 18;
     }
 }
