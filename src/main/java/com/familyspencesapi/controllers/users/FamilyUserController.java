@@ -2,8 +2,12 @@ package com.familyspencesapi.controllers.users;
 
 import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.service.users.FamilyUserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
@@ -18,6 +22,15 @@ public class FamilyUserController {
     @GetMapping(value = "/users/profile", produces = "application/json")
     public ResponseEntity<?> getUser(@RequestParam String email) {
         RegisterUser myUser = userService.getUserByEmail(email);
+        if (myUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(myUser);
+    }
+
+    @GetMapping(value = "/users/by-id/{userId}", produces = "application/json")
+    public ResponseEntity<?> getUserById(@PathVariable UUID userId) {
+        RegisterUser myUser = userService.getUserById(userId);
         if (myUser == null) {
             return ResponseEntity.notFound().build();
         }
@@ -47,4 +60,18 @@ public class FamilyUserController {
         }
         return ResponseEntity.ok(savedUser);
     }
+
+    @PostMapping(value = "/users/{email}/change-password", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<?> changePassword(
+            @PathVariable String email,
+            @RequestBody ChangePasswordRequest request) {
+        try {
+            userService.changePassword(email, request.currentPassword(), request.newPassword());
+            return ResponseEntity.ok(Map.of("message", "Contraseña actualizada correctamente."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    public record ChangePasswordRequest(String currentPassword, String newPassword) {}
 }

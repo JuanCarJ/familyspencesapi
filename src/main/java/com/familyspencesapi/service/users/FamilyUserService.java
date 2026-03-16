@@ -4,10 +4,12 @@ import com.familyspencesapi.domain.users.DocumentType;
 import com.familyspencesapi.domain.users.RegisterUser;
 import com.familyspencesapi.repositories.users.DocumentTypeRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
@@ -16,10 +18,14 @@ public class FamilyUserService {
 
     private final RegisterUserRepository registerUserRepository;
     private final DocumentTypeRepository doucmentTypeRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public FamilyUserService(RegisterUserRepository registerUserRepository,  DocumentTypeRepository doucmentTypeRepository) {
+    public FamilyUserService(RegisterUserRepository registerUserRepository,
+                             DocumentTypeRepository doucmentTypeRepository,
+                             PasswordEncoder passwordEncoder) {
         this.registerUserRepository = registerUserRepository;
         this.doucmentTypeRepository = doucmentTypeRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     private static final Pattern NAME_PATTERN =
@@ -33,6 +39,27 @@ public class FamilyUserService {
     // GET user by email
     public RegisterUser getUserByEmail(String email) {
         return registerUserRepository.findByEmail(email).orElse(null);
+    }
+
+    // GET user by UUID
+    public RegisterUser getUserById(UUID userId) {
+        return registerUserRepository.findById(userId).orElse(null);
+    }
+
+    // POST change password
+    public void changePassword(String email, String currentPassword, String newPassword) {
+        RegisterUser user = registerUserRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("La contraseña actual es incorrecta.");
+        }
+        if (!StringUtils.hasText(newPassword) || newPassword.length() < 8) {
+            throw new IllegalArgumentException("La nueva contraseña debe tener al menos 8 caracteres.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        registerUserRepository.save(user);
     }
 
 
