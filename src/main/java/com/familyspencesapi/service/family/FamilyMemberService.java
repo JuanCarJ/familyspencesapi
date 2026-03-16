@@ -17,7 +17,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -147,15 +146,16 @@ public class FamilyMemberService {
 
     public List<RegisterUser> getFamilyMembers(UUID familyId) {
         validateAndGetFamily(familyId);
-        return userRepository.findByFamily_Id(familyId)
-                .stream()
-                .filter(u -> !(
-                        u.getFirstName().trim().toLowerCase().contains(DELETED_FIRST_NAME) ||
-                                u.getFirstName().trim().toLowerCase().contains(DELETED_LAST_NAME) ||
-                                u.getLastName().trim().toLowerCase().contains(DELETED_FIRST_NAME) ||
-                                u.getLastName().trim().toLowerCase().contains(DELETED_LAST_NAME)
-                ))
-                .collect(Collectors.toList());
+        return userRepository.findByFamily_IdAndActiveTrue(familyId);
+    }
+
+    @Transactional
+    public void deactivateMember(UUID userId) {
+        RegisterUser user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró el usuario con ID: " + userId));
+        user.setActive(false);
+        userRepository.save(user);
+        logger.info("Usuario desactivado: " + user.getEmail());
     }
 
     private boolean isAdult(LocalDate birthDate){

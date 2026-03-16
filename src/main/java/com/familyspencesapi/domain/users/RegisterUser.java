@@ -57,6 +57,9 @@ public class RegisterUser {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Family family;
 
+    @Column(name = "active", nullable = false, columnDefinition = "boolean default true")
+    private boolean active = true;
+
     // ... todos tus getters y setters existentes permanecen igual ...
 
     public UUID getId() {
@@ -169,5 +172,13 @@ public class RegisterUser {
 
     public UUID getFamilyId() {
         return family != null ? family.getId() : null;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }
