@@ -41,6 +41,16 @@ public class FamilyMemberController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+    @PutMapping("/members/{userId}/deactivate")
+    public ResponseEntity<Object> deactivateMember(@PathVariable UUID userId) {
+        try {
+            familyMemberService.deactivateMember(userId);
+            return ResponseEntity.ok(Map.of("message", "Cuenta desactivada correctamente."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/members")
     public ResponseEntity<Object> getFamilyMembers(@RequestParam String familyId) {
         try {

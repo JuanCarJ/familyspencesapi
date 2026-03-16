@@ -14,6 +14,7 @@ public interface RegisterUserRepository extends JpaRepository<RegisterUser, UUID
     boolean existsByDocument(String document);
     Optional<RegisterUser> findByEmail(String email);
     List<RegisterUser> findByFamily_Id(UUID familyId);
+    List<RegisterUser> findByFamily_IdAndActiveTrue(UUID familyId);
 
     boolean existsByDocumentAndFamily_Id(String document, UUID familyId);
     boolean existsByEmailAndFamily_Id(String email, UUID familyId);
