@@ -41,24 +41,30 @@ public class FamilyUserController {
     public ResponseEntity<?> updateUser(
             @PathVariable String email,
             @RequestBody RegisterUser updatedData) {
-
-        RegisterUser updatedUser = userService.updateUser(email, updatedData);
-        if (updatedUser == null) {
-            return ResponseEntity.notFound().build();
+        try {
+            RegisterUser updatedUser = userService.updateUser(email, updatedData);
+            if (updatedUser == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(updatedUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
-        return ResponseEntity.ok(updatedUser);
     }
 
     @PutMapping(value = "/users/{email}", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> updateAllUser(
             @PathVariable String email,
             @RequestBody RegisterUser updatedUser) {
-
-        RegisterUser savedUser = userService.updateAllUser(email, updatedUser);
-        if (savedUser == null) {
-            return ResponseEntity.notFound().build();
+        try {
+            RegisterUser savedUser = userService.updateAllUser(email, updatedUser);
+            if (savedUser == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(savedUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
-        return ResponseEntity.ok(savedUser);
     }
 
     @PostMapping(value = "/users/{email}/change-password", consumes = "application/json", produces = "application/json")
@@ -68,6 +74,16 @@ public class FamilyUserController {
         try {
             userService.changePassword(email, request.currentPassword(), request.newPassword());
             return ResponseEntity.ok(Map.of("message", "Contraseña actualizada correctamente."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping(value = "/users/{email}", produces = "application/json")
+    public ResponseEntity<?> deleteAccount(@PathVariable String email) {
+        try {
+            userService.deleteAccount(email);
+            return ResponseEntity.ok(Map.of("message", "Cuenta eliminada correctamente."));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }

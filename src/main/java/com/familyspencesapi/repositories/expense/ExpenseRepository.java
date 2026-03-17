@@ -5,6 +5,7 @@ import com.familyspencesapi.domain.expense.Expense;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -89,5 +90,9 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     // Encontrar gastos caros (usando método del dominio)
     @Query("SELECT e FROM Expense e WHERE e.value > 1000.00")
     List<Expense> findExpensiveExpenses();
+
+    @Modifying
+    @Query("UPDATE Expense e SET e.responsible = :newName WHERE e.responsible = :oldEmail")
+    void updateResponsibleByEmail(@Param("oldEmail") String oldEmail, @Param("newName") String newName);
 
 }

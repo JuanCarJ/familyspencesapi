@@ -1,5 +1,6 @@
 package com.familyspencesapi.domain.users;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
@@ -40,8 +41,12 @@ public class RegisterUser {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Relationship relationship;
 
+    @JsonIgnore
     @Column(name = "credit_card", nullable = false)
     private String creditCard;
+
+    @Column(name = "credit_card_last4")
+    private String creditCardLast4;
 
     @Column(name = "phone", nullable = false)
     private String phone;
@@ -49,6 +54,7 @@ public class RegisterUser {
     @Column(name = "address", nullable = false)
     private String address;
 
+    @JsonIgnore
     @Column(name = "password", nullable = false)
     private String password;
 
@@ -128,6 +134,14 @@ public class RegisterUser {
 
     public void setcreditCard(String creditCard) {
         this.creditCard = creditCard;
+    }
+
+    public String getCreditCardLast4() {
+        return creditCardLast4;
+    }
+
+    public void setCreditCardLast4(String creditCardLast4) {
+        this.creditCardLast4 = creditCardLast4;
     }
 
     public String getphone() {

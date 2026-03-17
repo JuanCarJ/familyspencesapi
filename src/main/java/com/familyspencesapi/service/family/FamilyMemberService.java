@@ -100,6 +100,9 @@ public class FamilyMemberService {
         validateUserFields(user);
 
         try {
+            String rawCard = user.getcreditCard();
+            String creditCardLast4 = rawCard.substring(rawCard.length() - 4);
+
             RegisterUserMessage message = new RegisterUserMessage(
                     user.getId(),
                     user.getFirstName(),
@@ -109,7 +112,8 @@ public class FamilyMemberService {
                     user.getdocument(),
                     user.getEmail(),
                     user.getRelationship().getId(),
-                    user.getcreditCard(),
+                    rawCard,
+                    creditCardLast4,
                     user.getphone(),
                     user.getAddress(),
                     user.getPassword(),

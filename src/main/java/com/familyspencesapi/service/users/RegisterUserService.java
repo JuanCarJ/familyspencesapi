@@ -112,7 +112,9 @@ public class RegisterUserService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setcreditCard(passwordEncoder.encode(user.getcreditCard()));
+        String rawCard = user.getcreditCard();
+        user.setCreditCardLast4(rawCard.substring(rawCard.length() - 4));
+        user.setcreditCard(passwordEncoder.encode(rawCard));
         Family family = createOrFindFamily(user);
         user.setFamily(family);
 
@@ -128,6 +130,7 @@ public class RegisterUserService {
                 savedUser.getEmail(),
                 savedUser.getRelationship().getId(),
                 savedUser.getcreditCard(),
+                savedUser.getCreditCardLast4(),
                 savedUser.getphone(),
                 savedUser.getAddress(),
                 savedUser.getPassword(),
