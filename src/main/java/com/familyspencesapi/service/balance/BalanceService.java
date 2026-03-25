@@ -73,7 +73,10 @@ public class BalanceService {
         if (totalExpenses == null) totalExpenses = BigDecimal.ZERO;
 
         String period = targetMonth.toString();
-        Double totalIncomeDouble = closingRepository.calculateMonthlyIncome(familyId, period);
+        String monthName = targetMonth.getMonth()
+                .getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es", "ES"))
+                .toLowerCase();
+        Double totalIncomeDouble = closingRepository.calculateMonthlyIncome(familyId, period, monthName);
         BigDecimal totalIncome = BigDecimal.valueOf(totalIncomeDouble != null ? totalIncomeDouble : 0.0);
 
         BigDecimal balance = totalIncome.subtract(totalExpenses);
