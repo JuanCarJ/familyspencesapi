@@ -5,7 +5,7 @@ import com.familyspencesapi.messages.income.MessageSenderBrokerIncome;
 import com.familyspencesapi.repositories.income.RepositoryIncome;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-// Importaciones CRÍTICAS para sincronización transaccional
+
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 
@@ -49,10 +49,7 @@ public class IncomeService {
     @Transactional
     public void deleteIncome(UUID id) {
         repositoryIncome.deleteById(id);
-
         final Map<String, String> message = Map.of("incomeId", id.toString());
-
-        // CRÍTICO: Envía el mensaje DELETE SÓLO después del COMMIT exitoso de la DB
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
@@ -70,22 +67,14 @@ public class IncomeService {
     public Income updateIncome(UUID id, Income updatedIncome) {
         return repositoryIncome.findById(id)
                 .map(existingIncome -> {
-
                     existingIncome.setTitle(updatedIncome.getTitle());
                     existingIncome.setDescription(updatedIncome.getDescription());
                     existingIncome.setPeriod(updatedIncome.getPeriod());
                     existingIncome.setTotal(updatedIncome.getTotal());
-
-
                     existingIncome.setResponsible(updatedIncome.getResponsible());
                     existingIncome.setFamily(updatedIncome.getFamily());
-
-
                     Income savedIncome = repositoryIncome.save(existingIncome);
-
-
                     incomeSender.sendIncomeUpdated(savedIncome);
-
                     return savedIncome;
                 })
                 .orElse(null); // No encontrado

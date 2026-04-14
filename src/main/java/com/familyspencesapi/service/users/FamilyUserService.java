@@ -2,24 +2,41 @@ package com.familyspencesapi.service.users;
 
 import com.familyspencesapi.domain.users.DocumentType;
 import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.repositories.expense.ExpenseRepository;
+import com.familyspencesapi.repositories.ranking.RankingRepository;
 import com.familyspencesapi.repositories.users.DocumentTypeRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
 public class FamilyUserService {
 
+    private static final String DELETED_FIRST_NAME = "cuenta";
+    private static final String DELETED_LAST_NAME = "eliminada";
 
     private final RegisterUserRepository registerUserRepository;
     private final DocumentTypeRepository doucmentTypeRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final ExpenseRepository expenseRepository;
+    private final RankingRepository rankingRepository;
 
-    public FamilyUserService(RegisterUserRepository registerUserRepository,  DocumentTypeRepository doucmentTypeRepository) {
+    public FamilyUserService(RegisterUserRepository registerUserRepository,
+                             DocumentTypeRepository doucmentTypeRepository,
+                             PasswordEncoder passwordEncoder,
+                             ExpenseRepository expenseRepository,
+                             RankingRepository rankingRepository) {
         this.registerUserRepository = registerUserRepository;
         this.doucmentTypeRepository = doucmentTypeRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.expenseRepository = expenseRepository;
+        this.rankingRepository = rankingRepository;
     }
 
     private static final Pattern NAME_PATTERN =
@@ -33,6 +50,27 @@ public class FamilyUserService {
     // GET user by email
     public RegisterUser getUserByEmail(String email) {
         return registerUserRepository.findByEmail(email).orElse(null);
+    }
+
+    // GET user by UUID
+    public RegisterUser getUserById(UUID userId) {
+        return registerUserRepository.findById(userId).orElse(null);
+    }
+
+    // POST change password
+    public void changePassword(String email, String currentPassword, String newPassword) {
+        RegisterUser user = registerUserRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("La contraseña actual es incorrecta.");
+        }
+        if (!StringUtils.hasText(newPassword) || newPassword.length() < 8) {
+            throw new IllegalArgumentException("La nueva contraseña debe tener al menos 8 caracteres.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        registerUserRepository.save(user);
     }
 
 
@@ -54,6 +92,14 @@ public class FamilyUserService {
             existingUser.setLastName(updatedData.getLastName());
         }
 
+        // Validate forbidden name "Cuenta Eliminada"
+        String finalFirst = existingUser.getFirstName().trim().toLowerCase();
+        String finalLast = existingUser.getLastName().trim().toLowerCase();
+        if (finalFirst.contains(DELETED_FIRST_NAME) || finalFirst.contains(DELETED_LAST_NAME) ||
+                finalLast.contains(DELETED_FIRST_NAME) || finalLast.contains(DELETED_LAST_NAME)) {
+            throw new IllegalArgumentException("El nombre del usuario no es válido");
+        }
+
         if (updatedData.getdocumentType() != null) {
             validateDocumentType(updatedData.getdocumentType());
             existingUser.setdocumentType(updatedData.getdocumentType());
@@ -64,7 +110,9 @@ public class FamilyUserService {
         }
         if (updatedData.getcreditCard() != null && !updatedData.getcreditCard().isBlank()) {
             validateCreditCard(updatedData.getcreditCard());
-            existingUser.setcreditCard(updatedData.getcreditCard());
+            String rawCard = updatedData.getcreditCard();
+            existingUser.setCreditCardLast4(rawCard.substring(rawCard.length() - 4));
+            existingUser.setcreditCard(passwordEncoder.encode(rawCard));
         }
         if (updatedData.getphone() != null && !updatedData.getphone().isBlank()) {
             validatePhone(updatedData.getphone());
@@ -82,6 +130,7 @@ public class FamilyUserService {
     public RegisterUser updateAllUser(String email, RegisterUser updatedUser) {
         Optional<RegisterUser> optionalUser = registerUserRepository.findByEmail(email);
         validate(updatedUser);
+        validateForbiddenName(updatedUser.getFirstName(), updatedUser.getLastName());
         if (optionalUser.isEmpty()) {
             return null;
         }
@@ -91,7 +140,9 @@ public class FamilyUserService {
         existingUser.setLastName(updatedUser.getLastName());
         existingUser.setdocumentType(updatedUser.getdocumentType());
         existingUser.setdocument(updatedUser.getdocument());
-        existingUser.setcreditCard(updatedUser.getcreditCard());
+        String rawCard = updatedUser.getcreditCard();
+        existingUser.setCreditCardLast4(rawCard.substring(rawCard.length() - 4));
+        existingUser.setcreditCard(passwordEncoder.encode(rawCard));
         existingUser.setphone(updatedUser.getphone());
         existingUser.setAddress(updatedUser.getAddress());
 
@@ -158,6 +209,34 @@ public class FamilyUserService {
         if (!StringUtils.hasText(address) || address.length() < 5) {
             throw new IllegalArgumentException("La direccion no puede estar vacia y debe tener minimo 5 caracteres");
         }
+    }
+
+    private void validateForbiddenName(String firstName, String lastName) {
+        String first = firstName.trim().toLowerCase();
+        String last = lastName.trim().toLowerCase();
+        if (first.contains(DELETED_FIRST_NAME) || first.contains(DELETED_LAST_NAME) ||
+                last.contains(DELETED_FIRST_NAME) || last.contains(DELETED_LAST_NAME)) {
+            throw new IllegalArgumentException("El nombre del usuario no es válido");
+        }
+    }
+
+    // Soft delete: mark user as "Cuenta Eliminada", update associated data, and deactivate
+    @Transactional
+    public void deleteAccount(String email) {
+        RegisterUser user = registerUserRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+        // Update expenses: responsible field stores the user's email as plain text
+        expenseRepository.updateResponsibleByEmail(user.getEmail(), "Cuenta Eliminada");
+
+        // Update rankings: fullName field stores the user's name as plain text
+        rankingRepository.updateFullNameByUserId(user.getId(), "Cuenta Eliminada");
+
+        // Mark user as "Cuenta Eliminada" and deactivate
+        user.setFirstName("Cuenta");
+        user.setLastName("Eliminada");
+        user.setActive(false);
+        registerUserRepository.save(user);
     }
 }
 

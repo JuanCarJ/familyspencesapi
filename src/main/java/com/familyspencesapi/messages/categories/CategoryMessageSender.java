@@ -1,6 +1,7 @@
 package com.familyspencesapi.messages.categories;
 
 import com.familyspencesapi.config.messages.categories.CategoryQueueConfig;
+import com.familyspencesapi.config.messages.categories.dto.CategoryDTO;
 import com.familyspencesapi.domain.categories.Category;
 import com.familyspencesapi.utils.MessageSender;
 import com.familyspencesapi.utils.gson.MapperJsonObject;
@@ -37,11 +38,13 @@ public class CategoryMessageSender implements MessageSender<Object> {
     }
 
     public void sendCategoryCreated(Category category) {
-        execute(category, categoryQueueConfig.getRoutingKeyCreate());
+        CategoryDTO categoryDTO = new CategoryDTO(category);
+        execute(categoryDTO, categoryQueueConfig.getRoutingKeyCreate());
     }
 
     public void sendCategoryUpdated(Category category) {
-        execute(category, categoryQueueConfig.getRoutingKeyUpdate());
+        CategoryDTO categoryDTO = new CategoryDTO(category);
+        execute(categoryDTO, categoryQueueConfig.getRoutingKeyUpdate());
     }
 
     public void sendCategoryDeleted(Map<String, String> data) {

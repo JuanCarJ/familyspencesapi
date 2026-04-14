@@ -1,6 +1,4 @@
 package com.familyspencesapi.messages.income;
-
-
 import com.familyspencesapi.config.messages.income.IncomeQueueConfig;
 import com.familyspencesapi.domain.income.Income;
 import com.familyspencesapi.utils.MessageSender;
@@ -18,9 +16,7 @@ public class MessageSenderBrokerIncome  implements MessageSender<Object>{
     private final IncomeQueueConfig incomeQueueConfig;
     private final MapperJsonObject mapperJsonObject;
 
-    public MessageSenderBrokerIncome(RabbitTemplate rabbitTemplate,
-                                     IncomeQueueConfig incomeQueueConfig,
-                                     MapperJsonObject mapperJsonObject) {
+    public MessageSenderBrokerIncome(RabbitTemplate rabbitTemplate, IncomeQueueConfig incomeQueueConfig, MapperJsonObject mapperJsonObject) {
         this.rabbitTemplate = rabbitTemplate;
         this.incomeQueueConfig = incomeQueueConfig;
         this.mapperJsonObject = mapperJsonObject;
@@ -31,9 +27,7 @@ public class MessageSenderBrokerIncome  implements MessageSender<Object>{
         mapperJsonObject.execute(message).ifPresent(json -> {
             MessageProperties props = new MessageProperties();
             props.setContentType(MessageProperties.CONTENT_TYPE_JSON);
-
             Message amqpMessage = new Message(json.getBytes(), props);
-
             rabbitTemplate.send(
                     incomeQueueConfig.getExchangeName(),
                     routingKey,
@@ -46,7 +40,6 @@ public class MessageSenderBrokerIncome  implements MessageSender<Object>{
         execute(income, incomeQueueConfig.getRoutingKeyCreate());
     }
 
-    // MÉTODO CLAVE: Envía el evento de actualización
     public void sendIncomeUpdated(Income income) {
         execute(income, incomeQueueConfig.getRoutingKeyUpdate());
     }

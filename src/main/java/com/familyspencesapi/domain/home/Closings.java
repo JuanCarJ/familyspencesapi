@@ -49,6 +49,18 @@ public class Closings {
     public void setTotalIncome(BigDecimal totalIncome) { this.totalIncome = totalIncome; }
     public BigDecimal getTotalExpenses() { return totalExpenses; }
     public void setTotalExpenses(BigDecimal totalExpenses) { this.totalExpenses = totalExpenses; }
+    
+    @Transient
+    private String month;
+
+    public String getMonth() {
+        if (closingDate != null) {
+            String monthName = closingDate.getMonth().getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es", "ES"));
+            return monthName.substring(0, 1).toUpperCase() + monthName.substring(1).toLowerCase();
+        }
+        return null;
+    }
+
     public BigDecimal getBalance() { return balance; }
     public void setBalance(BigDecimal balance) { this.balance = balance; }
 }

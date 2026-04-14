@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -63,10 +62,6 @@ public class FamilyMemberService {
 
         familyRepository.findById(familyId)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró la familia con ID: " + familyId));
-    }
-
-    public List<Family> getFamlies(){
-        return familyRepository.findAll();
     }
 
 }

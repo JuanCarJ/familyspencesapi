@@ -1,11 +1,13 @@
 package com.familyspencesapi.domain.categories;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
 @Table(name = "categories")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Category {
 
     @Id
@@ -13,7 +15,7 @@ public class Category {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "family_id")
+    @Column(name = "family_id", nullable = false)
     private UUID familyId;
 
     @Column(name = "name", nullable = false, length = 50)
@@ -36,13 +38,8 @@ public class Category {
     public Category() {
     }
 
-    public Category(UUID id) {
-        this.id = id;
-    }
-
-    public Category(UUID id, UUID familyId, String name, CategoryType categoryType, String description,
+    public Category(UUID familyId, String name, CategoryType categoryType, String description,
                     BigDecimal allocatedBudget, BudgetPeriod budgetPeriod) {
-        this.id = id;
         this.familyId = familyId;
         this.name = name;
         this.categoryType = categoryType;
@@ -50,15 +47,6 @@ public class Category {
         this.allocatedBudget = allocatedBudget;
         this.budgetPeriod = budgetPeriod;
     }
-
-    public boolean isGlobal() {
-        return this.familyId == null;
-    }
-
-    public boolean belongsToFamily(UUID familyId) {
-        return this.familyId != null && this.familyId.equals(familyId);
-    }
-
 
     public UUID getId() {
         return id;
@@ -123,9 +111,7 @@ public class Category {
                 ", familyId=" + familyId +
                 ", name='" + name + '\'' +
                 ", categoryType=" + categoryType +
-                ", description='" + description + '\'' +
                 ", allocatedBudget=" + allocatedBudget +
-                ", budgetPeriod=" + budgetPeriod +
                 '}';
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,15 +54,36 @@ public class BalanceService {
         return new GeneralBalance(totalIncome, totalExpenses, balance);
     }
 
-    public void initiateMonthlyClosing(UUID familyId) {
-        logger.info("Initiating monthly closing process for familyId: {}", familyId);
+    public void initiateMonthlyClosing(UUID familyId, java.time.YearMonth targetMonth) {
+        logger.info("Initiating monthly closing process for familyId: {} and month: {}", familyId, targetMonth);
 
-        GeneralBalance currentBalance = calculateGeneralBalance(familyId);
+        LocalDate startOfMonth = targetMonth.atDay(1);
+        LocalDate endOfMonth = targetMonth.atEndOfMonth();
+
+        boolean exists = closingRepository.existsByFamilyIdAndClosingDateBetween(familyId, startOfMonth, endOfMonth);
+        if (exists) {
+            throw new IllegalStateException("A monthly closing already exists for month " + targetMonth);
+        }
+
+        BigDecimal totalExpenses = closingRepository.calculateMonthlyExpenses(
+                familyId,
+                startOfMonth.atStartOfDay(),
+                endOfMonth.atTime(23, 59, 59)
+        );
+        if (totalExpenses == null) totalExpenses = BigDecimal.ZERO;
+
+        String period = targetMonth.toString();
+        Double totalIncomeDouble = closingRepository.calculateMonthlyIncome(familyId, period);
+        BigDecimal totalIncome = BigDecimal.valueOf(totalIncomeDouble != null ? totalIncomeDouble : 0.0);
+
+        BigDecimal balance = totalIncome.subtract(totalExpenses);
+        GeneralBalance currentBalance = new GeneralBalance(totalIncome, totalExpenses, balance);
+
 
         MonthlyClosing closingData = new MonthlyClosing(
                 familyId,
                 currentBalance,
-                LocalDate.now()
+                endOfMonth
         );
 
         messageSender.send(

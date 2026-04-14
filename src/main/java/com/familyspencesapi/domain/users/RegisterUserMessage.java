@@ -13,6 +13,7 @@ public record RegisterUserMessage (
     String email,
     UUID relationshipId,
     String creditCard,
+    String creditCardLast4,
     String phone,
     String address,
     String password,

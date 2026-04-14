@@ -36,12 +36,10 @@ public class TaskService {
 
 
     public List<Tasks> getAllTasks(final UUID familyId) {
-        List<Tasks> tasksList = iTaskRepository.findByFamilyId(familyId);
-
-        if (tasksList.isEmpty()) {
-            throw new IllegalArgumentException("Family identification does not exist");
+        if (familyRepository.findById(familyId).isEmpty()) {
+            throw new IllegalArgumentException(FAMILY_NOT_FOUND);
         }
-
+        List<Tasks> tasksList = iTaskRepository.findByFamilyId(familyId);
         return tasksList;
     }
 
