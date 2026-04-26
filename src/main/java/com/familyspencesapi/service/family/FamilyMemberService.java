@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-
 @Service
 public class FamilyMemberService {
 
@@ -47,7 +46,7 @@ public class FamilyMemberService {
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró la familia con ID: " + familyId));
 
         if (userRepository.existsByEmailAndFamily_Id(user.getEmail(),familyIdAsUUID)) {
-            throw new IllegalArgumentException("Ya existe un usuario con este email en este grupo familiar");
+            throw new IllegalArgumentException("El correo ya está en uso.");
         }
 
         if (userRepository.existsByDocumentAndFamily_Id(user.getdocument(),familyIdAsUUID)) {
@@ -101,6 +100,9 @@ public class FamilyMemberService {
 
         try {
             String rawCard = user.getcreditCard();
+            if (rawCard == null || rawCard.length() < 4) {
+                throw new IllegalArgumentException("La tarjeta de crédito no es válida");
+            }
             String creditCardLast4 = rawCard.substring(rawCard.length() - 4);
 
             RegisterUserMessage message = new RegisterUserMessage(
@@ -150,9 +152,19 @@ public class FamilyMemberService {
 
     public List<RegisterUser> getFamilyMembers(UUID familyId) {
         validateAndGetFamily(familyId);
-        return userRepository.findByFamily_IdAndActiveTrue(familyId);
-    }
+        return userRepository.findByFamily_IdAndActiveTrue(familyId)
+                .stream()
+                .filter(RegisterUser::isActive)
+                .filter(user -> {
+                    String firstName = user.getFirstName() != null ? user.getFirstName().trim() : "";
+                    String lastName = user.getLastName() != null ? user.getLastName().trim() : "";
+                    String fullName = (firstName + " " + lastName).trim();
 
+                    return !firstName.equalsIgnoreCase("cuenta eliminada")
+                            && !fullName.equalsIgnoreCase("cuenta eliminada");
+                })
+                .toList();
+    }
     @Transactional
     public void deactivateMember(UUID userId) {
         RegisterUser user = userRepository.findById(userId)
@@ -198,6 +210,14 @@ public class FamilyMemberService {
     }
 
     private void validateUserFields(RegisterUser user) {
+
+        if (user.getFirstName() == null || user.getLastName() == null
+                || user.getEmail() == null || user.getcreditCard() == null
+                || user.getphone() == null || user.getdocument() == null
+                || user.getAddress() == null || user.getPassword() == null
+                || user.getbirthDate() == null || user.getdocumentType() == null
+                || user.getRelationship() == null) {
+            throw new IllegalArgumentException("Faltan campos obligatorios en el registro");}
 
         String nameRegex = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+)*$";
         if (!user.getFirstName().matches(nameRegex) || user.getFirstName().length() < 3 || user.getFirstName().length() > 50)
