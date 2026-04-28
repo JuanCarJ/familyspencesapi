@@ -49,7 +49,7 @@ public class BudgetProcessQueueConfig {
         return BindingBuilder
                 .bind(budgetCreateQueue())
                 .to(budgetExchange())
-                .with(getRoutingKeyCreate());
+                .with("budget.create");
     }
 
     @Bean
@@ -57,7 +57,7 @@ public class BudgetProcessQueueConfig {
         return BindingBuilder
                 .bind(budgetUpdateQueue())
                 .to(budgetExchange())
-                .with(getRoutingKeyUpdate());
+                .with("budget.update");
     }
 
     @Bean
@@ -65,7 +65,7 @@ public class BudgetProcessQueueConfig {
         return BindingBuilder
                 .bind(budgetDeleteQueue())
                 .to(budgetExchange())
-                .with(getRoutingKeyDelete());
+                .with("budget.delete");
     }
 
     // Getters y Setters

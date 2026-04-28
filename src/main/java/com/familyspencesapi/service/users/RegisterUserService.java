@@ -113,8 +113,10 @@ public class RegisterUserService {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         String rawCard = user.getcreditCard();
-        user.setCreditCardLast4(rawCard.substring(rawCard.length() - 4));
-        user.setcreditCard(passwordEncoder.encode(rawCard));
+        if (StringUtils.hasText(rawCard)) {
+            user.setCreditCardLast4(rawCard.substring(rawCard.length() - 4));
+            user.setcreditCard(passwordEncoder.encode(rawCard));
+        }
         Family family = createOrFindFamily(user);
         user.setFamily(family);
 
@@ -170,7 +172,9 @@ public class RegisterUserService {
         validateDocument(user.getdocument(), user.getdocumentType().getType());
         validateEmail(user.getEmail());
         validateRelationship(user);
-        validateCreditCard(user.getcreditCard());
+        if (StringUtils.hasText(user.getcreditCard())) {
+            validateCreditCard(user.getcreditCard());
+        }
         validatePhone(user.getphone());
         validateAddress(user.getAddress());
         validatePassword(user.getPassword());
@@ -186,8 +190,10 @@ public class RegisterUserService {
     }
 
     private void validateLastName(String lastName) {
-        if (!StringUtils.hasText(lastName) || !NAME_PATTERN.matcher(lastName).matches() ||
-                lastName.length() < 3 || lastName.length() > 50) {
+        if (!StringUtils.hasText(lastName)) {
+            throw new IllegalArgumentException("El apellido es obligatorio");
+        }
+        if (!NAME_PATTERN.matcher(lastName).matches() || lastName.length() < 3 || lastName.length() > 50) {
             throw new IllegalArgumentException(
                     "El apellido debe tener entre 3 y 50 letras y espacios, sin números ni símbolos"
             );
