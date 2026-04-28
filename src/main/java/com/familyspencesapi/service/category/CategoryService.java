@@ -2,6 +2,7 @@ package com.familyspencesapi.service.category;
 
 import com.familyspencesapi.domain.categories.BudgetPeriod;
 import com.familyspencesapi.domain.categories.Category;
+import com.familyspencesapi.domain.categories.CategorySummary;
 import com.familyspencesapi.domain.categories.CategoryType;
 import com.familyspencesapi.repositories.categories.CategoryRepository;
 import com.familyspencesapi.utils.CategoryException;
@@ -82,6 +83,12 @@ public class CategoryService {
     public void deleteCategory(UUID id) {
         Category existing = categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryException("Categoría no encontrada"));
+        if (categoryRepository.isUsedByGoal(id)) {
+            throw new CategoryException(
+                    "No se puede eliminar la categoría \"" + existing.getName() +
+                            "\" porque está asociada a uno o más objetivos (Goals)"
+            );
+        }
         categoryRepository.delete(existing);
     }
 
@@ -109,6 +116,18 @@ public class CategoryService {
         return categoryRepository.findFilteredForFamily(familyId, type, period);
     }
 
+    public List<CategorySummary> getCategoryIds() {
+        return categoryRepository.findAll().stream()
+                .map(c -> new CategorySummary(c.getId(), c.getName()))
+                .toList();
+    }
+
+    public List<CategorySummary> getCategoryIdsForFamily(UUID familyId) {
+        return categoryRepository.findGlobalAndFamilyCategories(familyId).stream()
+                .map(c -> new CategorySummary(c.getId(), c.getName()))
+                .toList();
+    }
+
     private void validateCategory(Category category) {
         validateName(category.getName());
         validateCategoryType(category.getCategoryType());
@@ -121,12 +140,10 @@ public class CategoryService {
 
     private void validateUniqueName(String name, UUID familyId) {
         if (familyId == null) {
-            // Categoría GLOBAL - validar que no exista otra global con el mismo nombre
             if (categoryRepository.existsByNameIgnoreCaseAndFamilyIdIsNull(name)) {
                 throw new CategoryException("Ya existe una categoría global con el nombre " + name);
             }
         } else {
-            // Categoría FAMILIAR - validar en contexto híbrido (global + familia)
             if (categoryRepository.existsByNameInContext(name, familyId)) {
                 throw new CategoryException(
                         "Ya existe una categoría con el nombre " + name +

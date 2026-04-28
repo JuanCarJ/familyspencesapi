@@ -2,6 +2,7 @@ package com.familyspencesapi.controllers.categories;
 
 import com.familyspencesapi.domain.categories.BudgetPeriod;
 import com.familyspencesapi.domain.categories.Category;
+import com.familyspencesapi.domain.categories.CategorySummary;
 import com.familyspencesapi.domain.categories.CategoryType;
 import com.familyspencesapi.messages.categories.CategoryMessageSender;
 import com.familyspencesapi.service.category.CategoryService;
@@ -33,7 +34,7 @@ public class CategoryController {
             @RequestBody Category category
     ) {
         try {
-            category.setFamilyId(familyId); // Si es null = categoría global
+            category.setFamilyId(familyId);
             Category created = categoryService.createCategory(category);
 
             categoryMessageSender.sendCategoryCreated(created);
@@ -76,7 +77,6 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoriesForFamily(familyId));
     }
 
-    // GET BY ID - Obtener categoría por ID
     @GetMapping("/{id}")
     public ResponseEntity<Object> getCategoryById(@PathVariable UUID id) {
         try {
@@ -86,6 +86,16 @@ public class CategoryController {
                     .status(HttpStatus.NOT_FOUND)
                     .body(Map.of(MESSAGE_KEY, ex.getMessage()));
         }
+    }
+
+    @GetMapping("/list")
+    public ResponseEntity<List<CategorySummary>> getCategoryIds() {
+        return ResponseEntity.ok(categoryService.getCategoryIds());
+    }
+
+    @GetMapping("/list/for-family/{familyId}")
+    public ResponseEntity<List<CategorySummary>> getCategoryIdsForFamily(@PathVariable UUID familyId) {
+        return ResponseEntity.ok(categoryService.getCategoryIdsForFamily(familyId));
     }
 
     @GetMapping("/filter")
@@ -106,7 +116,6 @@ public class CategoryController {
         List<Category> categories = categoryService.getFilteredForFamily(familyId, type, period);
         return ResponseEntity.ok(categories);
     }
-
 
     @PutMapping("/{id}")
     public ResponseEntity<Object> updateCategory(
@@ -130,12 +139,17 @@ public class CategoryController {
         }
     }
 
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteCategory(@PathVariable UUID id) {
         try {
             Category category = categoryService.getCategoryById(id);
-            categoryService.deleteCategory(id);
+            try {
+                categoryService.deleteCategory(id);
+            } catch (CategoryException ex) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(Map.of(MESSAGE_KEY, ex.getMessage()));
+            }
 
             Map<String, String> deleteInfo = new HashMap<>();
             deleteInfo.put("categoryId", id.toString());

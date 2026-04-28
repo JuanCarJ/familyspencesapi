@@ -3,6 +3,7 @@ package com.familyspencesapi.repositories.categories;
 import com.familyspencesapi.domain.categories.BudgetPeriod;
 import com.familyspencesapi.domain.categories.Category;
 import com.familyspencesapi.domain.categories.CategoryType;
+import com.familyspencesapi.domain.goals.Goal;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,4 +43,7 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
             @Param("type") CategoryType type,
             @Param("period") BudgetPeriod period
     );
+
+    @Query("SELECT CASE WHEN COUNT(g) > 0 THEN true ELSE false END FROM Goal g WHERE g.categoryId = :categoryId")
+    boolean isUsedByGoal(@Param("categoryId") UUID categoryId);
 }
