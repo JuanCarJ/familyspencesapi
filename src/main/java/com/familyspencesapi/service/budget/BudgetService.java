@@ -157,4 +157,8 @@ public class BudgetService {
             return budgetMap;
         }).collect(Collectors.toList());
     }
+
+    public void deleteBudget(UUID budgetId) {
+
+    }
 }
