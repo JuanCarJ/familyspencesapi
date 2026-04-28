@@ -14,10 +14,12 @@ public class UserRegisterProcessQueueConfig {
     private String routingKeyUserCreate;
     private String routingKeyUserUpdate;
     private String routingKeyUserDelete;
+    private String routingKeyUserDeactivate;
 
     private String queueUserCreate;
     private String queueUserUpdate;
     private String queueUserDelete;
+    private String queueUserDeactivate;
 
     public String getExchangeName() {
         return exchangeName;
@@ -73,6 +75,22 @@ public class UserRegisterProcessQueueConfig {
 
     public void setQueueUserDelete(String queueUserDelete) {
         this.queueUserDelete = queueUserDelete;
+    }
+
+    public String getRoutingKeyUserDeactivate() {
+        return routingKeyUserDeactivate;
+    }
+
+    public void setRoutingKeyUserDeactivate(String routingKeyUserDeactivate) {
+        this.routingKeyUserDeactivate = routingKeyUserDeactivate;
+    }
+
+    public String getQueueUserDeactivate() {
+        return queueUserDeactivate;
+    }
+
+    public void setQueueUserDeactivate(String queueUserDeactivate) {
+        this.queueUserDeactivate = queueUserDeactivate;
     }
 
 }

@@ -43,7 +43,7 @@ public class RegisterUser {
     private Relationship relationship;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(name = "credit_card", nullable = false)
+    @Column(name = "credit_card", nullable = true)
     private String creditCard;
 
     @Column(name = "credit_card_last4")
