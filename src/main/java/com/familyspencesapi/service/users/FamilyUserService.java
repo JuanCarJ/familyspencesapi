@@ -264,10 +264,14 @@ public class FamilyUserService {
         rabbitTemplate.convertAndSend(queueConfig.getExchangeName(), queueConfig.getRoutingKeyUserUpdate(), msg);
     }
 
-    // DELETE by UUID: publish user UUID to deactivate queue
+    // DELETE by UUID: deactivate immediately and publish to queue
+    @Transactional
     public void deactivateUserById(UUID id) {
-        registerUserRepository.findById(id)
+        RegisterUser user = registerUserRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+        user.setActive(false);
+        registerUserRepository.save(user);
 
         rabbitTemplate.convertAndSend(queueConfig.getExchangeName(), queueConfig.getRoutingKeyUserDeactivate(), id.toString());
     }

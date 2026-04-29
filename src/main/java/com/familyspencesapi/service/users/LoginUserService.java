@@ -46,7 +46,9 @@ public class LoginUserService {
 
         RegisterUser user = userOptional.get();
 
-
+        if (!user.isActive()) {
+            throw new LoginUserException("Esta cuenta ha sido desactivada.");
+        }
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new LoginUserException("Contraseña incorrecta.");
