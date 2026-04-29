@@ -205,9 +205,11 @@ public class RegisterUserService {
             throw new IllegalArgumentException("La fecha de nacimiento no puede ser nula");
         }
         LocalDate today = LocalDate.now();
-        if (birthDate.isAfter(today) ||
-                Period.between(birthDate, today).getYears() > 150) {
-            throw new IllegalArgumentException("Fecha de nacimiento inválida o edad mayor a 150 años");
+        if (birthDate.isAfter(today)) {
+            throw new IllegalArgumentException("La fecha de nacimiento no puede ser una fecha futura");
+        }
+        if (Period.between(birthDate, today).getYears() > 150) {
+            throw new IllegalArgumentException("Fecha de nacimiento inválida: edad mayor a 150 años");
         }
     }
 
@@ -319,6 +321,9 @@ public class RegisterUserService {
             return false;
         }
         LocalDate today = LocalDate.now();
+        if (birthDate.isAfter(today)) {
+            return false; // fecha futura → no es adulto, pero validateBirthDate ya lanza antes
+        }
         return Period.between(birthDate, today).getYears() >= 18;
     }
 }
