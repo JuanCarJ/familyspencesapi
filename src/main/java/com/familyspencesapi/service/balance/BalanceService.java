@@ -54,29 +54,25 @@ public class BalanceService {
         return new GeneralBalance(totalIncome, totalExpenses, balance);
     }
 
-    public void initiateMonthlyClosing(UUID familyId, java.time.YearMonth targetMonth) {
+    public void initiateMonthlyClosing(UUID familyId, YearMonth targetMonth) {
         logger.info("Initiating monthly closing process for familyId: {} and month: {}", familyId, targetMonth);
 
         LocalDate startOfMonth = targetMonth.atDay(1);
         LocalDate endOfMonth = targetMonth.atEndOfMonth();
+        String period = targetMonth.toString();
 
-        boolean exists = closingRepository.existsByFamilyIdAndClosingDateBetween(familyId, startOfMonth, endOfMonth);
-        if (exists) {
-            throw new IllegalStateException("A monthly closing already exists for month " + targetMonth);
+        long existingClosings = closingRepository.countByFamilyIdAndClosingDateBetween(familyId, startOfMonth, endOfMonth);
+        if (existingClosings == 1) {
+            throw new IllegalStateException("Ya existe un cierre mensual para " + period + ".");
+        }
+        if (existingClosings > 1) {
+            throw new IllegalStateException("Existen " + existingClosings + " cierres mensuales para " + period + ". Revise los datos duplicados antes de crear otro cierre.");
         }
 
-        BigDecimal totalExpenses = closingRepository.calculateMonthlyExpenses(
-                familyId,
-                startOfMonth.atStartOfDay(),
-                endOfMonth.atTime(23, 59, 59)
-        );
+        BigDecimal totalExpenses = closingRepository.calculateMonthlyExpenses(familyId, period);
         if (totalExpenses == null) totalExpenses = BigDecimal.ZERO;
 
-        String period = targetMonth.toString();
-        String monthName = targetMonth.getMonth()
-                .getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es", "ES"))
-                .toLowerCase();
-        Double totalIncomeDouble = closingRepository.calculateMonthlyIncome(familyId, period, monthName);
+        Double totalIncomeDouble = closingRepository.calculateMonthlyIncome(familyId, period);
         BigDecimal totalIncome = BigDecimal.valueOf(totalIncomeDouble != null ? totalIncomeDouble : 0.0);
 
         BigDecimal balance = totalIncome.subtract(totalExpenses);
