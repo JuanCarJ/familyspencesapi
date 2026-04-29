@@ -48,7 +48,9 @@ public class BudgetService {
         this.config = config;
     }
 
-    /** 🔹 Crea un presupuesto y envía un mensaje al broker */
+    /**
+     * 🔹 Crea un presupuesto y envía un mensaje al broker
+     */
     @Transactional
     public Map<String, Object> createBudget(UUID familyId, CreateBudgetRequest request) {
         logger.info("Creating budget for familyId: {}", familyId);
@@ -92,7 +94,9 @@ public class BudgetService {
         return response;
     }
 
-    /** 🔹 Busca un presupuesto por ID */
+    /**
+     * 🔹 Busca un presupuesto por ID
+     */
     @Transactional(readOnly = true)
     public Map<String, Object> getBudgetDetails(UUID budgetId) {
         Budget budget = repositoryBudget.findById(budgetId)
@@ -125,7 +129,9 @@ public class BudgetService {
         return response;
     }
 
-    /** 🔹 Obtener todos los presupuestos por familia */
+    /**
+     * 🔹 Obtener todos los presupuestos por familia
+     */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getAllBudgetsForFamily(UUID familyId) {
         List<Budget> budgets = repositoryBudget.findByFamilyIdOrderByPeriod(familyId);
@@ -159,6 +165,12 @@ public class BudgetService {
     }
 
     public void deleteBudget(UUID budgetId) {
-
+        if (!repositoryBudget.existsById(budgetId)) {
+            throw new NoSuchElementException(
+                    "No se puede eliminar: presupuesto con ID " + budgetId + " no existe.");
+        }
+        logger.warn("Eliminando presupuesto con ID {}", budgetId);
+        repositoryBudget.deleteById(budgetId);
     }
+
 }
