@@ -1,11 +1,14 @@
 package com.familyspencesapi.service.users;
 
+import com.familyspencesapi.config.messages.userprocessor.registeruser.UserRegisterProcessQueueConfig;
 import com.familyspencesapi.domain.users.DocumentType;
 import com.familyspencesapi.domain.users.RegisterUser;
+import com.familyspencesapi.domain.users.UpdateUserMessage;
 import com.familyspencesapi.repositories.expense.ExpenseRepository;
 import com.familyspencesapi.repositories.ranking.RankingRepository;
 import com.familyspencesapi.repositories.users.DocumentTypeRepository;
 import com.familyspencesapi.repositories.users.RegisterUserRepository;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,17 +29,23 @@ public class FamilyUserService {
     private final PasswordEncoder passwordEncoder;
     private final ExpenseRepository expenseRepository;
     private final RankingRepository rankingRepository;
+    private final RabbitTemplate rabbitTemplate;
+    private final UserRegisterProcessQueueConfig queueConfig;
 
     public FamilyUserService(RegisterUserRepository registerUserRepository,
                              DocumentTypeRepository doucmentTypeRepository,
                              PasswordEncoder passwordEncoder,
                              ExpenseRepository expenseRepository,
-                             RankingRepository rankingRepository) {
+                             RankingRepository rankingRepository,
+                             RabbitTemplate rabbitTemplate,
+                             UserRegisterProcessQueueConfig queueConfig) {
         this.registerUserRepository = registerUserRepository;
         this.doucmentTypeRepository = doucmentTypeRepository;
         this.passwordEncoder = passwordEncoder;
         this.expenseRepository = expenseRepository;
         this.rankingRepository = rankingRepository;
+        this.rabbitTemplate = rabbitTemplate;
+        this.queueConfig = queueConfig;
     }
 
     private static final Pattern NAME_PATTERN =
@@ -46,6 +55,8 @@ public class FamilyUserService {
     private static final Pattern CREDIT_CARD_PATTERN =
             Pattern.compile("^\\d{13,19}$");
 
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FamilyUserService.class);
 
     // GET user by email
     public RegisterUser getUserByEmail(String email) {
@@ -91,6 +102,9 @@ public class FamilyUserService {
             validateLastName(updatedData.getLastName());
             existingUser.setLastName(updatedData.getLastName());
         }
+        if (updatedData.getbirthDate() != null) {
+            existingUser.setbirthDate(updatedData.getbirthDate());
+        }
 
         // Validate forbidden name "Cuenta Eliminada"
         String finalFirst = existingUser.getFirstName().trim().toLowerCase();
@@ -100,7 +114,10 @@ public class FamilyUserService {
             throw new IllegalArgumentException("El nombre del usuario no es válido");
         }
 
-        if (updatedData.getdocumentType() != null) {
+        log.info("PATCH documentType recibido: {}, id: {}",
+                updatedData.getdocumentType(),
+                updatedData.getdocumentType() != null ? updatedData.getdocumentType().getId() : "null");
+        if (updatedData.getdocumentType() != null && updatedData.getdocumentType().getId() != null) {
             validateDocumentType(updatedData.getdocumentType());
             existingUser.setdocumentType(updatedData.getdocumentType());
         }
@@ -128,6 +145,9 @@ public class FamilyUserService {
 
     // PUT (actualización completa)
     public RegisterUser updateAllUser(String email, RegisterUser updatedUser) {
+        log.info("PUT updateAllUser - documentType: {}, id: {}",
+                updatedUser.getdocumentType(),
+                updatedUser.getdocumentType() != null ? updatedUser.getdocumentType().getId() : "null");
         Optional<RegisterUser> optionalUser = registerUserRepository.findByEmail(email);
         validate(updatedUser);
         validateForbiddenName(updatedUser.getFirstName(), updatedUser.getLastName());
@@ -138,6 +158,9 @@ public class FamilyUserService {
         RegisterUser existingUser = optionalUser.get();
         existingUser.setFirstName(updatedUser.getFirstName());
         existingUser.setLastName(updatedUser.getLastName());
+        if (updatedUser.getbirthDate() != null) {
+            existingUser.setbirthDate(updatedUser.getbirthDate());
+        }
         existingUser.setdocumentType(updatedUser.getdocumentType());
         existingUser.setdocument(updatedUser.getdocument());
         String rawCard = updatedUser.getcreditCard();
@@ -180,7 +203,7 @@ public class FamilyUserService {
     }
 
     private void validateDocumentType(DocumentType type) {
-        if (type == null || type.getId() == null || doucmentTypeRepository.findById(type.getId()).isPresent()) {
+        if (type == null || type.getId() == null || doucmentTypeRepository.findById(type.getId()).isEmpty()) {
             throw new IllegalArgumentException("Tipo de documento invalido");
         }
     }
@@ -218,6 +241,39 @@ public class FamilyUserService {
                 last.contains(DELETED_FIRST_NAME) || last.contains(DELETED_LAST_NAME)) {
             throw new IllegalArgumentException("El nombre del usuario no es válido");
         }
+    }
+
+    // PUT by UUID: publish update message to RabbitMQ
+    public void updateUserById(UUID id, RegisterUser updatedUser) {
+        RegisterUser existing = registerUserRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+        UpdateUserMessage msg = new UpdateUserMessage(
+                existing.getId(),
+                updatedUser.getFirstName() != null ? updatedUser.getFirstName() : existing.getFirstName(),
+                updatedUser.getLastName() != null ? updatedUser.getLastName() : existing.getLastName(),
+                updatedUser.getbirthDate() != null ? updatedUser.getbirthDate() : existing.getbirthDate(),
+                updatedUser.getdocumentType() != null ? updatedUser.getdocumentType().getId() : existing.getdocumentType().getId(),
+                updatedUser.getdocument() != null ? updatedUser.getdocument() : existing.getdocument(),
+                updatedUser.getRelationship() != null ? updatedUser.getRelationship().getId() : existing.getRelationship().getId(),
+                updatedUser.getcreditCard(),
+                updatedUser.getphone() != null ? updatedUser.getphone() : existing.getphone(),
+                updatedUser.getAddress() != null ? updatedUser.getAddress() : existing.getAddress()
+        );
+
+        rabbitTemplate.convertAndSend(queueConfig.getExchangeName(), queueConfig.getRoutingKeyUserUpdate(), msg);
+    }
+
+    // DELETE by UUID: deactivate immediately and publish to queue
+    @Transactional
+    public void deactivateUserById(UUID id) {
+        RegisterUser user = registerUserRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+        user.setActive(false);
+        registerUserRepository.save(user);
+
+        rabbitTemplate.convertAndSend(queueConfig.getExchangeName(), queueConfig.getRoutingKeyUserDeactivate(), id.toString());
     }
 
     // Soft delete: mark user as "Cuenta Eliminada", update associated data, and deactivate

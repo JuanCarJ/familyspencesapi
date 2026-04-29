@@ -9,12 +9,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // Manejo de errores de validación en DTOs
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -75,6 +79,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex, WebRequest request) {
+
+        log.error("Error inesperado en {}: {}", request.getDescription(false), ex.getMessage(), ex);
 
         ErrorResponse errorResponse = new ErrorResponse(
                 "Error interno del servidor",

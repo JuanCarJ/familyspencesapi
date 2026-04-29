@@ -2,6 +2,7 @@ package com.familyspencesapi.domain.users;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -41,8 +42,8 @@ public class RegisterUser {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Relationship relationship;
 
-    @JsonIgnore
-    @Column(name = "credit_card", nullable = false)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(name = "credit_card", nullable = true)
     private String creditCard;
 
     @Column(name = "credit_card_last4")
@@ -54,7 +55,7 @@ public class RegisterUser {
     @Column(name = "address", nullable = false)
     private String address;
 
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "password", nullable = false)
     private String password;
 

@@ -36,7 +36,7 @@ public class RankingProcessQueueConfig {
         return BindingBuilder
                 .bind(rankingQueue())
                 .to(rankingExchange())
-                .with(getRoutingKeyCreate()); // Usa la routing key de tus properties
+                .with("budget.ranking.create");
     }
 
     public String getExchangeName() {

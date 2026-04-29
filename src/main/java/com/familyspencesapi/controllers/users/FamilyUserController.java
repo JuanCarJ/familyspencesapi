@@ -79,6 +79,28 @@ public class FamilyUserController {
         }
     }
 
+    @PutMapping(value = "/users/by-id/{id}", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<?> updateUserById(
+            @PathVariable UUID id,
+            @RequestBody RegisterUser updatedUser) {
+        try {
+            userService.updateUserById(id, updatedUser);
+            return ResponseEntity.ok(Map.of("message", "Actualización enviada correctamente."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping(value = "/users/by-id/{id}", produces = "application/json")
+    public ResponseEntity<?> deactivateUser(@PathVariable UUID id) {
+        try {
+            userService.deactivateUserById(id);
+            return ResponseEntity.ok(Map.of("message", "Solicitud de desactivación enviada."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @DeleteMapping(value = "/users/{email}", produces = "application/json")
     public ResponseEntity<?> deleteAccount(@PathVariable String email) {
         try {
