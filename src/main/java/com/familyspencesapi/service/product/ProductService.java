@@ -24,6 +24,18 @@ public class ProductService {
         messageSenderBroker.send(productData, "product.exchange", "product.create");
     }
 
+    public void sendEditProductToBroker(Map<String, Object> productData) {
+        validateProductDataForEdit(productData);
+        messageSenderBroker.send(productData, "product.exchange", "product.edit");
+    }
+
+    public void sendDeleteProductToBroker(UUID productId) {
+        if (!productRepository.existsById(productId)) {
+            throw new IllegalArgumentException("No se ha encontrado el producto con el ID proporcionado");
+        }
+        messageSenderBroker.send(productId, "product.exchange", "product.delete");
+    }
+
     public List<ProductDomain> searchProductsByName(String name) {
         if (name == null || name.trim().isEmpty()) {
             return productRepository.findAll();
@@ -63,6 +75,17 @@ public class ProductService {
         Object priceObj = productData.get("precio");
         if (priceObj == null) {
             throw new IllegalArgumentException("El precio es requerido");
+        }
+    }
+
+    private void validateProductDataForEdit(Map<String, Object> productData) {
+        validateProductData(productData);
+
+        Object idObj = productData.get("id");
+        if (!productRepository.existsById((UUID.fromString(idObj.toString())))) {
+            throw new IllegalArgumentException("No se ha encontrado el producto con el ID proporcionado");
+        } else if (idObj.toString().isEmpty()) {
+            throw new IllegalArgumentException("El ID del producto es requerido para edición");
         }
     }
 
