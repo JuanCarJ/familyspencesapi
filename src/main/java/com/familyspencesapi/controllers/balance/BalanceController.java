@@ -54,7 +54,7 @@ public class BalanceController {
             balanceService.initiateMonthlyClosing(familyUUID, targetMonth);
             return ResponseEntity
                     .accepted()
-                    .body(Map.of("message", "Monthly closing process initiated for family " + familyUUID + " for month " + targetMonth));
+                    .body(Map.of("message", "Proceso de cierre mensual iniciado para la familia " + familyUUID + " y el mes " + targetMonth + "."));
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .badRequest()

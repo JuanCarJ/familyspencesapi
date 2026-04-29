@@ -73,7 +73,11 @@ public class ExpenseService {
         if (!expense.isValidPeriod()) {
             throw new IllegalArgumentException("Invalid period");
         }
-        System.out.println("CATEGORY ENVIADA = " + request.getCategory());
+
+        if (expenseRepository.existsSimilarExpense(expense.getTitle(), expense.getPeriod(), expense.getResponsible(), new UUID(0, 0))) {
+            throw new IllegalArgumentException("Ya existe un gasto con el mismo título, período y responsable");
+        }
+
         messageSenderBrokerExpense.execute(expense, processQueueConfig.getRoutingKeyExpenseCreate());
 
         return "The message was sent successfully.";
@@ -158,6 +162,10 @@ public class ExpenseService {
 
         if (!expense.isValidPeriod()) {
             throw new IllegalArgumentException("Período inválido: " + expense.getPeriod());
+        }
+
+        if (expenseRepository.existsSimilarExpense(expense.getTitle(), expense.getPeriod(), expense.getResponsible(), expenseId)) {
+            throw new IllegalArgumentException("Ya existe un gasto con el mismo título, período y responsable");
         }
 
         messageSenderBrokerExpense.execute(expense, processQueueConfig.getRoutingKeyExpenseUpdate());

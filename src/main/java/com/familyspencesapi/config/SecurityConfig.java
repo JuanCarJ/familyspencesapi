@@ -38,7 +38,7 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:4200")
+                        .allowedOrigins("http://localhost:4200", "https://budget.dautia.com")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
@@ -56,6 +56,7 @@ public class SecurityConfig {
         org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOrigin("http://localhost:4200");
+        config.addAllowedOrigin("https://budget.dautia.com");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
 
