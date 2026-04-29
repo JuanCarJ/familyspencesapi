@@ -53,10 +53,56 @@ public class ProductController {
         try {
             productService.sendCreateProductToBroker(producto);
 
-            respuesta.put("mensaje", "Solicitud de creación enviada a processor");
+            respuesta.put("mensaje", "Solicitud de creación enviada.");
             respuesta.put("producto", producto);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
+
+        } catch (IllegalArgumentException e) {
+            respuesta.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(respuesta);
+
+        } catch (Exception e) {
+            respuesta.put("mensaje", "Error interno del servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+        }
+    }
+
+    @PutMapping("/product/{id}")
+    public ResponseEntity<Map<String, Object>> editProduct(@PathVariable UUID id, @RequestBody Map<String, Object> producto) {
+        Map<String, Object> respuesta = new HashMap<>();
+
+        try {
+            producto.put("id", id);
+
+            productService.sendEditProductToBroker(producto);
+
+            respuesta.put("mensaje", "Solicitud de edición enviada.");
+            respuesta.put("producto", producto);
+
+            return ResponseEntity.ok(respuesta);
+
+        } catch (IllegalArgumentException e) {
+            respuesta.put("mensaje", e.getMessage());
+            return ResponseEntity.badRequest().body(respuesta);
+
+        } catch (Exception e) {
+            respuesta.put("mensaje", "Error interno del servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(respuesta);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteProduct(@PathVariable UUID id) {
+        Map<String, Object> respuesta = new HashMap<>();
+
+        try {
+            productService.sendDeleteProductToBroker(id);
+
+            respuesta.put("mensaje", "Solicitud de eliminación enviada.");
+            respuesta.put("id", id);
+
+            return ResponseEntity.ok(respuesta);
 
         } catch (IllegalArgumentException e) {
             respuesta.put("mensaje", e.getMessage());
